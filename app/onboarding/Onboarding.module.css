@@ -1,0 +1,171 @@
+/* ===========================
+   Onboarding Wizard Styles
+   =========================== */
+
+.onboardingPage {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.onboardingCard {
+    width: 100%;
+    max-width: 560px;
+    border: var(--border);
+    border-radius: var(--radius-md);
+    padding: 2.5rem 2rem;
+    background: var(--bg-color);
+}
+
+.onboardingBrand {
+    font-weight: 700;
+    font-size: var(--font-size-lg);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.onboardingSubtitle {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+
+/* Progress Steps */
+.stepIndicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.stepDot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--mid-grey);
+    transition: background var(--transition-fast);
+}
+
+.stepDotActive {
+    background: var(--off-black);
+}
+
+.stepDotComplete {
+    background: var(--accent-forest);
+}
+
+.stepLine {
+    width: 40px;
+    height: 1px;
+    background: var(--mid-grey);
+}
+
+/* Step Content */
+.stepTitle {
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.stepForm {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Tier Selection */
+.tierGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.tierCard {
+    border: var(--border);
+    border-radius: var(--radius-md);
+    padding: 1.25rem 1.5rem;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.tierCard:hover {
+    transform: translateY(-1px);
+}
+
+.tierCardSelected {
+    border-color: var(--off-black);
+    background: rgba(26, 26, 26, 0.04);
+}
+
+.tierInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.tierName {
+    font-size: var(--font-size-base);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.tierDescription {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+}
+
+.tierBadge {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-pill);
+    background: var(--off-black);
+    color: var(--white);
+}
+
+/* Secret Inputs */
+.secretGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.secretNote {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+    text-align: center;
+    line-height: 1.6;
+}
+
+/* Actions */
+.stepActions {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.stepActionsEnd {
+    composes: stepActions;
+    justify-content: flex-end;
+}

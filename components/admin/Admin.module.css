@@ -1,0 +1,134 @@
+/* ===========================
+   Admin Panel Styles
+   =========================== */
+
+.adminPage {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.adminHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+}
+
+.adminTitle {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.adminBrand {
+    font-weight: 700;
+    font-size: var(--font-size-sm);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.adminActions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+/* Fleet Heatmap */
+.heatmapSection {
+    margin-bottom: 2rem;
+}
+
+.sectionTitle {
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+}
+
+.heatmapGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.heatmapCard {
+    border: var(--border);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    text-align: center;
+}
+
+.heatmapValue {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+.heatmapLabel {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+/* Tenant Table */
+.tenantTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tenantTable th,
+.tenantTable td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: var(--border);
+    font-size: var(--font-size-xs);
+}
+
+.tenantTable th {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+}
+
+.tenantTable td {
+    font-weight: 400;
+}
+
+/* File Upload */
+.uploadZone {
+    border: 1px dashed var(--mid-grey);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color var(--transition-fast);
+}
+
+.uploadZone:hover {
+    border-color: var(--off-black);
+}
+
+.uploadLabel {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+}
+
+.uploadInput {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .heatmapGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

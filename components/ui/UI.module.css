@@ -1,0 +1,335 @@
+/* ===========================
+   UI Component Styles
+   BRAND_DESIGN_GUIDE.md compliant
+   =========================== */
+
+/* --- Card --- */
+.card {
+    background: var(--bg-color);
+    border: var(--border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    position: relative;
+}
+
+.cardHoverable {
+    transition: transform var(--transition-base);
+}
+
+.cardHoverable:hover {
+    transform: translateY(-2px);
+}
+
+/* --- Input --- */
+.inputWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.inputLabel {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-primary);
+}
+
+.inputField {
+    background: transparent;
+    border: var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color var(--transition-fast);
+    width: 100%;
+}
+
+.inputField::placeholder {
+    color: var(--mid-grey);
+}
+
+.inputField:focus {
+    border-color: var(--accent-blue);
+}
+
+.inputFieldError {
+    border-color: var(--accent-coral);
+}
+
+.inputError {
+    font-size: var(--font-size-xs);
+    color: var(--accent-coral);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.inputIcon {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--mid-grey);
+}
+
+/* --- Select --- */
+.selectField {
+    composes: inputField;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%231A1A1A' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
+    cursor: pointer;
+}
+
+/* --- Toggle --- */
+.toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+}
+
+.toggleTrack {
+    width: 44px;
+    height: 24px;
+    background: var(--mid-grey);
+    border-radius: 12px;
+    position: relative;
+    transition: background var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.toggleTrackActive {
+    background: var(--off-black);
+}
+
+.toggleThumb {
+    width: 18px;
+    height: 18px;
+    background: var(--white);
+    border-radius: 50%;
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    transition: transform var(--transition-fast);
+}
+
+.toggleThumbActive {
+    transform: translateX(20px);
+}
+
+.toggleLabel {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+/* --- Modal --- */
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(26, 26, 26, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.modalContent {
+    background: var(--bg-color);
+    border: var(--border);
+    border-radius: var(--radius-md);
+    max-width: 560px;
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    border-bottom: var(--border);
+}
+
+.modalTitle {
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.modalClose {
+    cursor: pointer;
+    color: var(--text-primary);
+    transition: opacity var(--transition-fast);
+}
+
+.modalClose:hover {
+    opacity: 0.6;
+}
+
+.modalBody {
+    padding: 1.5rem;
+}
+
+/* --- Status Indicator --- */
+.statusIndicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.statusDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.statusDotActive {
+    background: var(--accent-green);
+    animation: statusPulse 2s ease-in-out infinite;
+}
+
+.statusDotIdle {
+    background: var(--mid-grey);
+}
+
+.statusDotError {
+    background: var(--accent-coral);
+    animation: statusPulse 1.5s ease-in-out infinite;
+}
+
+.statusDotProvisioning {
+    background: var(--accent-blue);
+    animation: statusPulse 1s ease-in-out infinite;
+}
+
+.statusLabel {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+@keyframes statusPulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+}
+
+/* --- Skeleton Loader --- */
+.skeleton {
+    background: rgba(26, 26, 26, 0.06);
+    border-radius: var(--radius-sm);
+    animation: shimmer 1.8s ease-in-out infinite;
+}
+
+.skeletonCard {
+    composes: skeleton;
+    height: 200px;
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
+}
+
+.skeletonText {
+    composes: skeleton;
+    height: 14px;
+    width: 80%;
+}
+
+.skeletonTextShort {
+    composes: skeleton;
+    height: 14px;
+    width: 40%;
+}
+
+.skeletonAvatar {
+    composes: skeleton;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+@keyframes shimmer {
+
+    0%,
+    100% {
+        opacity: 0.4;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+}
+
+/* --- Toast --- */
+.toastContainer {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    pointer-events: none;
+}
+
+.toast {
+    pointer-events: auto;
+    background: var(--off-black);
+    color: var(--white);
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 400px;
+}
+
+.toastSuccess {
+    composes: toast;
+    background: var(--accent-forest);
+}
+
+.toastError {
+    composes: toast;
+    background: var(--accent-coral);
+}
+
+.toastInfo {
+    composes: toast;
+}
+
+/* --- Sparkline --- */
+.sparkline {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.sparklinePath {
+    fill: none;
+    stroke: var(--off-black);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}

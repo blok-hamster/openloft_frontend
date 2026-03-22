@@ -1,0 +1,207 @@
+.landingPage {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- Navigation --- */
+.navContainer {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 1rem 2rem;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 2rem;
+}
+
+.brand {
+    font-weight: 700;
+    font-size: 1.25rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.navLinks {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+}
+
+.navLink {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+    border-bottom: 1px dotted transparent;
+}
+
+.navLink:hover {
+    border-bottom-color: var(--text-primary);
+    opacity: 0.8;
+}
+
+.navActions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+/* --- Hero Section --- */
+.heroSection {
+    padding-top: 100px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.heroContent {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 5rem 2rem 3rem;
+    position: relative;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4rem;
+}
+
+.heroLeft {
+    flex: 1;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.heroHeadline {
+    font-size: 3.5rem;
+    line-height: 1.05;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+}
+
+.heroDescription {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    line-height: 1.7;
+}
+
+.heroActions {
+    display: flex;
+    gap: 1rem;
+}
+
+.heroRight {
+    flex: 1;
+    max-width: 520px;
+}
+
+/* Contained Spline 3D box */
+.splineBox {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+}
+
+.splineCanvas {
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.8s ease;
+}
+
+/* Skeleton Loader (brand guide aesthetic) */
+.splineSkeleton {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    position: absolute;
+    inset: 0;
+}
+
+.skeletonPulse {
+    width: 60%;
+    height: 50%;
+    background: rgba(26, 26, 26, 0.04);
+    border: 1px dashed var(--mid-grey);
+    border-radius: 16px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.skeletonText {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 0.4;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 900px) {
+    .heroContent {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .heroHeadline {
+        font-size: 2.5rem;
+    }
+
+    .heroLeft {
+        max-width: 100%;
+        align-items: center;
+        text-align: center;
+    }
+
+    .heroRight {
+        display: none;
+    }
+}
+
+/* --- Social Proof --- */
+.socialProof {
+    position: relative;
+    z-index: 10;
+    margin-top: auto;
+    padding: 3rem 0 2rem;
+    text-align: center;
+    border-top: 1px solid var(--off-black);
+}
+
+.trustedText {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}

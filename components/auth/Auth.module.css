@@ -1,0 +1,122 @@
+/* ===========================
+   Auth Page Styles
+   =========================== */
+
+.authPage {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.authCard {
+    width: 100%;
+    max-width: 420px;
+    border: var(--border);
+    border-radius: var(--radius-md);
+    padding: 2.5rem 2rem;
+    background: var(--bg-color);
+}
+
+.authBrand {
+    font-weight: 700;
+    font-size: var(--font-size-lg);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.authTitle {
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--text-secondary);
+}
+
+.authForm {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.authDivider {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 0.5rem 0;
+}
+
+.authDividerLine {
+    flex: 1;
+    height: 1px;
+    background: var(--mid-grey);
+}
+
+.authDividerText {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--mid-grey);
+}
+
+.authFooter {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: var(--font-size-xs);
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+}
+
+.authFooter a {
+    color: var(--text-primary);
+    font-weight: 700;
+    text-transform: uppercase;
+    border-bottom: 1px dotted var(--text-primary);
+}
+
+.authFooter a:hover {
+    opacity: 0.7;
+}
+
+.authError {
+    font-size: var(--font-size-xs);
+    color: var(--accent-coral);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+}
+
+.authSubmit {
+    margin-top: 0.5rem;
+}
+
+.googleButton {
+    width: 100%;
+    background: transparent;
+    color: var(--text-primary);
+    border: var(--border);
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-pill);
+    font-weight: 700;
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    font-family: var(--font-family);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all var(--transition-base);
+}
+
+.googleButton:hover {
+    background: var(--off-black);
+    color: var(--white);
+}
