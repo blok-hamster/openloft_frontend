@@ -108,7 +108,12 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                             size="sm"
                             icon={<ExternalLink size={12} />}
                             onClick={async () => {
-                                window.open(`http://${agent.agentId}.127.0.0.1.nip.io?token=${agent.gatewayToken}`, '_blank');
+                                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                                const baseDomain = isLocal ? '127.0.0.1.nip.io' : 'agents.openloft.xyz';
+                                const protocol = isLocal ? 'http' : 'https';
+                                const webUiUrl = `${protocol}://${agent.agentId}.${baseDomain}?token=${agent.gatewayToken}`;
+                                
+                                window.open(webUiUrl, '_blank');
                                 // Trigger background approval for the newly opened session
                                 try {
                                     await approveAgentDevice(agent.agentId);
