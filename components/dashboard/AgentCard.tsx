@@ -1,7 +1,7 @@
 'use client';
 
 import styles from './Dashboard.module.css';
-import { IAgent } from '@/lib/api';
+import { IAgent, approveAgentDevice } from '@/lib/api';
 import StatusIndicator from '@/components/ui/StatusIndicator';
 import Sparkline from '@/components/ui/Sparkline';
 import Button from '@/components/ui/Button';
@@ -107,7 +107,15 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                             variant="ghost"
                             size="sm"
                             icon={<ExternalLink size={12} />}
-                            onClick={() => window.open(`http://${agent.agentId}.127.0.0.1.nip.io?token=${agent.gatewayToken}`, '_blank')}
+                            onClick={async () => {
+                                window.open(`http://${agent.agentId}.127.0.0.1.nip.io?token=${agent.gatewayToken}`, '_blank');
+                                // Trigger background approval for the newly opened session
+                                try {
+                                    await approveAgentDevice(agent.agentId);
+                                } catch (err) {
+                                    console.error('Failed to trigger device approval:', err);
+                                }
+                            }}
                         >
                             WebUI
                         </Button>

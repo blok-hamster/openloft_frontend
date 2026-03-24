@@ -282,6 +282,11 @@ export const fetchAgentLogs = async (agentId: string): Promise<string> => {
   return data.logs;
 };
 
+export const approveAgentDevice = async (agentId: string): Promise<{ success: boolean; message: string }> => {
+  const { data } = await api.post<{ success: boolean; message: string }>(`/agents/${agentId}/device/approve`);
+  return data;
+};
+
 export const fetchAgentConfig = async (agentId: string): Promise<Record<string, unknown>> => {
   const { data } = await api.get<{ config: Record<string, unknown> }>(`/agents/${agentId}/config`);
   return data.config;
