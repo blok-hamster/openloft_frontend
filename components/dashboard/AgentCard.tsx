@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 
 import styles from './Dashboard.module.css';
 import { IAgent, approveAgentDevice } from '@/lib/api';
@@ -25,6 +26,7 @@ interface AgentCardProps {
 }
 
 export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings, onStop, onStart, onPause, onResume, onRestart, onDelete, onLogs, onCustomKey, onChannels }: AgentCardProps) {
+    const [isPairing, setIsPairing] = useState(false);
     const mockData = Array.from({ length: 12 }, () => Math.random() * 100);
     const isProvisioning = agent.status === 'provisioning';
     const isStarting = agent.status === 'starting';
@@ -123,6 +125,73 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                             }}
                         >
                             WebUI
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={<Link size={12} />}
+                            disabled={isPairing}
+                            onClick={async () => {
+                                setIsPairing(true);
+                                
+                                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                                const baseDomain = isLocal ? '127.0.0.1.nip.io' : 'agents.openloft.xyz';
+                                const protocol = isLocal ? 'ws' : 'wss';
+                                const wsUrl = `${protocol}://${agent.agentId}.${baseDomain}`;
+                                
+                                const connectAndPair = () => {
+                                    return new Promise<void>((resolve, reject) => {
+                                        console.log(`[Pair] Attempting connection to ${wsUrl}`);
+                                        const ws = new WebSocket(wsUrl);
+                                        
+                                        ws.onopen = () => {
+                                            console.log('🟢 Connected to OpenClaw Agent!');
+                                            ws.close();
+                                            resolve();
+                                        };
+                                        
+                                        ws.onclose = async (event) => {
+                                            // 1008 is OpenClaw's specific "Pairing Required" code
+                                            if (event.code === 1008) {
+                                                console.log('🔒 Device not paired. Requesting auto-approval via RPC...');
+                                                try {
+                                                    await approveAgentDevice(agent.agentId);
+                                                    console.log('Device approved! Reconnecting...');
+                                                    // Retry once after approval
+                                                    setTimeout(() => {
+                                                        const retryWs = new WebSocket(wsUrl);
+                                                        retryWs.onopen = () => {
+                                                            retryWs.close();
+                                                            resolve();
+                                                        };
+                                                        retryWs.onclose = () => reject(new Error('Failed after approval'));
+                                                        retryWs.onerror = () => reject(new Error('WebSocket error after approval'));
+                                                    }, 1500);
+                                                } catch (err) {
+                                                    reject(err);
+                                                }
+                                            } else if (event.code !== 1000) {
+                                                reject(new Error(`Connection closed: ${event.code}`));
+                                            }
+                                        };
+                                        
+                                        ws.onerror = () => {
+                                            reject(new Error('WebSocket connection failed'));
+                                        };
+                                    });
+                                };
+
+                                try {
+                                    await connectAndPair();
+                                    // If we are here, it means we connected (either immediately or after auto-pairing)
+                                } catch (err) {
+                                    console.error('Pairing process failed:', err);
+                                } finally {
+                                    setIsPairing(false);
+                                }
+                            }}
+                        >
+                            {isPairing ? 'Pairing...' : 'Pair'}
                         </Button>
                         <Button variant="ghost" size="sm" icon={<Square size={12} />} onClick={() => onStop(agent)}>
                             Stop
