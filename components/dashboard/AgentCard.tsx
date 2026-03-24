@@ -114,7 +114,7 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                                 const baseDomain = isLocal ? '127.0.0.1.nip.io' : 'agents.openloft.xyz';
                                 const protocol = isLocal ? 'http' : 'https';
                                 const webUiUrl = `${protocol}://${agent.agentId}.${baseDomain}?token=${agent.gatewayToken}`;
-                                
+
                                 window.open(webUiUrl, '_blank');
                                 // Trigger background approval for the newly opened session
                                 try {
@@ -133,40 +133,48 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                             disabled={isPairing}
                             onClick={async () => {
                                 setIsPairing(true);
-                                
+
                                 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                                 const baseDomain = isLocal ? '127.0.0.1.nip.io' : 'agents.openloft.xyz';
                                 const protocol = isLocal ? 'ws' : 'wss';
-                                const wsUrl = `${protocol}://${agent.agentId}.${baseDomain}`;
-                                
+
+                                // FIX 1: Attach the gateway token to authenticate the WebSocket handshake
+                                const wsUrl = `${protocol}://${agent.agentId}.${baseDomain}?token=${agent.gatewayToken}`;
+
                                 const connectAndPair = () => {
                                     return new Promise<void>((resolve, reject) => {
                                         console.log(`[Pair] Attempting connection to ${wsUrl}`);
                                         const ws = new WebSocket(wsUrl);
-                                        
+
                                         ws.onopen = () => {
                                             console.log('🟢 Connected to OpenClaw Agent!');
-                                            ws.close();
+                                            ws.close(); // Close the test connection
                                             resolve();
                                         };
-                                        
+
                                         ws.onclose = async (event) => {
-                                            // 1008 is OpenClaw's specific "Pairing Required" code
-                                            if (event.code === 1008) {
+                                            console.log(`[WS Close] Code: ${event.code}`);
+
+                                            // FIX 2: Catch both 1008 (Pairing Required) AND 1005 (Abrupt Auth Drop)
+                                            if (event.code === 1008 || event.code === 1005) {
                                                 console.log('🔒 Device not paired. Requesting auto-approval via RPC...');
                                                 try {
+                                                    // This fires the POST request to your backend controller
                                                     await approveAgentDevice(agent.agentId);
-                                                    console.log('Device approved! Reconnecting...');
-                                                    // Retry once after approval
+                                                    console.log('✅ Device approved! Reconnecting...');
+
+                                                    // Wait 1.5s for Swarm RPC to process the .req file on EFS, then retry
                                                     setTimeout(() => {
                                                         const retryWs = new WebSocket(wsUrl);
                                                         retryWs.onopen = () => {
+                                                            console.log('🟢 Reconnection successful!');
                                                             retryWs.close();
                                                             resolve();
                                                         };
-                                                        retryWs.onclose = () => reject(new Error('Failed after approval'));
+                                                        retryWs.onclose = (e) => reject(new Error(`Failed after approval. Code: ${e.code}`));
                                                         retryWs.onerror = () => reject(new Error('WebSocket error after approval'));
                                                     }, 1500);
+
                                                 } catch (err) {
                                                     reject(err);
                                                 }
@@ -174,16 +182,15 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                                                 reject(new Error(`Connection closed: ${event.code}`));
                                             }
                                         };
-                                        
+
                                         ws.onerror = () => {
-                                            reject(new Error('WebSocket connection failed'));
+                                            console.error('WebSocket connection encountered an error.');
                                         };
                                     });
                                 };
 
                                 try {
                                     await connectAndPair();
-                                    // If we are here, it means we connected (either immediately or after auto-pairing)
                                 } catch (err) {
                                     console.error('Pairing process failed:', err);
                                 } finally {
