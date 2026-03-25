@@ -16,7 +16,20 @@ export default function SettingsPage() {
     const [tenant, setTenant] = useState<ITenant | null>(null);
 
     // Secret Manager
-    const [secrets, setSecrets] = useState({ OPENAI_API_KEY: '', ANTHROPIC_API_KEY: '' });
+    const [secrets, setSecrets] = useState({ 
+        OPENAI_API_KEY: '', 
+        ANTHROPIC_API_KEY: '',
+        GEMINI_API_KEY: '',
+        GROQ_API_KEY: '',
+        DEEPSEEK_API_KEY: '',
+        XAI_API_KEY: '',
+        MISTRAL_API_KEY: '',
+        AZURE_OPENAI_API_KEY: '',
+        AZURE_OPENAI_ENDPOINT: '',
+        AZURE_OPENAI_API_INSTANCE_NAME: '',
+        AZURE_OPENAI_API_DEPLOYMENT_NAME: '',
+        AZURE_OPENAI_API_VERSION: ''
+    });
     const [savingSecrets, setSavingSecrets] = useState(false);
 
     // Account
@@ -53,7 +66,20 @@ export default function SettingsPage() {
             }
             await updateSecrets(user.tenantId, filtered);
             toast('Secrets saved to vault', 'success');
-            setSecrets({ OPENAI_API_KEY: '', ANTHROPIC_API_KEY: '' });
+            setSecrets({ 
+                OPENAI_API_KEY: '', 
+                ANTHROPIC_API_KEY: '',
+                GEMINI_API_KEY: '',
+                GROQ_API_KEY: '',
+                DEEPSEEK_API_KEY: '',
+                XAI_API_KEY: '',
+                MISTRAL_API_KEY: '',
+                AZURE_OPENAI_API_KEY: '',
+                AZURE_OPENAI_ENDPOINT: '',
+                AZURE_OPENAI_API_INSTANCE_NAME: '',
+                AZURE_OPENAI_API_DEPLOYMENT_NAME: '',
+                AZURE_OPENAI_API_VERSION: ''
+            });
         } catch {
             toast('Failed to save secrets', 'error');
         } finally {
@@ -77,6 +103,15 @@ export default function SettingsPage() {
         }
     };
 
+    // Collapsible states
+    const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+    
+    const toggleGroup = (group: string) => {
+        setExpandedGroups(prev => 
+            prev.includes(group) ? prev.filter(g => g !== group) : [...prev, group]
+        );
+    };
+
     return (
         <>
             <div className={styles.dashboardHeader}>
@@ -91,25 +126,133 @@ export default function SettingsPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '560px' }}>
                 {/* Secret Manager */}
                 <Card>
-                    <div className={styles.headerTitle} style={{ fontSize: 'var(--font-size-sm)', marginBottom: '1rem' }}>
+                    <div className={styles.headerTitle} style={{ fontSize: 'var(--font-size-sm)', marginBottom: '1.25rem' }}>
                         Secret Manager
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        <Input
-                            label="OpenAI API Key"
-                            type="password"
-                            placeholder="sk-..."
-                            value={secrets.OPENAI_API_KEY}
-                            onChange={(e) => setSecrets((s) => ({ ...s, OPENAI_API_KEY: e.target.value }))}
-                        />
-                        <Input
-                            label="Anthropic API Key"
-                            type="password"
-                            placeholder="sk-ant-..."
-                            value={secrets.ANTHROPIC_API_KEY}
-                            onChange={(e) => setSecrets((s) => ({ ...s, ANTHROPIC_API_KEY: e.target.value }))}
-                        />
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                        {/* Main Providers */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <Input
+                                label="OpenAI API Key"
+                                type="password"
+                                placeholder="sk-..."
+                                value={secrets.OPENAI_API_KEY}
+                                onChange={(e) => setSecrets((s) => ({ ...s, OPENAI_API_KEY: e.target.value }))}
+                            />
+                            <Input
+                                label="Anthropic API Key"
+                                type="password"
+                                placeholder="sk-ant-..."
+                                value={secrets.ANTHROPIC_API_KEY}
+                                onChange={(e) => setSecrets((s) => ({ ...s, ANTHROPIC_API_KEY: e.target.value }))}
+                            />
+                        </div>
+
+                        {/* Other Providers Group */}
+                        <div style={{ border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden' }}>
+                            <button 
+                                onClick={() => toggleGroup('others')}
+                                style={{ 
+                                    width: '100%', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', 
+                                    alignItems: 'center', background: 'rgba(255,255,255,0.02)', border: 'none', 
+                                    cursor: 'pointer', color: 'var(--text-primary)', fontSize: '12px', fontWeight: 600 
+                                }}
+                            >
+                                OTHER PROVIDERS (Gemini, Groq, DeepSeek, xAI, Mistral)
+                                <span>{expandedGroups.includes('others') ? '−' : '+'}</span>
+                            </button>
+                            
+                            {expandedGroups.includes('others') && (
+                                <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                                    <Input
+                                        label="Google Gemini API Key"
+                                        type="password"
+                                        placeholder="AIza..."
+                                        value={secrets.GEMINI_API_KEY}
+                                        onChange={(e) => setSecrets((s) => ({ ...s, GEMINI_API_KEY: e.target.value }))}
+                                    />
+                                    <Input
+                                        label="Groq API Key"
+                                        type="password"
+                                        placeholder="gsk_..."
+                                        value={secrets.GROQ_API_KEY}
+                                        onChange={(e) => setSecrets((s) => ({ ...s, GROQ_API_KEY: e.target.value }))}
+                                    />
+                                    <Input
+                                        label="DeepSeek API Key"
+                                        type="password"
+                                        placeholder="sk-..."
+                                        value={secrets.DEEPSEEK_API_KEY}
+                                        onChange={(e) => setSecrets((s) => ({ ...s, DEEPSEEK_API_KEY: e.target.value }))}
+                                    />
+                                    <Input
+                                        label="xAI API Key"
+                                        type="password"
+                                        placeholder="xai-..."
+                                        value={secrets.XAI_API_KEY}
+                                        onChange={(e) => setSecrets((s) => ({ ...s, XAI_API_KEY: e.target.value }))}
+                                    />
+                                    <Input
+                                        label="Mistral API Key"
+                                        type="password"
+                                        placeholder="..."
+                                        value={secrets.MISTRAL_API_KEY}
+                                        onChange={(e) => setSecrets((s) => ({ ...s, MISTRAL_API_KEY: e.target.value }))}
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Azure Providers Group */}
+                        <div style={{ border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden' }}>
+                            <button 
+                                onClick={() => toggleGroup('azure')}
+                                style={{ 
+                                    width: '100%', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', 
+                                    alignItems: 'center', background: 'rgba(255,255,255,0.02)', border: 'none', 
+                                    cursor: 'pointer', color: 'var(--text-primary)', fontSize: '12px', fontWeight: 600 
+                                }}
+                            >
+                                AZURE OPENAI (Enterprise)
+                                <span>{expandedGroups.includes('azure') ? '−' : '+'}</span>
+                            </button>
+                            
+                            {expandedGroups.includes('azure') && (
+                                <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                                    <Input
+                                        label="Azure API Key"
+                                        type="password"
+                                        value={secrets.AZURE_OPENAI_API_KEY}
+                                        onChange={(e) => setSecrets((s) => ({ ...s, AZURE_OPENAI_API_KEY: e.target.value }))}
+                                    />
+                                    <Input
+                                        label="Endpoint URL"
+                                        placeholder="https://resource.openai.azure.com"
+                                        value={secrets.AZURE_OPENAI_ENDPOINT}
+                                        onChange={(e) => setSecrets((s) => ({ ...s, AZURE_OPENAI_ENDPOINT: e.target.value }))}
+                                    />
+                                    <Input
+                                        label="Instance Name"
+                                        value={secrets.AZURE_OPENAI_API_INSTANCE_NAME}
+                                        onChange={(e) => setSecrets((s) => ({ ...s, AZURE_OPENAI_API_INSTANCE_NAME: e.target.value }))}
+                                    />
+                                    <Input
+                                        label="Deployment Name"
+                                        value={secrets.AZURE_OPENAI_API_DEPLOYMENT_NAME}
+                                        onChange={(e) => setSecrets((s) => ({ ...s, AZURE_OPENAI_API_DEPLOYMENT_NAME: e.target.value }))}
+                                    />
+                                    <Input
+                                        label="API Version"
+                                        placeholder="2024-02-15-preview"
+                                        value={secrets.AZURE_OPENAI_API_VERSION}
+                                        onChange={(e) => setSecrets((s) => ({ ...s, AZURE_OPENAI_API_VERSION: e.target.value }))}
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
                             <Button variant="primary" size="sm" loading={savingSecrets} onClick={handleSaveSecrets}>
                                 Save to Vault
                             </Button>
@@ -117,7 +260,7 @@ export default function SettingsPage() {
                     </div>
                 </Card>
 
-                {/* Webhook Config */}
+                {/* Workspace Info */}
                 {tenant && (
                     <Card>
                         <div className={styles.headerTitle} style={{ fontSize: 'var(--font-size-sm)', marginBottom: '1rem' }}>

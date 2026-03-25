@@ -112,14 +112,23 @@ export default function SkillsPage() {
                         style={{ display: 'none' }}
                         onChange={handleFileUpload}
                     />
-                    <Button 
-                        variant="secondary" 
-                        icon={<Upload size={14} />} 
-                        onClick={() => fileInputRef.current?.click()}
-                        loading={uploading}
-                    >
-                        Import Custom Skill
-                    </Button>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
+                        <Button 
+                            variant="secondary" 
+                            icon={<Upload size={14} />} 
+                            onClick={() => fileInputRef.current?.click()}
+                            loading={uploading}
+                            disabled={process.env.NEXT_PUBLIC_NODE_ENV === 'prod'}
+                            title={process.env.NEXT_PUBLIC_NODE_ENV === 'prod' ? "Coming soon" : ""}
+                        >
+                            Import Custom Skill
+                        </Button>
+                        {process.env.NEXT_PUBLIC_NODE_ENV === 'prod' && (
+                            <span style={{ fontSize: '10px', color: 'var(--accent-coral)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                COMING SOON: UNDER CONSTRUCTION
+                            </span>
+                        )}
+                    </div>
                     <Select
                         label="Agent"
                         value={selectedAgent}

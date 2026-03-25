@@ -105,7 +105,15 @@ export interface IAuthResponse { token: string; user: IUserContext; }
 export interface ICreateTenantRequest { name: string; }
 
 // Agents
-export interface IDeployAgentRequest { tenantId: string; name: string; llmProvider: string; model?: string; secrets?: Record<string, string>; }
+export interface IDeployAgentRequest { 
+  tenantId: string; 
+  name: string; 
+  llmProvider: string; 
+  model?: string; 
+  secrets?: Record<string, string>; 
+  usePlatformCredits?: boolean;
+  saveToSecretManager?: boolean;
+}
 export interface ISendMessageRequest { message: string; }
 export interface IAgentChatResponse { success: boolean; message: string; }
 export interface IApprovalRequest { approved: boolean; }
@@ -176,6 +184,11 @@ export const getTenant = async (tenantId: string): Promise<ITenant> => {
 export const updateSecrets = async (tenantId: string, secrets: Record<string, string>): Promise<{message: string}> => {
   const { data } = await api.post<{message: string}>(`/tenants/${tenantId}/secrets`, { secrets });
   return data;
+};
+
+export const getTenantSecretsInfo = async (tenantId: string): Promise<string[]> => {
+  const { data } = await api.get<{ availableProviders: string[] }>(`/tenants/${tenantId}/secrets/status`);
+  return data.availableProviders;
 };
 
 // --- Agent Endpoints ---

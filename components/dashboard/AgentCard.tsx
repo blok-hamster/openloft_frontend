@@ -72,9 +72,9 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
 
             {/* Core actions — always visible but disabled during provisioning */}
             <div className={styles.agentActions}>
-                <Button variant="ghost" size="sm" icon={<MessageSquare size={12} />} onClick={() => onChat(agent)} disabled={disabled}>
+                {/* <Button variant="ghost" size="sm" icon={<MessageSquare size={12} />} onClick={() => onChat(agent)} disabled={disabled}>
                     Chat
-                </Button>
+                </Button> */}
                 <Button variant="ghost" size="sm" icon={<FolderOpen size={12} />} onClick={() => onMemory(agent)} disabled={disabled}>
                     Workspace
                 </Button>
@@ -89,16 +89,16 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                         Logs
                     </Button>
                 )}
-                {onCustomKey && (
+                {/* {onCustomKey && (
                     <Button variant="ghost" size="sm" icon={<Key size={12} />} onClick={() => onCustomKey(agent)} disabled={disabled}>
                         Keys
                     </Button>
-                )}
-                {onChannels && (
+                )} */}
+                {/* {onChannels && (
                     <Button variant="ghost" size="sm" icon={<Link size={12} />} onClick={() => onChannels(agent)} disabled={disabled}>
                         Channels
                     </Button>
-                )}
+                )} */}
             </div>
 
             {/* Lifecycle actions — contextual based on status */}
@@ -198,7 +198,7 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                                 }
                             }}
                         >
-                            {isPairing ? 'Pairing...' : 'Pair'}
+                            {isPairing ? 'Pairing...' : 'Pair Device'}
                         </Button>
                         <Button variant="ghost" size="sm" icon={<Square size={12} />} onClick={() => onStop(agent)}>
                             Stop

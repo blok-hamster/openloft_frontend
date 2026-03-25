@@ -85,13 +85,22 @@ export default function LobbyListPage() {
           <h1 className={styles.headerTitle}>A2A Lobby</h1>
           <p className={styles.headerSubtitle}>Multi-agent collaboration sessions</p>
         </div>
-        <Button 
-          variant="primary" 
-          icon={<Plus size={16} />}
-          onClick={() => setShowCreate(true)}
-        >
-          Create Lobby
-        </Button>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
+          <Button 
+            variant="primary" 
+            icon={<Plus size={16} />}
+            onClick={() => setShowCreate(true)}
+            disabled={process.env.NEXT_PUBLIC_NODE_ENV === 'prod'}
+            title={process.env.NEXT_PUBLIC_NODE_ENV === 'prod' ? "Coming soon" : ""}
+          >
+            Create Lobby
+          </Button>
+          {process.env.NEXT_PUBLIC_NODE_ENV === 'prod' && (
+            <span style={{ fontSize: '10px', color: 'var(--accent-coral)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              COMING SOON: UNDER CONSTRUCTION
+            </span>
+          )}
+        </div>
       </div>
 
       {loading ? (
