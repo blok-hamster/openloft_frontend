@@ -20,6 +20,25 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Handle session expiration (401 Unauthorized)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Clear local storage and redirect to login if we get an unauthorized error
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('loft_token');
+        localStorage.removeItem('loft_user');
+        // Do not redirect if we are already on the login page to avoid loops
+        if (!window.location.pathname.startsWith('/auth/login')) {
+          window.location.href = '/auth/login';
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // --- Entity Interfaces ---
 
 export interface IAgent {
@@ -97,9 +116,11 @@ export interface IUpdateAccountRequest {
 
 // Auth
 export interface IRegisterRequest { email: string; password: string; companyName: string; }
+export interface IVerifyEmailRequest { email: string; code: string; }
 export interface ILoginRequest { email: string; password: string; }
-export interface IGoogleLoginRequest { credential: string; client_id?: string; }
+export interface IGoogleLoginRequest { credential?: string; access_token?: string; client_id?: string; }
 export interface IAuthResponse { token: string; user: IUserContext; }
+export interface IRegisterResponse { message: string; email: string; }
 
 // Tenants
 export interface ICreateTenantRequest { name: string; }
@@ -137,8 +158,18 @@ export interface IUploadSkillResponse { message: string; skill: string; }
 
 // --- Auth Endpoints ---
 
-export const register = async (data: IRegisterRequest): Promise<IAuthResponse> => {
-  const { data: res } = await api.post<IAuthResponse>('/auth/register', data);
+export const register = async (data: IRegisterRequest): Promise<IRegisterResponse> => {
+  const { data: res } = await api.post<IRegisterResponse>('/auth/register', data);
+  return res;
+};
+
+export const verifyEmail = async (data: IVerifyEmailRequest): Promise<IAuthResponse> => {
+  const { data: res } = await api.post<IAuthResponse>('/auth/verify', data);
+  return res;
+};
+
+export const resendOTP = async (email: string): Promise<{message: string}> => {
+  const { data: res } = await api.post<{message: string}>('/auth/resend-otp', { email });
   return res;
 };
 

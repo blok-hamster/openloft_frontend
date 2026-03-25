@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useAuth } from '@/lib/AuthContext';
 import styles from './Landing.module.css';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
@@ -23,6 +24,7 @@ function SplineSkeleton() {
 }
 
 export default function Hero() {
+    const { isAuthenticated } = useAuth();
     const [splineLoaded, setSplineLoaded] = useState(false);
 
     const handleSplineLoad = useCallback((splineApp: Application) => {
@@ -56,8 +58,14 @@ export default function Hero() {
                         LOFT delivers the world&apos;s most powerful execution environment to spin up OpenClaw AI agent instances with just a couple clicks, powering complete enterprise automation.
                     </p>
                     <div className={styles.heroActions}>
-                        <Link href="/auth/login" className="btn-secondary">Sign In</Link>
-                        <Link href="/auth/register" className="btn-primary">Deploy Agent</Link>
+                        {isAuthenticated ? (
+                            <Link href="/dashboard" className="btn-primary">Go to Dashboard</Link>
+                        ) : (
+                            <>
+                                <Link href="/auth/login" className="btn-secondary">Sign In</Link>
+                                <Link href="/auth/register" className="btn-primary">Deploy Agent</Link>
+                            </>
+                        )}
                     </div>
                 </motion.div>
 

@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import {
     login as apiLogin,
     register as apiRegister,
+    verifyEmail as apiVerifyEmail,
+    resendOTP as apiResendOTP,
     googleLogin as apiGoogleLogin,
     logout as apiLogout,
     ILoginRequest,
@@ -20,7 +22,9 @@ interface AuthContextType {
     isAuthenticated: boolean;
     isLoading: boolean;
     login: (data: ILoginRequest) => Promise<void>;
-    register: (data: IRegisterRequest) => Promise<void>;
+    register: (data: IRegisterRequest) => Promise<{ email: string }>;
+    verifyEmail: (email: string, code: string) => Promise<void>;
+    resendOTP: (email: string) => Promise<void>;
     googleLogin: (data: IGoogleLoginRequest) => Promise<void>;
     logout: () => Promise<void>;
 }
@@ -81,9 +85,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const register = useCallback(async (data: IRegisterRequest) => {
         const res = await apiRegister(data);
+        return { email: res.email };
+    }, []);
+
+    const verifyEmail = useCallback(async (email: string, code: string) => {
+        const res = await apiVerifyEmail({ email, code });
         persistAuth(res.token, res.user);
         router.push('/onboarding');
     }, [persistAuth, router]);
+
+    const resendOTP = useCallback(async (email: string) => {
+        await apiResendOTP(email);
+    }, []);
 
     const googleLogin = useCallback(async (data: IGoogleLoginRequest) => {
         const res = await apiGoogleLogin(data);
@@ -110,6 +123,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 isLoading,
                 login,
                 register,
+                verifyEmail,
+                resendOTP,
                 googleLogin,
                 logout,
             }}

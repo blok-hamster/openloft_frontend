@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -21,7 +22,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     return (
         <div className={styles.dashboardLayout}>
             <aside className={styles.sidebar}>
-                <div className={styles.sidebarBrand}>LOFT</div>
+                <div className={styles.sidebarBrand}>
+                    <Link href="/">
+                        <Image src="/black_logo.svg" alt="open loft Logo" width={100} height={32} priority />
+                    </Link>
+                </div>
                 <nav className={styles.sidebarNav}>
                     {navItems.map((item) => {
                         const isActive = pathname === item.href;

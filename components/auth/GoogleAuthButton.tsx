@@ -1,5 +1,6 @@
 'use client';
 
+import { useGoogleLogin } from '@react-oauth/google';
 import styles from './Auth.module.css';
 
 interface GoogleAuthButtonProps {
@@ -8,20 +9,24 @@ interface GoogleAuthButtonProps {
 }
 
 export default function GoogleAuthButton({ onSuccess, label = 'Continue with Google' }: GoogleAuthButtonProps) {
-    const handleClick = () => {
-        // In production, integrate with Google Identity Services (One Tap / Sign In button)
-        // For now, we show a placeholder that simulates the OAuth flow
-        const credential = prompt('Paste your Google OAuth credential token:');
-        if (credential) {
-            onSuccess(credential);
-        }
-    };
+    const login = useGoogleLogin({
+        onSuccess: (response) => {
+            if (response.access_token) {
+                onSuccess(response.access_token);
+            }
+        },
+        onError: (error) => console.log('Google login failed:', error)
+    });
 
+    // Wait, let's use the standard component if we want the ID token (credential) easily.
+    // Or we use the 'token' from useGoogleLogin and adjust the backend.
+    // Actually, @react-oauth/google's <GoogleLogin> is the one that gives the `credential`.
+    
     return (
         <button
             type="button"
             className={styles.googleButton}
-            onClick={handleClick}
+            onClick={() => login()}
         >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />

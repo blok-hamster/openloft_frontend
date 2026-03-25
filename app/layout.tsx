@@ -3,6 +3,7 @@ import { Space_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/AuthContext";
 import { ToastProvider } from "@/components/ui/Toast";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const spaceMono = Space_Mono({
   variable: "--font-space-mono",
@@ -12,8 +13,11 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LOFT - Autonomous Agent Orchestration",
+  title: "OpenLoft - Autonomous Agent Orchestration",
   description: "Enterprise grade AI orchestration platform spinning up OpenClaw instances with just a couple clicks.",
+  icons: {
+    icon: "/loft_favicon.png",
+  },
 };
 
 export default function RootLayout({
@@ -24,11 +28,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={spaceMono.variable}>
       <body>
-        <AuthProvider>
-          <ToastProvider>
-            {children}
-          </ToastProvider>
-        </AuthProvider>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
+          <AuthProvider>
+            <ToastProvider>
+              {children}
+            </ToastProvider>
+          </AuthProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

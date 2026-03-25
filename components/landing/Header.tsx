@@ -1,15 +1,20 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
+import { useAuth } from '@/lib/AuthContext';
 import styles from './Landing.module.css';
 
 export default function Header() {
+    const { isAuthenticated } = useAuth();
     return (
         <header className="glass-header">
             <div className={styles.navContainer}>
                 {/* Logo */}
                 <div className={styles.brand}>
-                    <span>LOFT</span>
+                    <Link href="/">
+                        <Image src="/black_logo.svg" alt="LOFT Logo" width={120} height={40} priority />
+                    </Link>
                 </div>
 
                 {/* Links */}
@@ -23,8 +28,14 @@ export default function Header() {
 
                 {/* Actions */}
                 <div className={styles.navActions}>
-                    <Link href="/auth/login" className="btn-secondary">Sign In</Link>
-                    <Link href="/auth/register" className="btn-primary">Deploy Agent</Link>
+                    {isAuthenticated ? (
+                        <Link href="/dashboard" className="btn-primary">Dashboard</Link>
+                    ) : (
+                        <>
+                            <Link href="/auth/login" className="btn-secondary">Sign In</Link>
+                            <Link href="/auth/register" className="btn-primary">Deploy Agent</Link>
+                        </>
+                    )}
                 </div>
             </div>
         </header>
