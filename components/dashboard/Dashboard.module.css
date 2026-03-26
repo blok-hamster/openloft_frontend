@@ -649,3 +649,148 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ===========================
+   Terminal Styles
+   =========================== */
+
+.terminalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(200, 204, 200, 0.85);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.terminalModal {
+    width: 90%;
+    max-width: 800px;
+    height: 80vh;
+    background: var(--off-black);
+    border: 1px solid var(--off-black);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+.terminalHeader {
+    padding: 0.75rem 1.25rem;
+    background: var(--off-black);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--white);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.terminalHeaderLeft {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.terminalHeaderTitle {
+   color: #F5A0F0; /* Pink accent */
+}
+
+.terminalHeaderClose {
+    background: none;
+    border: none;
+    color: var(--white);
+    opacity: 0.5;
+    cursor: pointer;
+    transition: opacity var(--transition-fast);
+}
+
+.terminalHeaderClose:hover {
+    opacity: 1;
+}
+
+.terminalBody {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem;
+    overflow: hidden;
+}
+
+.terminalOutput {
+    flex: 1;
+    overflow-y: auto;
+    font-family: var(--font-family-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    color: #2EA82E; /* Vivid Green accent */
+    margin-bottom: 1rem;
+    white-space: pre-wrap;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.terminalOutput::-webkit-scrollbar {
+    width: 6px;
+}
+
+.terminalOutput::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.terminalHistoryItem {
+    margin-bottom: 0.75rem;
+}
+
+.terminalHistoryCommand {
+    color: #F47A4A; /* Coral accent */
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.terminalInputLine {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: var(--font-family-mono);
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.terminalPrompt {
+    color: #F47A4A; /* Coral accent */
+    font-weight: 700;
+}
+
+.terminalInput {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--white);
+    font-family: var(--font-family-mono);
+    font-size: 13px;
+}
+
+.terminalLoading {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: #2EA82E;
+    animation: blink 1s step-end infinite;
+    vertical-align: middle;
+}
+
+@keyframes blink {
+    50% { opacity: 0; }
+}

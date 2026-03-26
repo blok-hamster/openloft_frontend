@@ -55,7 +55,7 @@ export default function Hero() {
                         The new standard for agent orchestration
                     </h1>
                     <p className={styles.heroDescription}>
-                        LOFT delivers the world&apos;s most powerful execution environment to spin up OpenClaw AI agent instances with just a couple clicks, powering complete enterprise automation.
+                        OpenLoft delivers the world&apos;s most powerful execution environment to spin up <span style={{ color: '#F47A4A' }}>OpenClaw AI agent</span> instances with just a couple clicks, powering complete enterprise automation.
                     </p>
                     <div className={styles.heroActions}>
                         {isAuthenticated ? (

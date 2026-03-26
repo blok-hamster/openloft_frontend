@@ -6,7 +6,7 @@ import { IAgent, approveAgentDevice } from '@/lib/api';
 import StatusIndicator from '@/components/ui/StatusIndicator';
 import Sparkline from '@/components/ui/Sparkline';
 import Button from '@/components/ui/Button';
-import { MessageSquare, FolderOpen, HardDrive, Settings, Square, ExternalLink, Play, Pause, RotateCcw, Trash2, ScrollText, Key, Link } from 'lucide-react';
+import { MessageSquare, FolderOpen, HardDrive, Settings, Square, ExternalLink, Play, Pause, RotateCcw, Trash2, ScrollText, Key, Link, Terminal } from 'lucide-react';
 
 interface AgentCardProps {
     agent: IAgent;
@@ -23,9 +23,10 @@ interface AgentCardProps {
     onLogs?: (agent: IAgent) => void;
     onCustomKey?: (agent: IAgent) => void;
     onChannels?: (agent: IAgent) => void;
+    onTerminal?: (agent: IAgent) => void;
 }
 
-export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings, onStop, onStart, onPause, onResume, onRestart, onDelete, onLogs, onCustomKey, onChannels }: AgentCardProps) {
+export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings, onStop, onStart, onPause, onResume, onRestart, onDelete, onLogs, onCustomKey, onChannels, onTerminal }: AgentCardProps) {
     const [isPairing, setIsPairing] = useState(false);
     const mockData = Array.from({ length: 12 }, () => Math.random() * 100);
     const isProvisioning = agent.status === 'provisioning';
@@ -87,6 +88,11 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                 {onLogs && (
                     <Button variant="ghost" size="sm" icon={<ScrollText size={12} />} onClick={() => onLogs(agent)} disabled={disabled}>
                         Logs
+                    </Button>
+                )}
+                {onTerminal && (
+                    <Button variant="ghost" size="sm" icon={<Terminal size={12} />} onClick={() => onTerminal(agent)} disabled={disabled}>
+                        Terminal
                     </Button>
                 )}
                 {/* {onCustomKey && (
