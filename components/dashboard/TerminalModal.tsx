@@ -4,22 +4,22 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Terminal as TerminalIcon } from 'lucide-react';
 import { IAgent } from '@/lib/api';
 import { isCommandBlocked } from '@/lib/terminalBlacklist';
-import { io, Socket } from 'socket.io-client';
+import type { Socket } from 'socket.io-client';
 import styles from './Dashboard.module.css';
 
 interface TerminalModalProps {
     agent: IAgent | null;
     open: boolean;
     onClose: () => void;
+    socket: Socket | null;
 }
 
 type ConnectionState = 'idle' | 'connecting' | 'connected' | 'error';
 
-export default function TerminalModal({ agent, open, onClose }: TerminalModalProps) {
+export default function TerminalModal({ agent, open, onClose, socket }: TerminalModalProps) {
     const [input, setInput] = useState('');
     const [output, setOutput] = useState<string[]>([]);
     const [connState, setConnState] = useState<ConnectionState>('idle');
-    const socketRef = useRef<Socket | null>(null);
     const outputRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -40,7 +40,7 @@ export default function TerminalModal({ agent, open, onClose }: TerminalModalPro
 
     // Connect on open
     useEffect(() => {
-        if (!open || !agent) return;
+        if (!open || !agent || !socket) return;
 
         setConnState('connecting');
         setOutput([
@@ -50,14 +50,14 @@ export default function TerminalModal({ agent, open, onClose }: TerminalModalPro
             `Connecting via secure relay...`
         ]);
 
-        const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:3001';
-        const socket = io(socketUrl);
-        socketRef.current = socket;
+        if (!socket.connected) {
+            setConnState('error');
+            appendOutput('Socket not connected. Try refreshing the page.');
+            return;
+        }
 
-        socket.on('connect', () => {
-            appendOutput('Socket connected. Opening terminal session...');
-            socket.emit('terminal:open', { agentId: agent.agentId });
-        });
+        appendOutput('Opening terminal session...');
+        socket.emit('terminal:open', { agentId: agent.agentId });
 
         socket.on('terminal:connected', ({ agentId }) => {
             if (agentId === agent.agentId) {
@@ -80,17 +80,14 @@ export default function TerminalModal({ agent, open, onClose }: TerminalModalPro
             }
         });
 
-        socket.on('connect_error', (err) => {
-            setConnState('error');
-            appendOutput(`\nSocket.IO connection error: ${err.message}`);
-        });
-
         return () => {
             socket.emit('terminal:close', { agentId: agent.agentId });
-            socket.disconnect();
-            socketRef.current = null;
+            // Remove terminal-specific listeners but don't disconnect — the socket is shared
+            socket.off('terminal:connected');
+            socket.off('terminal:output');
+            socket.off('terminal:closed');
         };
-    }, [open, agent, appendOutput]);
+    }, [open, agent, socket, appendOutput]);
 
     if (!open || !agent) return null;
 
@@ -107,7 +104,7 @@ export default function TerminalModal({ agent, open, onClose }: TerminalModalPro
         }
 
         // Send the command + newline through Socket.IO
-        socketRef.current?.emit('terminal:input', { agentId: agent.agentId, data: input + '\n' });
+        socket?.emit('terminal:input', { agentId: agent.agentId, data: input + '\n' });
         setInput('');
     };
 
@@ -115,7 +112,7 @@ export default function TerminalModal({ agent, open, onClose }: TerminalModalPro
         // Allow Ctrl+C to send SIGINT
         if (e.ctrlKey && e.key === 'c') {
             e.preventDefault();
-            socketRef.current?.emit('terminal:input', { agentId: agent.agentId, data: '\x03' });
+            socket?.emit('terminal:input', { agentId: agent.agentId, data: '\x03' });
         }
     };
 

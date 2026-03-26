@@ -44,6 +44,7 @@ export default function DashboardPage() {
   const [terminalAgent, setTerminalAgent] = useState<IAgent | null>(null);
 
   const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const socketRef = useRef<ReturnType<typeof io> | null>(null);
 
   const loadData = useCallback(async () => {
     if (!user?.tenantId) return;
@@ -88,6 +89,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:3001';
     const socket = io(socketUrl);
+    socketRef.current = socket;
 
     socket.on('connect', () => {
       console.log('[Socket] Connected to backend');
@@ -104,6 +106,7 @@ export default function DashboardPage() {
 
     return () => {
       socket.disconnect();
+      socketRef.current = null;
     };
   }, [agents.length]); // Re-subscribe if list size changes (new agent added)
 
@@ -254,6 +257,7 @@ export default function DashboardPage() {
         agent={terminalAgent}
         open={!!terminalAgent}
         onClose={() => setTerminalAgent(null)}
+        socket={socketRef.current}
       />
     </>
   );
