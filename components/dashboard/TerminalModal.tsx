@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Terminal as TerminalIcon } from 'lucide-react';
-import { IAgent, requestTerminalToken } from '@/lib/api';
+import { IAgent } from '@/lib/api';
 import { isCommandBlocked } from '@/lib/terminalBlacklist';
+import { io, Socket } from 'socket.io-client';
 import styles from './Dashboard.module.css';
 
 interface TerminalModalProps {
@@ -12,13 +13,13 @@ interface TerminalModalProps {
     onClose: () => void;
 }
 
-type ConnectionState = 'idle' | 'authenticating' | 'connecting' | 'connected' | 'error';
+type ConnectionState = 'idle' | 'connecting' | 'connected' | 'error';
 
 export default function TerminalModal({ agent, open, onClose }: TerminalModalProps) {
     const [input, setInput] = useState('');
     const [output, setOutput] = useState<string[]>([]);
     const [connState, setConnState] = useState<ConnectionState>('idle');
-    const wsRef = useRef<WebSocket | null>(null);
+    const socketRef = useRef<Socket | null>(null);
     const outputRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -41,74 +42,53 @@ export default function TerminalModal({ agent, open, onClose }: TerminalModalPro
     useEffect(() => {
         if (!open || !agent) return;
 
-        let ws: WebSocket | null = null;
+        setConnState('connecting');
+        setOutput([
+            `Welcome to OpenLoft Terminal v2.0.0`,
+            `Agent: ${agent.agentId}`,
+            `---`,
+            `Connecting via secure relay...`
+        ]);
 
-        const connect = async () => {
-            setConnState('authenticating');
-            setOutput([
-                `Welcome to OpenLoft Terminal v2.0.0`,
-                `Agent: ${agent.agentId}`,
-                `---`,
-                `Authenticating...`
-            ]);
+        const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:3001';
+        const socket = io(socketUrl);
+        socketRef.current = socket;
 
-            try {
-                const { token } = await requestTerminalToken(agent.agentId);
-                
-                setConnState('connecting');
-                appendOutput('Token acquired. Connecting to container...');
+        socket.on('connect', () => {
+            appendOutput('Socket connected. Opening terminal session...');
+            socket.emit('terminal:open', { agentId: agent.agentId });
+        });
 
-                const baseDomain = 'agents.openloft.xyz';
-                const relayBaseUrl = `https://${agent.agentId}.${baseDomain}`;
-
-                // Diagnostic: test HTTP connectivity to the relay first
-                try {
-                    const probe = await fetch(`${relayBaseUrl}/terminal`, { method: 'GET' });
-                    const probeText = await probe.text();
-                    appendOutput(`[Diag] HTTP probe: ${probe.status} — ${probeText.substring(0, 80)}`);
-                } catch (probeErr: any) {
-                    appendOutput(`[Diag] HTTP probe FAILED: ${probeErr.message}`);
-                }
-
-                const wsUrl = `wss://${agent.agentId}.${baseDomain}/terminal?token=${token}`;
-                appendOutput(`[Diag] Connecting WebSocket to: ${wsUrl.replace(token, 'TOKEN_REDACTED')}`);
-                
-                ws = new WebSocket(wsUrl);
-                wsRef.current = ws;
-
-                ws.onopen = () => {
-                    setConnState('connected');
-                    appendOutput('Connected! Shell ready.\n');
-                    inputRef.current?.focus();
-                };
-
-                ws.onmessage = (event) => {
-                    appendOutput(event.data);
-                };
-
-                ws.onclose = (event) => {
-                    setConnState('idle');
-                    appendOutput(`\n[Close] code=${event.code} reason="${event.reason}" wasClean=${event.wasClean}`);
-                };
-
-                ws.onerror = (event) => {
-                    setConnState('error');
-                    appendOutput(`\n[Error] WebSocket error event fired (details unavailable in browser API)`);
-                };
-
-            } catch (err: any) {
-                setConnState('error');
-                appendOutput(`\nAuth failed: ${err.response?.data?.error || err.message}`);
+        socket.on('terminal:connected', ({ agentId }) => {
+            if (agentId === agent.agentId) {
+                setConnState('connected');
+                appendOutput('Shell ready!\n');
+                inputRef.current?.focus();
             }
-        };
+        });
 
-        connect();
+        socket.on('terminal:output', ({ agentId, output: text }) => {
+            if (agentId === agent.agentId) {
+                appendOutput(text);
+            }
+        });
+
+        socket.on('terminal:closed', ({ agentId }) => {
+            if (agentId === agent.agentId) {
+                setConnState('idle');
+                appendOutput('\nSession ended.');
+            }
+        });
+
+        socket.on('connect_error', (err) => {
+            setConnState('error');
+            appendOutput(`\nSocket.IO connection error: ${err.message}`);
+        });
 
         return () => {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.close(1000);
-            }
-            wsRef.current = null;
+            socket.emit('terminal:close', { agentId: agent.agentId });
+            socket.disconnect();
+            socketRef.current = null;
         };
     }, [open, agent, appendOutput]);
 
@@ -126,8 +106,8 @@ export default function TerminalModal({ agent, open, onClose }: TerminalModalPro
             return;
         }
 
-        // Send the command + newline to the shell's stdin
-        wsRef.current?.send(input + '\n');
+        // Send the command + newline through Socket.IO
+        socketRef.current?.emit('terminal:input', { agentId: agent.agentId, data: input + '\n' });
         setInput('');
     };
 
@@ -135,13 +115,12 @@ export default function TerminalModal({ agent, open, onClose }: TerminalModalPro
         // Allow Ctrl+C to send SIGINT
         if (e.ctrlKey && e.key === 'c') {
             e.preventDefault();
-            wsRef.current?.send('\x03');
+            socketRef.current?.emit('terminal:input', { agentId: agent.agentId, data: '\x03' });
         }
     };
 
     const statusLabel = {
         idle: 'Disconnected',
-        authenticating: 'Authenticating...',
         connecting: 'Connecting...',
         connected: 'Live',
         error: 'Error',
