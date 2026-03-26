@@ -49,7 +49,7 @@ export default function LobbyDetailPage() {
   };
 
   const setupSocket = () => {
-    socketRef.current = io(process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:3001');
+    socketRef.current = io(process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') || 'http://localhost:3001');
     socketRef.current.on('connect', () => {
       socketRef.current?.emit('lobby:join', lobbyId);
     });

@@ -87,7 +87,7 @@ export default function DashboardPage() {
 
   // Create socket once
   useEffect(() => {
-    const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:3001';
+    const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') || 'http://localhost:3001';
     const socket = io(socketUrl);
     socketRef.current = socket;
 
