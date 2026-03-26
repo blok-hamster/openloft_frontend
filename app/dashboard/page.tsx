@@ -85,7 +85,7 @@ export default function DashboardPage() {
     };
   }, [agents, loadData]);
 
-  // Real-time status updates via Socket.io
+  // Create socket once
   useEffect(() => {
     const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:3001';
     const socket = io(socketUrl);
@@ -93,10 +93,6 @@ export default function DashboardPage() {
 
     socket.on('connect', () => {
       console.log('[Socket] Connected to backend');
-      // Subscribe to all current agents
-      agents.forEach(agent => {
-        socket.emit('subscribe', agent.agentId);
-      });
     });
 
     socket.on('agent:status', ({ agentId, status }) => {
@@ -108,7 +104,16 @@ export default function DashboardPage() {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [agents.length]); // Re-subscribe if list size changes (new agent added)
+  }, []); // Only run once
+
+  // Subscribe to agents whenever the list changes
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket?.connected) return;
+    agents.forEach(agent => {
+      socket.emit('subscribe', agent.agentId);
+    });
+  }, [agents.length]);
 
   // Lifecycle handlers
   const handleStop = async () => {

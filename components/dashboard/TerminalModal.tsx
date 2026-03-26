@@ -50,14 +50,17 @@ export default function TerminalModal({ agent, open, onClose, socket }: Terminal
             `Connecting via secure relay...`
         ]);
 
-        if (!socket.connected) {
-            setConnState('error');
-            appendOutput('Socket not connected. Try refreshing the page.');
-            return;
-        }
+        const openSession = () => {
+            appendOutput('Opening terminal session...');
+            socket.emit('terminal:open', { agentId: agent.agentId });
+        };
 
-        appendOutput('Opening terminal session...');
-        socket.emit('terminal:open', { agentId: agent.agentId });
+        if (socket.connected) {
+            openSession();
+        } else {
+            appendOutput('Waiting for socket connection...');
+            socket.once('connect', openSession);
+        }
 
         socket.on('terminal:connected', ({ agentId }) => {
             if (agentId === agent.agentId) {
