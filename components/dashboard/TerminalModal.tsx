@@ -59,7 +59,19 @@ export default function TerminalModal({ agent, open, onClose }: TerminalModalPro
                 appendOutput('Token acquired. Connecting to container...');
 
                 const baseDomain = 'agents.openloft.xyz';
+                const relayBaseUrl = `https://${agent.agentId}.${baseDomain}`;
+
+                // Diagnostic: test HTTP connectivity to the relay first
+                try {
+                    const probe = await fetch(`${relayBaseUrl}/terminal`, { method: 'GET' });
+                    const probeText = await probe.text();
+                    appendOutput(`[Diag] HTTP probe: ${probe.status} — ${probeText.substring(0, 80)}`);
+                } catch (probeErr: any) {
+                    appendOutput(`[Diag] HTTP probe FAILED: ${probeErr.message}`);
+                }
+
                 const wsUrl = `wss://${agent.agentId}.${baseDomain}/terminal?token=${token}`;
+                appendOutput(`[Diag] Connecting WebSocket to: ${wsUrl.replace(token, 'TOKEN_REDACTED')}`);
                 
                 ws = new WebSocket(wsUrl);
                 wsRef.current = ws;
@@ -76,16 +88,12 @@ export default function TerminalModal({ agent, open, onClose }: TerminalModalPro
 
                 ws.onclose = (event) => {
                     setConnState('idle');
-                    if (event.code !== 1000) {
-                        appendOutput(`\nConnection closed (code: ${event.code})`);
-                    } else {
-                        appendOutput('\nSession ended.');
-                    }
+                    appendOutput(`\n[Close] code=${event.code} reason="${event.reason}" wasClean=${event.wasClean}`);
                 };
 
-                ws.onerror = () => {
+                ws.onerror = (event) => {
                     setConnState('error');
-                    appendOutput('\nWebSocket error. Check container status.');
+                    appendOutput(`\n[Error] WebSocket error event fired (details unavailable in browser API)`);
                 };
 
             } catch (err: any) {
