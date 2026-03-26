@@ -30,7 +30,8 @@ export default function TerminalModal({ agent, open, onClose }: TerminalModalPro
     useEffect(() => {
         if (!open || !agent) return;
 
-        const socketUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:3001';
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+        const socketUrl = new URL(apiUrl).origin;
         const socket = io(socketUrl);
         socketRef.current = socket;
 
