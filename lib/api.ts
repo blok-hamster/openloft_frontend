@@ -445,3 +445,7 @@ export const sendLobbyMessage = async (lobbyId: string, content: string, senderI
   await api.post(`/lobbies/${lobbyId}/message`, { content, senderId, senderName });
 };
 
+export const requestTerminalToken = async (agentId: string): Promise<{ token: string; expiresIn: number }> => {
+  const { data } = await api.post(`/agents/${agentId}/terminal/token`);
+  return data;
+};
