@@ -50,6 +50,8 @@ export interface IAgent {
   containerId?: string;
   llmProvider: string;
   activeSkills: string[];
+  activePlugins: string[];
+  pluginConfigs?: Record<string, any>;
   gatewayToken: string;
   webhookPath: string;
   resourceLimits: { memoryMB: number; vCPU: number; };
@@ -240,7 +242,12 @@ export const getAvailableProviders = async (): Promise<string[]> => {
 };
 
 export const toggleSkill = async (agentId: string, skillId: string, active: boolean): Promise<IAgent> => {
-  const { data } = await api.post<IAgent>(`/agents/${agentId}/skills/toggle`, { skillId, active });
+  const { data } = await api.post<IAgent>(`/agents/${agentId}/toggle-skill`, { skillId, active });
+  return data;
+};
+
+export const togglePlugin = async (agentId: string, pluginId: string, active: boolean): Promise<IAgent> => {
+  const { data } = await api.post<IAgent>(`/agents/${agentId}/toggle-plugin`, { pluginId, active });
   return data;
 };
 
@@ -340,6 +347,10 @@ export const updateAgentConfig = async (agentId: string, config: Record<string, 
   await api.put(`/agents/${agentId}/config`, { config });
 };
 
+export const saveAgentSecret = async (agentId: string, keyName: string, value: string): Promise<void> => {
+  await api.post(`/agents/${agentId}/secret`, { keyName, value });
+};
+
 export const getAgentFiles = async (agentId: string): Promise<string[]> => {
   const { data } = await api.get<string[]>(`/agents/${agentId}/files`);
   return data;
@@ -403,8 +414,13 @@ export const getTenants = async (): Promise<ITenant[]> => {
 
 // --- Registry Endpoints ---
 
-export const getSkills = async (): Promise<unknown[]> => {
-  const { data } = await api.get<unknown[]>('/registry/skills');
+export const getSkills = async (): Promise<any[]> => {
+  const { data } = await api.get<any[]>('/registry/skills');
+  return data;
+};
+
+export const getPlugins = async (): Promise<any[]> => {
+  const { data } = await api.get<any[]>('/registry/plugins');
   return data;
 };
 
@@ -417,6 +433,45 @@ export const uploadSkill = async (manifestFile: File): Promise<IUploadSkillRespo
           'Content-Type': 'multipart/form-data'
       }
   });
+  return data;
+};
+
+export const uploadPlugin = async (manifestFile: File): Promise<IUploadSkillResponse> => {
+  const formData = new FormData();
+  formData.append('manifest', manifestFile);
+  
+  const { data } = await api.post<IUploadSkillResponse>('/registry/plugins', formData, {
+      headers: {
+          'Content-Type': 'multipart/form-data'
+      }
+  });
+  return data;
+};
+
+export const searchClawHub = async (query: string): Promise<any[]> => {
+  const { data } = await api.get<any[]>(`/registry/search?q=${encodeURIComponent(query)}`);
+  return data;
+};
+
+export const getSkillDetails = async (slug: string): Promise<any> => {
+  const { data } = await api.get<any>(`/registry/skills/${slug}/details`);
+  return data;
+};
+
+export const getSkillFileContent = async (slug: string, filePath: string): Promise<string> => {
+  const { data } = await api.get<{ content: string }>(`/registry/skills/${slug}/files/content`, {
+    params: { filePath }
+  });
+  return data.content;
+};
+
+export const getTrendingSkills = async (): Promise<any[]> => {
+    const { data } = await api.get<any[]>('/registry/trending');
+    return data;
+};
+
+export const installSkill = async (slug: string): Promise<{ message: string; slug: string }> => {
+  const { data } = await api.post<{ message: string; slug: string }>('/registry/install', { slug });
   return data;
 };
 

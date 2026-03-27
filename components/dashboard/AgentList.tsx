@@ -19,10 +19,9 @@ interface AgentListProps {
     onLogs?: (agent: IAgent) => void;
     onCustomKey?: (agent: IAgent) => void;
     onChannels?: (agent: IAgent) => void;
-    onTerminal?: (agent: IAgent) => void;
 }
 
-export default function AgentList({ agents, onChat, onMemory, onDrive, onSettings, onStop, onStart, onPause, onResume, onRestart, onDelete, onLogs, onCustomKey, onChannels, onTerminal }: AgentListProps) {
+export default function AgentList({ agents, onChat, onMemory, onDrive, onSettings, onStop, onStart, onPause, onResume, onRestart, onDelete, onLogs, onCustomKey, onChannels }: AgentListProps) {
     if (agents.length === 0) {
         return (
             <div className={styles.emptyState}>
@@ -54,7 +53,6 @@ export default function AgentList({ agents, onChat, onMemory, onDrive, onSetting
                     onLogs={onLogs}
                     onCustomKey={onCustomKey}
                     onChannels={onChannels}
-                    onTerminal={onTerminal}
                 />
             ))}
         </div>

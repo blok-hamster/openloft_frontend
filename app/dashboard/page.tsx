@@ -8,7 +8,6 @@ import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import AgentList from '@/components/dashboard/AgentList';
 import AgentCreationWizard from '@/components/dashboard/AgentCreationWizard';
 import AgentChatPanel from '@/components/dashboard/AgentChatPanel';
-import TerminalModal from '@/components/dashboard/TerminalModal';
 import MemoryEditor from '@/components/dashboard/MemoryEditor';
 import AgentDrive from '@/components/dashboard/AgentDrive';
 import ConfirmDestructiveAction from '@/components/dashboard/ConfirmDestructiveAction';
@@ -41,7 +40,6 @@ export default function DashboardPage() {
   const [logsAgent, setLogsAgent] = useState<IAgent | null>(null);
   const [customKeyAgent, setCustomKeyAgent] = useState<IAgent | null>(null);
   const [channelsAgent, setChannelsAgent] = useState<IAgent | null>(null);
-  const [terminalAgent, setTerminalAgent] = useState<IAgent | null>(null);
 
   const pollRef = useRef<NodeJS.Timeout | null>(null);
   const socketRef = useRef<ReturnType<typeof io> | null>(null);
@@ -186,7 +184,6 @@ export default function DashboardPage() {
           onLogs={(a) => setLogsAgent(a)}
           onCustomKey={(a) => setCustomKeyAgent(a)}
           onChannels={(a) => setChannelsAgent(a)}
-          onTerminal={(a) => setTerminalAgent(a)}
         />
       )}
 
@@ -256,13 +253,6 @@ export default function DashboardPage() {
         agent={channelsAgent}
         open={!!channelsAgent}
         onClose={() => setChannelsAgent(null)}
-      />
-
-      <TerminalModal
-        agent={terminalAgent}
-        open={!!terminalAgent}
-        onClose={() => setTerminalAgent(null)}
-        socket={socketRef.current}
       />
     </>
   );
