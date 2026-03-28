@@ -35,6 +35,8 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
     const { toast } = useToast();
     const [channels, setChannels] = useState<ChannelState>(emptyChannels);
     const [saving, setSaving] = useState(false);
+    const [pairingCodes, setPairingCodes] = useState<Record<string, string>>({});
+    const [pairing, setPairing] = useState<Record<string, boolean>>({});
     const [activeChannels, setActiveChannels] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
@@ -54,6 +56,27 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
                 .catch(() => {});
         }
     }, [open, agent]);
+
+    const handlePair = async (channel: string) => {
+        if (!agent || !pairingCodes[channel]) return;
+        setPairing(prev => ({ ...prev, [channel]: true }));
+        try {
+            const token = typeof window !== 'undefined' ? localStorage.getItem('loft_token') : null;
+            const response = await axios.post(`${apiBase}/agents/${agent.agentId}/channels/approve`, {
+                channel,
+                code: pairingCodes[channel]
+            }, {
+                headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            toast(response.data.message || 'Successfully paired!', 'success');
+            setPairingCodes(prev => ({ ...prev, [channel]: '' }));
+            // Optionally re-fetch active channels or just assume it's good
+        } catch (err: any) {
+            toast(err.response?.data?.error || 'Failed to pair channel', 'error');
+        } finally {
+            setPairing(prev => ({ ...prev, [channel]: false }));
+        }
+    };
 
     const handleSave = async () => {
         if (!agent) return;
@@ -79,13 +102,48 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
             icon: '🎮',
             active: activeChannels.discord,
             fields: (
-                <Input
-                    label="Bot Token"
-                    type="password"
-                    placeholder="Your Discord bot token"
-                    value={channels.discord.token}
-                    onChange={(e) => setChannels(c => ({ ...c, discord: { token: e.target.value } }))}
-                />
+                <>
+                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>
+                        Step 1: Configure & Save
+                    </div>
+                    <Input
+                        label="Bot Token"
+                        type="password"
+                        placeholder="Your Discord bot token"
+                        value={channels.discord.token}
+                        onChange={(e) => setChannels(c => ({ ...c, discord: { token: e.target.value } }))}
+                    />
+                    
+                    <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>
+                            Step 2: Pair (Talk to bot first)
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+                            <div style={{ flex: 1 }}>
+                                <Input
+                                    label="Pairing Code"
+                                    placeholder="Enter code from bot"
+                                    value={pairingCodes.discord || ''}
+                                    onChange={(e) => setPairingCodes(prev => ({ ...prev, discord: e.target.value }))}
+                                />
+                            </div>
+                            <Button 
+                                variant="secondary" 
+                                size="sm" 
+                                onClick={() => handlePair('discord')}
+                                loading={pairing.discord}
+                                disabled={!pairingCodes.discord || !activeChannels.discord}
+                            >
+                                Pair
+                            </Button>
+                        </div>
+                        {!activeChannels.discord && (
+                            <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginTop: '0.4rem', fontStyle: 'italic' }}>
+                                Save configuration first to enable pairing
+                            </div>
+                        )}
+                    </div>
+                </>
             ),
         },
         {
@@ -94,13 +152,48 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
             icon: '✈️',
             active: activeChannels.telegram,
             fields: (
-                <Input
-                    label="Bot Token (from BotFather)"
-                    type="password"
-                    placeholder="123456:ABC-DEF..."
-                    value={channels.telegram.token}
-                    onChange={(e) => setChannels(c => ({ ...c, telegram: { token: e.target.value } }))}
-                />
+                <>
+                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>
+                        Step 1: Configure & Save
+                    </div>
+                    <Input
+                        label="Bot Token (from BotFather)"
+                        type="password"
+                        placeholder="123456:ABC-DEF..."
+                        value={channels.telegram.token}
+                        onChange={(e) => setChannels(c => ({ ...c, telegram: { token: e.target.value } }))}
+                    />
+                    
+                    <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>
+                            Step 2: Pair (Talk to bot first)
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+                            <div style={{ flex: 1 }}>
+                                <Input
+                                    label="Pairing Code"
+                                    placeholder="/start NX7..."
+                                    value={pairingCodes.telegram || ''}
+                                    onChange={(e) => setPairingCodes(prev => ({ ...prev, telegram: e.target.value }))}
+                                />
+                            </div>
+                            <Button 
+                                variant="secondary" 
+                                size="sm" 
+                                onClick={() => handlePair('telegram')}
+                                loading={pairing.telegram}
+                                disabled={!pairingCodes.telegram || !activeChannels.telegram}
+                            >
+                                Pair
+                            </Button>
+                        </div>
+                        {!activeChannels.telegram && (
+                            <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginTop: '0.4rem', fontStyle: 'italic' }}>
+                                Save configuration first to enable pairing
+                            </div>
+                        )}
+                    </div>
+                </>
             ),
         },
         {
