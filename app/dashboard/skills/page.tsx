@@ -24,13 +24,13 @@ interface Extension {
     stats?: { stars: number; downloads: number };
 }
 
-type TabType = 'skills' | 'plugins';
+type TabType = 'discover' | 'installed' | 'plugins';
 
 export default function MarketplacePage() {
     const { user } = useAuth();
     const { toast } = useToast();
 
-    const [activeTab, setActiveTab] = useState<TabType>('skills');
+    const [activeTab, setActiveTab] = useState<TabType>('installed');
     const [agents, setAgents] = useState<IAgent[]>([]);
     const [skills, setSkills] = useState<Extension[]>([]);
     const [plugins, setPlugins] = useState<Extension[]>([]);
@@ -184,7 +184,7 @@ export default function MarketplacePage() {
         }
 
         try {
-            if (activeTab === 'skills') {
+            if (activeTab === 'discover' || activeTab === 'installed') {
                 await toggleSkill(selectedAgent, extId, active);
                 toast(`Skill ${active ? 'enabled' : 'disabled'} seamlessly`, 'success');
             } else {
@@ -222,15 +222,15 @@ export default function MarketplacePage() {
 
         setUploading(true);
         try {
-            if (activeTab === 'skills') {
+            if (activeTab === 'discover' || activeTab === 'installed') {
                 await uploadSkill(file);
             } else {
                 await uploadPlugin(file);
             }
-            toast(`Custom ${activeTab === 'skills' ? 'skill' : 'plugin'} imported successfully`, 'success');
+            toast(`Custom ${activeTab === 'plugins' ? 'plugin' : 'skill'} imported successfully`, 'success');
             loadData();
         } catch (err: any) {
-            toast(err.message || `Failed to import custom ${activeTab}`, 'error');
+            toast(err.message || `Failed to import custom file`, 'error');
         } finally {
             setUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -252,7 +252,7 @@ export default function MarketplacePage() {
         );
     }
 
-    const itemsToShow = activeTab === 'skills' ? skills : plugins;
+    const itemsToShow = activeTab === 'plugins' ? plugins : skills;
     const filteredLocal = itemsToShow.filter(i => 
         i.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
         i.id.toLowerCase().includes(searchQuery.toLowerCase())
@@ -299,11 +299,18 @@ export default function MarketplacePage() {
 
             <div className={styles.memoryTabs} style={{ marginBottom: '1.5rem' }}>
                 <button 
-                    className={`${styles.memoryTab} ${activeTab === 'skills' ? styles.memoryTabActive : ''}`}
-                    onClick={() => setActiveTab('skills')}
+                    className={`${styles.memoryTab} ${activeTab === 'discover' ? styles.memoryTabActive : ''}`}
+                    onClick={() => setActiveTab('discover')}
+                >
+                    <Search size={14} />
+                    Discover Skills
+                </button>
+                <button 
+                    className={`${styles.memoryTab} ${activeTab === 'installed' ? styles.memoryTabActive : ''}`}
+                    onClick={() => setActiveTab('installed')}
                 >
                     <Cpu size={14} />
-                    Skills ({skills.length})
+                    Installed ({skills.length})
                 </button>
                 <button 
                     className={`${styles.memoryTab} ${activeTab === 'plugins' ? styles.memoryTabActive : ''}`}
@@ -314,7 +321,7 @@ export default function MarketplacePage() {
                 </button>
             </div>
 
-            {searchQuery.trim().length > 2 && activeTab === 'skills' && (
+            {searchQuery.trim().length > 2 && activeTab === 'discover' && (
                 <div style={{ marginBottom: '2rem' }}>
                     <h3 className={styles.agentName} style={{ marginBottom: '1rem', color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Search size={16} /> Discovery Results (ClawHub)
@@ -378,7 +385,7 @@ export default function MarketplacePage() {
                 </div>
             )}
 
-            {searchQuery.trim().length <= 2 && activeTab === 'skills' && (
+            {searchQuery.trim().length <= 2 && activeTab === 'discover' && (
                 <div style={{ marginBottom: '2rem' }}>
                     <h3 className={styles.agentName} style={{ marginBottom: '1.25rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem' }}>
                         <TrendingUp size={18} style={{ color: '#ff4b4b' }} /> Trending Now
@@ -696,62 +703,65 @@ export default function MarketplacePage() {
                 </div>
             )}
 
-            <h3 className={styles.agentName} style={{ marginBottom: '1rem' }}>
-                {searchQuery ? 'Local Results' : `Installed ${activeTab === 'skills' ? 'Skills' : 'Plugins'}`}
-            </h3>
+            {(activeTab === 'installed' || activeTab === 'plugins') && (
+                <>
+                    <h3 className={styles.agentName} style={{ marginBottom: '1rem' }}>
+                        {searchQuery ? 'Local Results' : `Installed ${activeTab === 'plugins' ? 'Plugins' : 'Skills'}`}
+                    </h3>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {filteredLocal.map((item) => {
-                    const isActive = activeTab === 'skills' 
-                        ? currentAgent?.activeSkills.includes(item.id) 
-                        : currentAgent?.activePlugins.includes(item.id);
-                        
-                    return (
-                        <Card key={item.id}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                    <div style={{ 
-                                        width: '40px', 
-                                        height: '40px', 
-                                        background: 'rgba(26, 26, 26, 0.04)', 
-                                        borderRadius: '8px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        color: 'var(--text-secondary)'
-                                    }}>
-                                        {activeTab === 'skills' ? <Cpu size={20} /> : <Box size={20} />}
-                                    </div>
-                                    <div>
-                                        <div className={styles.agentName}>{item.name || item.id}</div>
-                                        {item.description && (
-                                            <div className={styles.agentMetaItem} style={{ marginTop: '0.25rem' }}>
-                                                {item.description}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {filteredLocal.map((item) => {
+                            const isActive = activeTab !== 'plugins' 
+                                ? currentAgent?.activeSkills.includes(item.id) 
+                                : currentAgent?.activePlugins.includes(item.id);
+                            return (
+                                <Card key={item.id}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                            <div style={{ 
+                                                width: '40px', 
+                                                height: '40px', 
+                                                background: 'rgba(26, 26, 26, 0.04)', 
+                                                borderRadius: '8px',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                color: 'var(--text-secondary)'
+                                            }}>
+                                                {activeTab === 'installed' ? <Cpu size={20} /> : <Box size={20} />}
                                             </div>
-                                        )}
+                                            <div>
+                                                <div className={styles.agentName}>{item.name || item.id}</div>
+                                                {item.description && (
+                                                    <div className={styles.agentMetaItem} style={{ marginTop: '0.25rem' }}>
+                                                        {item.description}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <Toggle
+                                            checked={isActive || false}
+                                            disabled={!selectedAgent}
+                                            onChange={(checked) => handleToggle(item.id, checked)}
+                                        />
                                     </div>
-                                </div>
-                                <Toggle
-                                    checked={isActive || false}
-                                    disabled={!selectedAgent}
-                                    onChange={(checked) => handleToggle(item.id, checked)}
-                                />
-                            </div>
-                        </Card>
-                    );
-                })}
+                                </Card>
+                            );
+                        })}
 
-                {filteredLocal.length === 0 && (
-                    <div className={styles.emptyState}>
-                        <div className={styles.emptyTitle}>No {activeTab} available</div>
-                        <div className={styles.emptyDescription}>
-                            {activeTab === 'skills' 
-                                ? "Skills are lightweight logic blocks that can be injected at runtime."
-                                : "Plugins are robust extensions that require container-level mounting."}
-                        </div>
+                        {filteredLocal.length === 0 && (
+                            <div className={styles.emptyState}>
+                                <div className={styles.emptyTitle}>No {activeTab} available</div>
+                                <div className={styles.emptyDescription}>
+                                    {activeTab === 'installed' 
+                                        ? "Skills are lightweight logic blocks that can be injected at runtime."
+                                        : "Plugins are robust extensions that require container-level mounting."}
+                                </div>
+                            </div>
+                        )}
                     </div>
-                )}
-            </div>
+                </>
+            )}
         </>
     );
 }
