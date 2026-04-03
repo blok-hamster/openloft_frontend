@@ -12,7 +12,7 @@ export default function PricingPage() {
         {
             id: 'hobby',
             name: 'Hobby',
-            price: '$0',
+            price: '$20',
             description: 'For experimentation and small projects.',
             features: ['1 Agent', 'Platform Credits Only', 'Public Community Skills', 'Standard Support', 'Shared Infrastructure'],
             icon: <Zap size={32} />,
@@ -21,7 +21,7 @@ export default function PricingPage() {
         {
             id: 'pro',
             name: 'Professional',
-            price: '$49',
+            price: '$50',
             period: '/mo',
             description: 'Powerful AI for growing teams.',
             features: ['5 Agents', 'Bring Your Own Key (BYOK)', 'S3 Persistent Memory', 'Priority Support', 'Automatic Recovery', 'Custom Plugins'],
@@ -43,7 +43,7 @@ export default function PricingPage() {
     return (
         <main className={styles.landingPage}>
             <Header />
-            
+
             <section className={styles.pricingHero}>
                 <div className={styles.container}>
                     <h1 className={styles.heroTitle}>Simple, Transparent Pricing</h1>
@@ -66,7 +66,7 @@ export default function PricingPage() {
                                     </div>
                                     <p className={styles.planDesc}>{plan.description}</p>
                                 </div>
-                                
+
                                 <div className={styles.planFeatures}>
                                     {plan.features.map((feature, i) => (
                                         <div key={i} className={styles.featureItem}>

@@ -2,9 +2,11 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { getFleetHealth, getTenants, restartFleet, syncPolicy, uploadSkill, IFleetHealthResponse, ITenant } from '@/lib/api';
+import { getFleetHealth, getTenants, restartFleet, syncPolicy, uploadSkill, getCoupons, createCoupon, deactivateCoupon, IFleetHealthResponse, ITenant, ICoupon } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import SkeletonLoader from '@/components/ui/SkeletonLoader';
 import styles from '@/components/admin/Admin.module.css';
 
@@ -15,16 +17,32 @@ export default function AdminPage() {
 
     const [health, setHealth] = useState<IFleetHealthResponse | null>(null);
     const [tenants, setTenants] = useState<ITenant[]>([]);
+    const [coupons, setCoupons] = useState<ICoupon[]>([]);
     const [loading, setLoading] = useState(true);
+
+    // Coupon Creation Form State
+    const [creatingCoupon, setCreatingCoupon] = useState(false);
+    const [couponForm, setCouponForm] = useState({
+        tier: 'pro',
+        discountType: 'percent',
+        discountValue: 50,
+        durationMonths: '',
+        maxRedemptions: '',
+        expiresAt: '',
+        recipients: '',
+        customCode: ''
+    });
 
     const loadData = useCallback(async () => {
         try {
-            const [healthData, tenantData] = await Promise.all([
+            const [healthData, tenantData, couponData] = await Promise.all([
                 getFleetHealth(),
                 getTenants(),
+                getCoupons()
             ]);
             setHealth(healthData);
             setTenants(tenantData);
+            setCoupons(couponData);
         } catch {
             toast('Failed to load admin data', 'error');
         } finally {
@@ -63,6 +81,42 @@ export default function AdminPage() {
             toast('Skill uploaded', 'success');
         } catch {
             toast('Failed to upload skill', 'error');
+        }
+    };
+
+    const handleCreateCoupon = async () => {
+        setCreatingCoupon(true);
+        try {
+            await createCoupon({
+                tier: couponForm.tier,
+                discountType: couponForm.discountType,
+                discountValue: Number(couponForm.discountValue) || 0,
+                durationMonths: couponForm.durationMonths ? Number(couponForm.durationMonths) : null,
+                maxRedemptions: couponForm.maxRedemptions ? Number(couponForm.maxRedemptions) : null,
+                expiresAt: couponForm.expiresAt ? new Date(couponForm.expiresAt).toISOString() : null,
+                recipients: couponForm.recipients.split(',').map(e => e.trim()).filter(Boolean),
+                customCode: couponForm.customCode.trim()
+            });
+            toast('Coupon created successfully', 'success');
+            setCouponForm({
+                tier: 'pro', discountType: 'percent', discountValue: 50, durationMonths: '',
+                maxRedemptions: '', expiresAt: '', recipients: '', customCode: ''
+            });
+            loadData();
+        } catch {
+            toast('Failed to create coupon', 'error');
+        } finally {
+            setCreatingCoupon(false);
+        }
+    };
+
+    const handleDeactivateCoupon = async (id: string) => {
+        try {
+            await deactivateCoupon(id);
+            toast('Coupon deactivated', 'success');
+            loadData();
+        } catch {
+            toast('Failed to deactivate coupon', 'error');
         }
     };
 
@@ -162,6 +216,111 @@ export default function AdminPage() {
                         accept=".zip,.json"
                         onChange={handleUpload}
                     />
+                </div>
+            </div>
+
+            {/* Coupons Management */}
+            <div className={styles.heatmapSection}>
+                <div className={styles.sectionTitle}>Coupons ({coupons.length})</div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '2rem', alignItems: 'start' }}>
+                    <div style={{ overflowX: 'auto', backgroundColor: 'var(--surface-color)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
+                        <table className={styles.tenantTable} style={{ width: '100%' }}>
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Tier</th>
+                                    <th>Discount</th>
+                                    <th>Used</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {coupons.map((c) => (
+                                    <tr key={c._id}>
+                                        <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{c.code}</td>
+                                        <td style={{ textTransform: 'capitalize' }}>{c.tier}</td>
+                                        <td>{c.discountType === 'percent' ? `${c.discountValue}%` : `$${c.discountValue}`}</td>
+                                        <td>{c.currentRedemptions} {c.maxRedemptions ? `/ ${c.maxRedemptions}` : ''}</td>
+                                        <td>
+                                            <span style={{ 
+                                                padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold',
+                                                backgroundColor: c.isActive ? 'rgba(46, 160, 67, 0.15)' : 'rgba(229, 77, 46, 0.15)',
+                                                color: c.isActive ? '#3fb950' : '#ff7b72'
+                                            }}>
+                                                {c.isActive ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {c.isActive && (
+                                                <Button variant="danger" size="sm" onClick={() => handleDeactivateCoupon(c._id)}>
+                                                    Deactivate
+                                                </Button>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {coupons.length === 0 && (
+                                    <tr>
+                                        <td colSpan={6} style={{ textAlign: 'center', padding: '24px', color: 'var(--mid-grey)' }}>No coupons created yet</td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style={{ backgroundColor: 'var(--surface-color)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-color)', marginBottom: '8px' }}>Create Coupon</h3>
+                        
+                        <Select
+                            label="Target Tier"
+                            value={couponForm.tier}
+                            onChange={(e) => setCouponForm({ ...couponForm, tier: e.target.value })}
+                            options={[{ value: 'pro', label: 'Pro' }, { value: 'enterprise', label: 'Enterprise' }]}
+                        />
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                            <Select
+                                label="Type"
+                                value={couponForm.discountType}
+                                onChange={(e) => setCouponForm({ ...couponForm, discountType: e.target.value })}
+                                options={[{ value: 'percent', label: '%' }, { value: 'amount', label: '$' }]}
+                            />
+                            <Input
+                                label="Value"
+                                type="number"
+                                value={couponForm.discountValue}
+                                onChange={(e) => setCouponForm({ ...couponForm, discountValue: e.target.value as any })}
+                            />
+                        </div>
+
+                        <Input
+                            label="Custom Code (Optional)"
+                            placeholder="e.g. SUMMER50"
+                            value={couponForm.customCode}
+                            onChange={(e) => setCouponForm({ ...couponForm, customCode: e.target.value })}
+                        />
+
+                        <Input
+                            label="Max Redemptions (Optional)"
+                            type="number"
+                            placeholder="e.g. 100"
+                            value={couponForm.maxRedemptions}
+                            onChange={(e) => setCouponForm({ ...couponForm, maxRedemptions: e.target.value })}
+                        />
+
+                        <Input
+                            label="Recipients (Comma separated)"
+                            placeholder="user1@ext.com, user2@ext.com"
+                            value={couponForm.recipients}
+                            onChange={(e) => setCouponForm({ ...couponForm, recipients: e.target.value })}
+                        />
+
+                        <Button variant="primary" fullWidth loading={creatingCoupon} onClick={handleCreateCoupon} style={{ marginTop: '8px' }}>
+                            Create & Send Coupon
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>

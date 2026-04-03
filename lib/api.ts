@@ -56,6 +56,7 @@ export interface IAgent {
   webhookPath: string;
   resourceLimits: { memoryMB: number; vCPU: number; };
   mcpServers?: string[];
+  llmKeyType?: 'platform' | 'custom';
   createdAt: string;
   updatedAt: string;
 }
@@ -104,6 +105,7 @@ export interface ICreateCheckoutSessionRequest {
   type: 'subscription' | 'topup';
   tier?: 'pro' | 'enterprise';
   amount?: number;
+  couponCode?: string;
 }
 
 export interface ICreatePortalSessionRequest {
@@ -373,6 +375,11 @@ export const saveAgentSecret = async (agentId: string, keyName: string, value: s
   await api.post(`/agents/${agentId}/secret`, { keyName, value });
 };
 
+export const switchAgentKeyType = async (agentId: string, keyType: 'platform' | 'custom'): Promise<{message: string, agent: IAgent}> => {
+  const { data } = await api.post<{message: string, agent: IAgent}>(`/agents/${agentId}/switch-key-type`, { keyType });
+  return data;
+};
+
 export const getAgentFiles = async (agentId: string): Promise<string[]> => {
   const { data } = await api.get<string[]>(`/agents/${agentId}/files`);
   return data;
@@ -427,10 +434,16 @@ export const getAgentCard = async (agentId: string): Promise<unknown> => {
 
 export const getBilling = async (tenantId: string): Promise<{
     creditBalance: number;
+    creditCap?: number;
     subscriptionTier: string;
+    subscriptionStatus?: string;
+    pauseReason?: string;
+    billingPeriodEnd?: string;
     burnRate: number;
-    estimatedDaysRemaining: number;
+    estimatedDaysRemaining: number | null;
     llmKeyType: string;
+    stripeCustomerId: boolean;
+    stripeSubscriptionId: boolean;
 }> => {
     const { data } = await api.get(`/tenants/${tenantId}/billing`);
     return data;
@@ -460,6 +473,53 @@ export const getFleetHealth = async (): Promise<IFleetHealthResponse> => {
 
 export const getTenants = async (): Promise<ITenant[]> => {
   const { data } = await api.get<ITenant[]>('/admin/tenants');
+  return data;
+};
+
+// --- Admin Coupon Endpoints ---
+
+export interface ICoupon {
+  _id: string;
+  code: string;
+  tier: string;
+  discountType: string;
+  discountValue: number;
+  durationMonths: number | null;
+  maxRedemptions: number | null;
+  currentRedemptions: number;
+  expiresAt: string | null;
+  isActive: boolean;
+  recipients: string[];
+  createdAt: string;
+}
+
+export const getCoupons = async (active?: boolean): Promise<ICoupon[]> => {
+  const params = active !== undefined ? { active } : {};
+  const { data } = await api.get<ICoupon[]>('/admin/coupons', { params });
+  return data;
+};
+
+export const createCoupon = async (payload: {
+  tier: string;
+  discountType: string;
+  discountValue: number;
+  durationMonths: number | null;
+  maxRedemptions: number | null;
+  expiresAt: string | null;
+  recipients: string[];
+  customCode: string;
+}): Promise<{ coupon: ICoupon; message: string }> => {
+  const { data } = await api.post<{ coupon: ICoupon; message: string }>('/admin/coupons', payload);
+  return data;
+};
+
+export const deactivateCoupon = async (couponId: string): Promise<{ message: string }> => {
+  const { data } = await api.post<{ message: string }>(`/admin/coupons/${couponId}/deactivate`);
+  return data;
+};
+
+export const sendCoupon = async (couponId: string, recipients: string[]): Promise<{ message: string }> => {
+  const { data } = await api.post<{ message: string }>(`/admin/coupons/${couponId}/send`, { recipients });
   return data;
 };
 

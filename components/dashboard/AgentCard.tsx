@@ -89,11 +89,11 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                         Logs
                     </Button>
                 )}
-                {/* {onCustomKey && (
+                {onCustomKey && (
                     <Button variant="ghost" size="sm" icon={<Key size={12} />} onClick={() => onCustomKey(agent)} disabled={disabled}>
                         Keys
                     </Button>
-                )} */}
+                )}
                 {onChannels && (
                     <Button variant="ghost" size="sm" icon={<Link size={12} />} onClick={() => onChannels(agent)} disabled={disabled}>
                         Channels
