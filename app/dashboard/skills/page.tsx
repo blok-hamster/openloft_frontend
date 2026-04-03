@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { useSearchParams } from 'next/navigation';
 import { fetchAgents, getSkills, toggleSkill, uploadSkill, getPlugins, togglePlugin, uploadPlugin, IAgent, searchClawHub, installSkill, getSkillDetails, getSkillFileContent, getTrendingSkills, saveAgentSecret } from '@/lib/api';
@@ -27,7 +27,7 @@ interface Extension {
 
 type TabType = 'discover' | 'installed' | 'plugins';
 
-export default function MarketplacePage() {
+function MarketplaceContent() {
     const { user } = useAuth();
     const { toast } = useToast();
     const searchParams = useSearchParams();
@@ -772,5 +772,13 @@ export default function MarketplacePage() {
                 </>
             )}
         </>
+    );
+}
+
+export default function MarketplacePage() {
+    return (
+        <Suspense fallback={<div style={{ padding: '2rem' }}><SkeletonLoader variant="card" count={4} /></div>}>
+            <MarketplaceContent />
+        </Suspense>
     );
 }
