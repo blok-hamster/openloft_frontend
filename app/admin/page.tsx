@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { getFleetHealth, getTenants, restartFleet, syncPolicy, uploadSkill, getCoupons, createCoupon, deactivateCoupon, IFleetHealthResponse, ITenant, ICoupon } from '@/lib/api';
+import { getFleetHealth, getTenants, restartFleet, syncPolicy, uploadSkill, getCoupons, createCoupon, deactivateCoupon, scaleOutCluster, scaleInCluster, IFleetHealthResponse, ITenant, ICoupon } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -73,6 +73,26 @@ export default function AdminPage() {
         }
     };
 
+    const handleScaleOut = async () => {
+        try {
+            toast('Scale out requested (Watch Discord for updates)', 'success');
+            const res = await scaleOutCluster();
+            toast(res.message, 'success');
+        } catch (error: any) {
+             toast(error?.response?.data?.error || 'Failed to scale out', 'error');
+        }
+    };
+
+    const handleScaleIn = async () => {
+        try {
+            toast('Scale in requested', 'success');
+            const res = await scaleInCluster();
+            toast(res.message, 'success');
+        } catch (error: any) {
+             toast(error?.response?.data?.error || 'Failed to scale in', 'error');
+        }
+    };
+
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -120,7 +140,7 @@ export default function AdminPage() {
         }
     };
 
-    if (user?.role !== 'admin') {
+    if (user?.role !== 'platform_admin' && user?.role !== 'admin') {
         return (
             <div className={styles.adminPage}>
                 <div className={styles.adminTitle}>Access Denied</div>
@@ -139,6 +159,8 @@ export default function AdminPage() {
                     <div className={styles.adminBrand}>LOFT Admin</div>
                 </div>
                 <div className={styles.adminActions}>
+                    <Button variant="secondary" size="sm" onClick={handleScaleOut}>Test Scale Out</Button>
+                    <Button variant="secondary" size="sm" onClick={handleScaleIn}>Test Scale In</Button>
                     <Button variant="secondary" size="sm" onClick={handleSync}>Sync Policy</Button>
                     <Button variant="danger" size="sm" onClick={handleRestart}>Restart Fleet</Button>
                 </div>

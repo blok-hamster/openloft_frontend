@@ -476,6 +476,16 @@ export const getTenants = async (): Promise<ITenant[]> => {
   return data;
 };
 
+export const scaleOutCluster = async (): Promise<IAdminActionResponse> => {
+  const { data } = await api.post<IAdminActionResponse>('/admin/cluster/scale-out');
+  return data;
+};
+
+export const scaleInCluster = async (): Promise<IAdminActionResponse> => {
+  const { data } = await api.post<IAdminActionResponse>('/admin/cluster/scale-in');
+  return data;
+};
+
 // --- Admin Coupon Endpoints ---
 
 export interface ICoupon {
