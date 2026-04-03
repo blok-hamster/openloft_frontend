@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/lib/AuthContext';
+import { useSearchParams } from 'next/navigation';
 import { fetchAgents, getSkills, toggleSkill, uploadSkill, getPlugins, togglePlugin, uploadPlugin, IAgent, searchClawHub, installSkill, getSkillDetails, getSkillFileContent, getTrendingSkills, saveAgentSecret } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import Toggle from '@/components/ui/Toggle';
@@ -29,6 +30,7 @@ type TabType = 'discover' | 'installed' | 'plugins';
 export default function MarketplacePage() {
     const { user } = useAuth();
     const { toast } = useToast();
+    const searchParams = useSearchParams();
 
     const [activeTab, setActiveTab] = useState<TabType>('installed');
     const [agents, setAgents] = useState<IAgent[]>([]);
@@ -79,7 +81,14 @@ export default function MarketplacePage() {
     useEffect(() => {
         loadData();
         loadTrending();
-    }, [loadData]);
+
+        const installSlug = searchParams.get('install');
+        if (installSlug) {
+            setInstallConfirmSlug(installSlug);
+            // Clean up URL without refreshing
+            window.history.replaceState(null, '', window.location.pathname);
+        }
+    }, [loadData, searchParams]);
 
     const loadTrending = async () => {
         setLoadingTrending(true);

@@ -805,3 +805,229 @@
 @keyframes blink {
     50% { opacity: 0; }
 }
+
+/* Metrics */
+.metricsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.metricTile {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.metricIcon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.metricContent {
+    display: flex;
+    flex-direction: column;
+}
+
+.metricValue {
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.metricLabel {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* Billing */
+.billingContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.billingSummaryGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.balanceHeader, .burnHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.balanceIcon, .burnIcon {
+    color: var(--accent-blue);
+}
+
+.balanceLabel {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+}
+
+.balanceValue {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 1.5rem;
+}
+
+.balanceActions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.devHint {
+    font-size: 10px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+}
+
+.burnRate {
+    font-size: var(--font-size-lg);
+    margin-bottom: 0.5rem;
+}
+
+.timeRemaining {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+}
+
+.planGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.activePlanCard {
+    border-color: var(--accent-blue) !important;
+    box-shadow: 0 0 0 1px var(--accent-blue);
+    position: relative;
+}
+
+.popularBadge {
+    position: absolute;
+    top: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent-blue);
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 10px;
+    border-radius: var(--radius-pill);
+    text-transform: uppercase;
+}
+
+.planHeader {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.planPrice {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+}
+
+.priceAmount {
+    font-size: 1.5rem;
+    font-weight: 800;
+}
+
+.pricePeriod {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+}
+
+.planDesc {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.featureList {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.featureItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: var(--font-size-sm);
+}
+
+.checkIcon {
+    color: #22c55e;
+    font-weight: 800;
+}
+/* Wizard Progress */
+.wizardProgress {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    position: relative;
+    padding: 0 1rem;
+}
+
+.progressLine {
+    position: absolute;
+    top: 50%;
+    left: 1rem;
+    right: 1rem;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.05);
+    z-index: 1;
+    transition: width 0.3s ease;
+}
+
+.progressStep {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.progressStepActive {
+    background: var(--accent-blue);
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 4px rgba(39, 121, 255, 0.1);
+}
+
+.activePlanCard {
+    border-color: var(--accent-blue) !important;
+    background: rgba(39, 121, 255, 0.05) !important;
+}

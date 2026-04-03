@@ -3,28 +3,46 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
-import { createTenant, updateSecrets } from '@/lib/api';
+import { createTenant, updateSecrets, updateSubscription } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import styles from './Onboarding.module.css';
 
-type Tier = 'free' | 'pro' | 'enterprise';
+type Tier = 'hobby' | 'pro' | 'enterprise';
 
-const tiers: { id: Tier; name: string; description: string; badge: string }[] = [
-    { id: 'free', name: 'Free', description: 'Up to 1 agent, community support', badge: '$0/mo' },
-    { id: 'pro', name: 'Pro', description: 'Up to 10 agents, priority support, advanced metrics', badge: '$49/mo' },
-    { id: 'enterprise', name: 'Enterprise', description: 'Unlimited agents, SLA, dedicated support', badge: 'Custom' },
+const tiers: { id: Tier; name: string; description: string; badge: string; features: string[] }[] = [
+    { 
+        id: 'hobby', 
+        name: 'Hobby', 
+        description: 'For experimentation and small projects.', 
+        badge: '$0/mo',
+        features: ['1 Agent', 'Platform Credits Only', 'Public Community Skills', 'Standard Support']
+    },
+    { 
+        id: 'pro', 
+        name: 'Professional', 
+        description: 'Powerful AI for growing teams.', 
+        badge: '$49/mo',
+        features: ['5 Agents', 'Bring Your Own Key (BYOK)', 'S3 Persistent Memory', 'Priority Support']
+    },
+    { 
+        id: 'enterprise', 
+        name: 'Enterprise', 
+        description: 'Scalable infrastructure for large swarms.', 
+        badge: 'Custom',
+        features: ['Unlimited Agents', 'Dedicated Cluster', 'Advanced Security', 'Dedicated Account Manager']
+    },
 ];
 
 export default function OnboardingPage() {
     const router = useRouter();
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
     const { toast } = useToast();
 
     const [step, setStep] = useState(0);
     const [orgName, setOrgName] = useState('');
-    const [selectedTier, setSelectedTier] = useState<Tier>('free');
+    const [selectedTier, setSelectedTier] = useState<Tier>('hobby');
     const [tenantId, setTenantId] = useState('');
     const [secrets, setSecrets] = useState({ OPENAI_API_KEY: '', ANTHROPIC_API_KEY: '' });
     const [loading, setLoading] = useState(false);
@@ -35,6 +53,7 @@ export default function OnboardingPage() {
         try {
             const tenant = await createTenant({ name: orgName });
             setTenantId(tenant.tenantId);
+            updateUser({ tenantId: tenant.tenantId });
             toast('Organization created', 'success');
             setStep(1);
         } catch {
@@ -44,8 +63,13 @@ export default function OnboardingPage() {
         }
     };
 
-    const handleTierSelect = () => {
-        setStep(2);
+    const handleTierSelect = async () => {
+        try {
+            await updateSubscription(tenantId, selectedTier);
+            setStep(2);
+        } catch {
+            toast('Failed to save plan selection', 'error');
+        }
     };
 
     const handleSecretsSubmit = async () => {
@@ -124,6 +148,11 @@ export default function OnboardingPage() {
                                     <div className={styles.tierInfo}>
                                         <div className={styles.tierName}>{tier.name}</div>
                                         <div className={styles.tierDescription}>{tier.description}</div>
+                                        <ul className={styles.tierFeatures}>
+                                            {tier.features.map((f, i) => (
+                                                <li key={i}>{f}</li>
+                                            ))}
+                                        </ul>
                                     </div>
                                     <div className={styles.tierBadge}>{tier.badge}</div>
                                 </div>

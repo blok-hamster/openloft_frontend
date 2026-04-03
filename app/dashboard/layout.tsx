@@ -1,23 +1,31 @@
 'use client';
 
 import Image from 'next/image';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
-import { LayoutGrid, Puzzle, Settings, Shield, LogOut, Users } from 'lucide-react';
+import { LayoutGrid, Puzzle, Settings, Shield, LogOut, Users, CreditCard } from 'lucide-react';
 import styles from '@/components/dashboard/Dashboard.module.css';
 
 const navItems = [
     { href: '/dashboard', label: 'Agents', icon: LayoutGrid },
     { href: '/dashboard/lobby', label: 'Lobby', icon: Users },
     { href: '/dashboard/skills', label: 'Skills', icon: Puzzle },
+    { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
-    const { user, logout } = useAuth();
+    const { user, logout, isLoading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!isLoading && user && !user.tenantId) {
+            router.push('/onboarding');
+        }
+    }, [user, isLoading, router]);
 
     return (
         <div className={styles.dashboardLayout}>

@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { deployAgent, getAvailableProviders } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import Modal from '@/components/ui/Modal';
+import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
@@ -98,60 +99,53 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
 
     const [step, setStep] = useState(0);
     const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
     const [llmProvider, setLlmProvider] = useState('');
     const [model, setModel] = useState('');
     const [loading, setLoading] = useState(false);
     const [availableProviders, setAvailableProviders] = useState<string[]>([]);
     
-    // BYOK States
+    // Billing States
     const [usePlatformCredits, setUsePlatformCredits] = useState(true);
     const [useSavedKey, setUseSavedKey] = useState(true);
     const [customSecret, setCustomSecret] = useState('');
     const [saveToSecretManager, setSaveToSecretManager] = useState(true);
     const [availableTenantSecrets, setAvailableTenantSecrets] = useState<string[]>([]);
 
-    // Fetch available providers when modal opens
+    // Fetch available providers and tenant secrets
     useEffect(() => {
-        if (open) {
-            getAvailableProviders()
-                .then((providers) => {
-                    setAvailableProviders(providers);
-                    // Auto-select first available provider
-                    if (providers.length > 0 && !llmProvider) {
-                        const first = providers[0];
-                        setLlmProvider(first);
-                        setModel(providerModels[first]?.models[0]?.value ?? '');
-                    }
-                })
-                .catch(() => setAvailableProviders([]));
+        if (open && user?.tenantId) {
+            Promise.all([
+                getAvailableProviders(),
+                import('@/lib/api').then(m => m.getTenantSecretsInfo(user.tenantId))
+            ]).then(([providers, secrets]) => {
+                setAvailableProviders(providers);
+                setAvailableTenantSecrets(secrets);
+            }).catch(() => {});
         }
-    }, [open]);
+    }, [open, user?.tenantId]);
 
-    // Fetch tenant secrets status when moving to billing step
-    useEffect(() => {
-        if (step === 2 && user?.tenantId) {
-            import('@/lib/api').then(({ getTenantSecretsInfo }) => {
-                getTenantSecretsInfo(user.tenantId)
-                    .then(setAvailableTenantSecrets)
-                    .catch(() => setAvailableTenantSecrets([]));
-            });
-        }
-    }, [step, user?.tenantId]);
-
-    // Build provider options with disabled flags
-    const llmProviderOptions = useMemo(() =>
-        Object.entries(providerModels).map(([value, { label }]) => ({
-            value,
-            label: availableProviders.includes(value) ? label : `${label} (No API Key)`,
-            disabled: !availableProviders.includes(value),
-        })),
-    [availableProviders]);
+    // Filter providers based on billing strategy
+    const llmProviderOptions = useMemo(() => {
+        return Object.entries(providerModels)
+            .filter(([value]) => {
+                if (usePlatformCredits) {
+                    // Only show providers that have system-level API keys configured
+                    return availableProviders.includes(value);
+                }
+                // BYOK shows every provider in our catalog
+                return true;
+            })
+            .map(([value, { label }]) => ({
+                value,
+                label,
+                disabled: false,
+            }));
+    }, [availableProviders, usePlatformCredits]);
 
     const currentModels = useMemo(() => providerModels[llmProvider]?.models ?? [], [llmProvider]);
 
     const handleProviderChange = (value: string) => {
-        // Only allow selecting available providers
-        if (!availableProviders.includes(value)) return;
         setLlmProvider(value);
         const firstModel = providerModels[value]?.models[0]?.value ?? '';
         setModel(firstModel);
@@ -197,7 +191,8 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
 
             await deployAgent({ 
                 tenantId: user.tenantId, 
-                name, 
+                name,
+                description,
                 llmProvider, 
                 model,
                 usePlatformCredits,
@@ -218,6 +213,7 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
     const handleClose = () => {
         setStep(0);
         setName('');
+        setDescription('');
         setLlmProvider('');
         setModel('');
         setUsePlatformCredits(true);
@@ -227,17 +223,30 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
 
     return (
         <Modal open={open} onClose={handleClose} title="Deploy New Agent">
+            <div className={styles.wizardProgress}>
+                <div className={styles.progressLine} style={{ width: `${(step / 4) * 100}%` }} />
+                {[0, 1, 2, 3, 4].map((s) => (
+                    <div key={s} className={`${styles.progressStep} ${step >= s ? styles.progressStepActive : ''}`} />
+                ))}
+            </div>
+
             {step === 0 && (
                 <div className={styles.wizardSteps}>
                     <Input
                         label="Agent Name"
-                        placeholder="marketing-agent-01"
+                        placeholder="Nexus-01"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                     />
+                    <Input
+                        label="Description"
+                        placeholder="Autonomous community moderator and content curator."
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                    />
                     <div className={styles.wizardActionsEnd}>
                         <Button variant="primary" onClick={() => setStep(1)} disabled={!name.trim()}>
-                            Next
+                            Next: Billing Strategy
                         </Button>
                     </div>
                 </div>
@@ -245,134 +254,132 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
 
             {step === 1 && (
                 <div className={styles.wizardSteps}>
-                    <Select
-                        label="LLM Provider"
-                        value={llmProvider}
-                        onChange={(e) => handleProviderChange(e.target.value)}
-                        options={llmProviderOptions}
-                    />
-                    <Select
-                        label="Model"
-                        value={model}
-                        onChange={(e) => setModel(e.target.value)}
-                        options={currentModels}
-                    />
+                    <div className={styles.headerTitle} style={{ fontSize: 'var(--font-size-sm)', marginBottom: '1rem' }}>
+                        Choose Billing Strategy
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <Card 
+                            className={usePlatformCredits ? styles.activePlanCard : ''} 
+                            onClick={() => setUsePlatformCredits(true)}
+                            style={{ cursor: 'pointer', padding: '1.25rem' }}
+                        >
+                            <h4 style={{ fontSize: '0.8125rem', marginBottom: '0.5rem' }}>Platform Credits</h4>
+                            <p style={{ fontSize: '0.75rem', opacity: 0.7 }}>Use OpenLoft managed keys. Pay per token from your balance.</p>
+                        </Card>
+                        <Card 
+                            className={!usePlatformCredits ? styles.activePlanCard : ''} 
+                            onClick={() => setUsePlatformCredits(false)}
+                            style={{ cursor: 'pointer', padding: '1.25rem' }}
+                        >
+                            <h4 style={{ fontSize: '0.8125rem', marginBottom: '0.5rem' }}>Bring Your Own Key</h4>
+                            <p style={{ fontSize: '0.75rem', opacity: 0.7 }}>Use your own API keys. Only pay for the orchestration layer.</p>
+                        </Card>
+                    </div>
                     <div className={styles.wizardActions}>
                         <Button variant="ghost" onClick={() => setStep(0)}>Back</Button>
-                        <Button variant="primary" onClick={() => setStep(2)} disabled={!llmProvider || !model}>Next</Button>
+                        <Button variant="primary" onClick={() => setStep(2)}>Next: Select Provider</Button>
                     </div>
                 </div>
             )}
 
             {step === 2 && (
                 <div className={styles.wizardSteps}>
-                    <div className={styles.headerTitle} style={{ fontSize: 'var(--font-size-sm)', marginBottom: '1rem' }}>
-                        Billing & Keys
-                    </div>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                        <div style={{ display: 'flex', gap: '1rem' }}>
-                            <Button 
-                                variant={usePlatformCredits ? "primary" : "secondary"} 
-                                onClick={() => setUsePlatformCredits(true)}
-                                style={{ flex: 1 }}
-                            >
-                                Platform Credits
-                            </Button>
-                            <Button 
-                                variant={!usePlatformCredits ? "primary" : "secondary"} 
-                                onClick={() => setUsePlatformCredits(false)}
-                                style={{ flex: 1 }}
-                            >
-                                My Own Key
-                            </Button>
-                        </div>
-
-                        {!usePlatformCredits && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
-                                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                                    <Button 
-                                        variant={useSavedKey ? "secondary" : "ghost"} 
-                                        onClick={() => setUseSavedKey(true)}
-                                        size="sm"
-                                        disabled={!hasSavedKeyForProvider}
-                                        style={{ fontSize: '11px' }}
-                                    >
-                                        Use Saved Key {hasSavedKeyForProvider ? '✅' : '(None found)'}
-                                    </Button>
-                                    <Button 
-                                        variant={!useSavedKey ? "secondary" : "ghost"} 
-                                        onClick={() => setUseSavedKey(false)}
-                                        size="sm"
-                                        style={{ fontSize: '11px' }}
-                                    >
-                                        Provide New Key
-                                    </Button>
-                                </div>
-
-                                {!useSavedKey && (
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                        <Input
-                                            label={`${providerModels[llmProvider]?.label} API Key`}
-                                            type="password"
-                                            placeholder="sk-..."
-                                            value={customSecret}
-                                            onChange={(e) => setCustomSecret(e.target.value)}
-                                        />
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                                            <input 
-                                                type="checkbox" 
-                                                checked={saveToSecretManager} 
-                                                onChange={(e) => setSaveToSecretManager(e.target.checked)}
-                                            />
-                                            Save to Secret Manager for future use
-                                        </label>
-                                    </div>
-                                )}
-
-                                {useSavedKey && hasSavedKeyForProvider && (
-                                    <div className={styles.agentMetaItem} style={{ fontSize: '12px' }}>
-                                        Using your saved {providerModels[llmProvider]?.label} key from Vault.
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {usePlatformCredits && (
-                            <div className={styles.agentMetaItem} style={{ fontSize: '12px', textAlign: 'center' }}>
-                                This agent will use the platform's API keys. Usage will be billed to your LOFT account.
-                            </div>
-                        )}
-                    </div>
-
+                    <Select
+                        label="LLM Provider"
+                        value={llmProvider}
+                        onChange={(e) => handleProviderChange(e.target.value)}
+                        options={llmProviderOptions}
+                    />
                     <div className={styles.wizardActions}>
                         <Button variant="ghost" onClick={() => setStep(1)}>Back</Button>
-                        <Button 
-                            variant="primary" 
-                            onClick={() => setStep(3)} 
-                            disabled={!usePlatformCredits && !useSavedKey && !customSecret}
-                        >
-                            Next
-                        </Button>
+                        <Button variant="primary" onClick={() => setStep(3)} disabled={!llmProvider}>Next: Configuration</Button>
                     </div>
                 </div>
             )}
 
             {step === 3 && (
                 <div className={styles.wizardSteps}>
-                    <div style={{ textAlign: 'center' }}>
-                        <div className={styles.headerTitle} style={{ fontSize: 'var(--font-size-sm)', marginBottom: '0.5rem' }}>
-                            Ready to Deploy
+                    <Select
+                        label="Model"
+                        value={model}
+                        onChange={(e) => setModel(e.target.value)}
+                        options={currentModels}
+                    />
+                    
+                    {!usePlatformCredits && (
+                        <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                                <Button 
+                                    variant={useSavedKey ? "secondary" : "ghost"} 
+                                    onClick={() => setUseSavedKey(true)}
+                                    size="sm"
+                                    disabled={!hasSavedKeyForProvider}
+                                >
+                                    Use Saved Key {hasSavedKeyForProvider ? '✅' : '(None)'}
+                                </Button>
+                                <Button 
+                                    variant={!useSavedKey ? "secondary" : "ghost"} 
+                                    onClick={() => setUseSavedKey(false)}
+                                    size="sm"
+                                >
+                                    New Key
+                                </Button>
+                            </div>
+
+                            {!useSavedKey ? (
+                                <Input
+                                    label={`${providerModels[llmProvider]?.label} API Key`}
+                                    type="password"
+                                    placeholder="sk-..."
+                                    value={customSecret}
+                                    onChange={(e) => setCustomSecret(e.target.value)}
+                                />
+                            ) : hasSavedKeyForProvider && (
+                                <div className={styles.agentMetaItem} style={{ fontSize: '11px' }}>
+                                    Using saved {providerModels[llmProvider]?.label} key from Vault.
+                                </div>
+                            )}
                         </div>
-                        <div className={styles.agentMetaItem} style={{ justifyContent: 'center', marginBottom: '1rem' }}>
-                            {name} • {providerModels[llmProvider]?.label} • {currentModels.find(m => m.value === model)?.label}
-                        </div>
-                        <div style={{ padding: '0.75rem', borderRadius: '8px', background: 'rgba(46, 213, 115, 0.1)', color: 'var(--accent-green)', fontSize: '12px', fontWeight: 500 }}>
-                            Billing: {usePlatformCredits ? 'Platform Account' : 'Bring Your Own Key'}
-                        </div>
-                    </div>
+                    )}
+                    
                     <div className={styles.wizardActions}>
                         <Button variant="ghost" onClick={() => setStep(2)}>Back</Button>
+                        <Button variant="primary" onClick={() => setStep(4)} disabled={!model || (!usePlatformCredits && !useSavedKey && !customSecret)}>
+                            Next: Review
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            {step === 4 && (
+                <div className={styles.wizardSteps}>
+                    <div style={{ textAlign: 'center' }}>
+                        <div className={styles.headerTitle} style={{ fontSize: 'var(--font-size-sm)', marginBottom: '1rem' }}>
+                            Final Review
+                        </div>
+                        <Card style={{ textAlign: 'left', background: 'rgba(26,26,26,0.02)' }}>
+                            <div className={styles.agentName}>{name}</div>
+                            <div className={styles.agentMetaItem} style={{ marginBottom: '1rem' }}>{description}</div>
+                            
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.75rem' }}>
+                                <div><strong>Provider:</strong> {providerModels[llmProvider]?.label}</div>
+                                <div><strong>Model:</strong> {currentModels.find(m => m.value === model)?.label}</div>
+                                <div style={{ 
+                                    marginTop: '0.5rem',
+                                    padding: '0.5rem', 
+                                    borderRadius: '6px', 
+                                    background: usePlatformCredits ? 'rgba(39, 121, 255, 0.1)' : 'rgba(34, 197, 94, 0.1)', 
+                                    color: usePlatformCredits ? 'var(--accent-blue)' : '#22c55e',
+                                    fontWeight: 700,
+                                    textAlign: 'center'
+                                }}>
+                                    {usePlatformCredits ? 'Platform Account Billing' : 'Bring Your Own Key'}
+                                </div>
+                            </div>
+                        </Card>
+                    </div>
+                    <div className={styles.wizardActions}>
+                        <Button variant="ghost" onClick={() => setStep(3)}>Back</Button>
                         <Button variant="primary" loading={loading} onClick={handleDeploy}>
                             Deploy Agent
                         </Button>

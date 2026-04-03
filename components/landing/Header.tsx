@@ -19,11 +19,11 @@ export default function Header() {
 
                 {/* Links */}
                 <nav className={styles.navLinks}>
-                    <Link href="#" className={styles.navLink}>Products</Link>
-                    <Link href="#" className={styles.navLink}>Resources</Link>
-                    <Link href="#" className={styles.navLink}>Skills</Link>
-                    <Link href="#" className={styles.navLink}>Pricing</Link>
-                    <Link href="#" className={styles.navLink}>Docs</Link>
+                    <Link href="/products" className={styles.navLink}>Products</Link>
+                    <Link href="/resources" className={styles.navLink}>Resources</Link>
+                    <Link href="/skills" className={styles.navLink}>Skills</Link>
+                    <Link href="/pricing" className={styles.navLink}>Pricing</Link>
+                    <Link href="/docs" className={styles.navLink}>Docs</Link>
                 </nav>
 
                 {/* Actions */}

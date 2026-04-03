@@ -126,9 +126,32 @@
 }
 
 .tierDescription {
-    font-size: var(--font-size-xs);
-    color: var(--text-secondary);
-    letter-spacing: 0.02em;
+    font-size: 11px;
+    opacity: 0.6;
+    margin-bottom: 0.75rem;
+}
+
+.tierFeatures {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.tierFeatures li {
+    font-size: 10px;
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.tierFeatures li::before {
+    content: '✓';
+    color: var(--accent-blue);
+    font-weight: bold;
 }
 
 .tierBadge {

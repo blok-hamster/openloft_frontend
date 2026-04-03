@@ -8,13 +8,15 @@ interface CardProps {
     hoverable?: boolean;
     className?: string;
     style?: React.CSSProperties;
+    onClick?: () => void;
 }
 
-export default function Card({ children, hoverable = false, className = '', style }: CardProps) {
+export default function Card({ children, hoverable = false, className = '', style, onClick }: CardProps) {
     return (
         <div
             className={`${styles.card} ${hoverable ? styles.cardHoverable : ''} ${className}`}
             style={style}
+            onClick={onClick}
         >
             {children}
         </div>

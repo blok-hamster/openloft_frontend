@@ -27,6 +27,7 @@ interface AuthContextType {
     resendOTP: (email: string) => Promise<void>;
     googleLogin: (data: IGoogleLoginRequest) => Promise<void>;
     logout: () => Promise<void>;
+    updateUser: (updates: Partial<IUserContext>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -80,7 +81,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const login = useCallback(async (data: ILoginRequest) => {
         const res = await apiLogin(data);
         persistAuth(res.token, res.user);
-        router.push('/dashboard');
+        if (res.user.tenantId) {
+            router.push('/dashboard');
+        } else {
+            router.push('/onboarding');
+        }
     }, [persistAuth, router]);
 
     const register = useCallback(async (data: IRegisterRequest) => {
@@ -91,7 +96,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const verifyEmail = useCallback(async (email: string, code: string) => {
         const res = await apiVerifyEmail({ email, code });
         persistAuth(res.token, res.user);
-        router.push('/onboarding');
+        // Note: verifyEmail usually means new user, always onboarding? 
+        // Better to check tenantId here too for safety.
+        if (res.user.tenantId) {
+            router.push('/dashboard');
+        } else {
+            router.push('/onboarding');
+        }
     }, [persistAuth, router]);
 
     const resendOTP = useCallback(async (email: string) => {
@@ -100,9 +111,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const googleLogin = useCallback(async (data: IGoogleLoginRequest) => {
         const res = await apiGoogleLogin(data);
+        console.log('[Auth] Google Login Response:', res.user);
         persistAuth(res.token, res.user);
-        router.push('/dashboard');
+        if (res.user.tenantId) {
+            console.log('[Auth] Redirecting to Dashboard (tenantId found)');
+            router.push('/dashboard');
+        } else {
+            console.log('[Auth] Redirecting to Onboarding (no tenantId)');
+            router.push('/onboarding');
+        }
     }, [persistAuth, router]);
+
+    const updateUser = useCallback((updates: Partial<IUserContext>) => {
+        if (!user) return;
+        const newUser = { ...user, ...updates };
+        setUser(newUser);
+        localStorage.setItem('loft_user', JSON.stringify(newUser));
+    }, [user]);
 
     const logout = useCallback(async () => {
         try {
@@ -127,6 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 resendOTP,
                 googleLogin,
                 logout,
+                updateUser,
             }}
         >
             {children}

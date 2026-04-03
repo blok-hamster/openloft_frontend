@@ -7,6 +7,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     size?: 'sm' | 'md' | 'lg';
     icon?: ReactNode;
     loading?: boolean;
+    fullWidth?: boolean;
 }
 
 const sizeMap = {
@@ -20,6 +21,7 @@ export default function Button({
     size = 'md',
     icon,
     loading,
+    fullWidth,
     children,
     disabled,
     style,
@@ -32,7 +34,15 @@ export default function Button({
         <button
             className={className}
             disabled={disabled || loading}
-            style={{ ...sizeStyle, ...style }}
+            style={{ 
+                ...sizeStyle, 
+                width: fullWidth ? '100%' : 'auto',
+                display: fullWidth ? 'flex' : 'inline-flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '0.5rem',
+                ...style 
+            }}
             {...props}
         >
             {loading ? '...' : icon}

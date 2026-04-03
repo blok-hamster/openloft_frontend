@@ -100,6 +100,15 @@ export interface IUserContext {
   tenantId: string;
 }
 
+export interface ICreateCheckoutSessionRequest {
+  type: 'subscription' | 'topup';
+  tier?: 'pro' | 'enterprise';
+  amount?: number;
+}
+
+export interface ICreatePortalSessionRequest {
+  tenantId: string;
+}
 
 export interface IUserProfile {
   _id: string;
@@ -131,6 +140,7 @@ export interface ICreateTenantRequest { name: string; }
 export interface IDeployAgentRequest { 
   tenantId: string; 
   name: string; 
+  description?: string;
   llmProvider: string; 
   model?: string; 
   secrets?: Record<string, string>; 
@@ -248,6 +258,18 @@ export const toggleSkill = async (agentId: string, skillId: string, active: bool
 
 export const togglePlugin = async (agentId: string, pluginId: string, active: boolean): Promise<IAgent> => {
   const { data } = await api.post<IAgent>(`/agents/${agentId}/toggle-plugin`, { pluginId, active });
+  return data;
+};
+
+// --- Billing Endpoints ---
+
+export const createCheckoutSession = async (tenantId: string, payload: ICreateCheckoutSessionRequest): Promise<{ url: string }> => {
+  const { data } = await api.post<{ url: string }>(`/billing/checkout/${tenantId}`, payload);
+  return data;
+};
+
+export const createPortalSession = async (tenantId: string): Promise<{ url: string }> => {
+  const { data } = await api.post<{ url: string }>(`/billing/portal/${tenantId}`);
   return data;
 };
 
@@ -373,6 +395,19 @@ export const getMetrics = async (agentId: string): Promise<unknown> => {
   return data;
 };
 
+export const getUsage = async (agentId: string, days: number = 7): Promise<{
+    daily: any[];
+    summary: {
+        totalInputTokens: number;
+        totalOutputTokens: number;
+        totalCost: number;
+        totalRequests: number;
+    }
+}> => {
+    const { data } = await api.get(`/agents/${agentId}/usage`, { params: { days } });
+    return data;
+};
+
 export const getAuditLogs = async (agentId: string, actionType?: string, status?: string): Promise<IAuditLog[]> => {
   const { data } = await api.get<IAuditLog[]>(`/agents/${agentId}/audit`, {
       params: { actionType, status }
@@ -388,6 +423,22 @@ export const sendMessageToAgent = async (agentId: string, message: string): Prom
 export const getAgentCard = async (agentId: string): Promise<unknown> => {
   const { data } = await api.get<unknown>(`/agents/${agentId}/card`);
   return data;
+};
+
+export const getBilling = async (tenantId: string): Promise<{
+    creditBalance: number;
+    subscriptionTier: string;
+    burnRate: number;
+    estimatedDaysRemaining: number;
+    llmKeyType: string;
+}> => {
+    const { data } = await api.get(`/tenants/${tenantId}/billing`);
+    return data;
+};
+
+export const updateSubscription = async (tenantId: string, tier: string): Promise<any> => {
+    const { data } = await api.put(`/tenants/${tenantId}/subscription`, { tier });
+    return data;
 };
 
 // --- Admin Fleet Endpoints ---

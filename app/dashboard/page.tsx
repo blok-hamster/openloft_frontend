@@ -8,6 +8,7 @@ import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import AgentList from '@/components/dashboard/AgentList';
 import AgentCreationWizard from '@/components/dashboard/AgentCreationWizard';
 import AgentChatPanel from '@/components/dashboard/AgentChatPanel';
+import UsageMetrics from '@/components/dashboard/UsageMetrics';
 import MemoryEditor from '@/components/dashboard/MemoryEditor';
 import AgentDrive from '@/components/dashboard/AgentDrive';
 import ConfirmDestructiveAction from '@/components/dashboard/ConfirmDestructiveAction';
@@ -187,9 +188,10 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* Chat Panel */}
+      {/* Chat Panel & Metrics */}
       {chatAgent && (
-        <div style={{ marginTop: '2rem' }}>
+        <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+          <UsageMetrics agentId={chatAgent.agentId} />
           <AgentChatPanel agent={chatAgent} onClose={() => setChatAgent(null)} />
         </div>
       )}
