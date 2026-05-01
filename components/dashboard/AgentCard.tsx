@@ -7,7 +7,6 @@ import StatusIndicator from '@/components/ui/StatusIndicator';
 import Sparkline from '@/components/ui/Sparkline';
 import Button from '@/components/ui/Button';
 import { MessageSquare, FolderOpen, HardDrive, Settings, Square, ExternalLink, Play, Pause, RotateCcw, Trash2, ScrollText, Key, Link, Terminal } from 'lucide-react';
-import HttpDetailsModal from './HttpDetailsModal';
 import { useEffect, useCallback, useRef } from 'react';
 
 interface AgentCardProps {
@@ -25,12 +24,12 @@ interface AgentCardProps {
     onLogs?: (agent: IAgent) => void;
     onCustomKey?: (agent: IAgent) => void;
     onChannels?: (agent: IAgent) => void;
+    onHttpDetails?: (agent: IAgent) => void;
 }
 
-export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings, onStop, onStart, onPause, onResume, onRestart, onDelete, onLogs, onCustomKey, onChannels }: AgentCardProps) {
+export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings, onStop, onStart, onPause, onResume, onRestart, onDelete, onLogs, onCustomKey, onChannels, onHttpDetails }: AgentCardProps) {
     const [isPairing, setIsPairing] = useState(false);
     const [isPaired, setIsPaired] = useState(false);
-    const [showHttpDetails, setShowHttpDetails] = useState(false);
     
     const pairingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -59,7 +58,7 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
 
             ws.onopen = () => {
                 clearTimeout(timeout);
-                console.log(`🟢 [${agent.agentId}] Connected to OpenClaw Agent!`);
+                console.log(`[${agent.agentId}] Connected to OpenClaw Agent!`);
                 ws.close();
                 resolve();
             };
@@ -67,7 +66,7 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
             ws.onclose = async (event) => {
                 clearTimeout(timeout);
                 if (event.code === 1008 || event.code === 1005) {
-                    console.log(`🔒 [${agent.agentId}] Device not paired. Requesting auto-approval...`);
+                    console.log(`[${agent.agentId}] Device not paired. Requesting auto-approval...`);
                     try {
                         await approveAgentDevice(agent.agentId);
                         // Wait for RPC propagation
@@ -216,7 +215,7 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                             variant="ghost"
                             size="sm"
                             icon={<Terminal size={12} />}
-                            onClick={() => setShowHttpDetails(true)}
+                            onClick={() => onHttpDetails?.(agent)}
                             disabled={disabled}
                         >
                             HTTP API
@@ -226,6 +225,7 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                             size="sm"
                             icon={<Link size={12} />}
                             disabled={isPaired || isPairing}
+                            className={isPaired ? styles.pairedButton : ''}
                             onClick={async () => {
                                 setIsPairing(true);
                                 try {
@@ -238,7 +238,7 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                                 }
                             }}
                         >
-                            {isPaired ? 'Paired ✅' : isPairing ? 'Pairing...' : 'Pair Device'}
+                            {isPaired ? 'Paired' : isPairing ? 'Pairing...' : 'Pair Device'}
                         </Button>
                         <Button variant="ghost" size="sm" icon={<Square size={12} />} onClick={() => onStop(agent)}>
                             Stop
@@ -274,11 +274,6 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                     </Button>
                 )}
             </div>
-            <HttpDetailsModal 
-                agent={agent} 
-                open={showHttpDetails} 
-                onClose={() => setShowHttpDetails(false)} 
-            />
         </div>
     );
 }

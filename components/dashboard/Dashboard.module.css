@@ -1032,6 +1032,10 @@
     background: rgba(39, 121, 255, 0.05) !important;
 }
 
+.pairedButton {
+    color: #22c55e !important;
+}
+
 /* HTTP Details Modal */
 .httpDetailsContent {
     display: flex;
