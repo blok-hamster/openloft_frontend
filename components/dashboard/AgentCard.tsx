@@ -41,89 +41,42 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
     const isPaused = (agent.status as string) === 'paused';
     const disabled = isProvisioning || isStarting;
 
-    const connectAndPair = useCallback(() => {
-        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const baseDomain = isLocal ? '127.0.0.1.nip.io' : 'agents.openloft.xyz';
-        const protocol = isLocal ? 'ws' : 'wss';
-        const wsUrl = `${protocol}://${agent.agentId}.${baseDomain}?token=${agent.gatewayToken}`;
-
-        return new Promise<void>((resolve, reject) => {
-            console.log(`[Pair] Attempting connection to ${wsUrl}`);
-            const ws = new WebSocket(wsUrl);
-
-            const timeout = setTimeout(() => {
-                ws.close();
-                reject(new Error('Connection timeout'));
-            }, 5000);
-
-            ws.onopen = () => {
-                clearTimeout(timeout);
-                console.log(`[${agent.agentId}] Connected to OpenClaw Agent!`);
-                ws.close();
-                resolve();
-            };
-
-            ws.onclose = async (event) => {
-                clearTimeout(timeout);
-                if (event.code === 1008 || event.code === 1005) {
-                    console.log(`[${agent.agentId}] Device not paired. Requesting auto-approval...`);
-                    try {
-                        await approveAgentDevice(agent.agentId);
-                        // Wait for RPC propagation
-                        setTimeout(async () => {
-                            try {
-                                const retryWs = new WebSocket(wsUrl);
-                                retryWs.onopen = () => {
-                                    retryWs.close();
-                                    resolve();
-                                };
-                                retryWs.onclose = (e) => reject(new Error(`Retry failed: ${e.code}`));
-                                retryWs.onerror = () => reject(new Error('Retry error'));
-                            } catch (e) { reject(e); }
-                        }, 2000);
-                    } catch (err) { reject(err); }
-                } else if (event.code !== 1000) {
-                    reject(new Error(`Closed: ${event.code}`));
-                }
-            };
-
-            ws.onerror = () => {
-                clearTimeout(timeout);
-                reject(new Error('WebSocket error'));
-            };
-        });
-    }, [agent.agentId, agent.gatewayToken]);
-
     useEffect(() => {
+        let interval: NodeJS.Timeout;
+        
         if (isRunning && !isPaired) {
-            // Initial check
-            connectAndPair()
-                .then(() => setIsPaired(true))
-                .catch(() => {
-                    // Start polling if initial check fails
-                    pairingIntervalRef.current = setInterval(() => {
-                        connectAndPair()
-                            .then(() => {
-                                setIsPaired(true);
-                                if (pairingIntervalRef.current) {
-                                    clearInterval(pairingIntervalRef.current);
-                                    pairingIntervalRef.current = null;
-                                }
-                            })
-                            .catch(() => {});
-                    }, 5000);
-                });
-        } else if (!isRunning && isPaired) {
-            setIsPaired(false);
+            const checkAndPair = async () => {
+                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                const baseDomain = isLocal ? '127.0.0.1.nip.io' : 'agents.openloft.xyz';
+                const protocol = isLocal ? 'ws' : 'wss';
+                const wsUrl = `${protocol}://${agent.agentId}.${baseDomain}?token=${agent.gatewayToken}`;
+
+                // Try to connect to see if already paired
+                const ws = new WebSocket(wsUrl);
+                ws.onopen = () => {
+                    ws.close();
+                    setIsPaired(true);
+                };
+                ws.onclose = async (e) => {
+                    // If not paired, request approval
+                    if (e.code === 1008 || e.code === 1005) {
+                        try {
+                            await approveAgentDevice(agent.agentId);
+                        } catch (err) {
+                            // Silent fail on background approval
+                        }
+                    }
+                };
+            };
+
+            checkAndPair();
+            interval = setInterval(checkAndPair, 5000);
         }
 
         return () => {
-            if (pairingIntervalRef.current) {
-                clearInterval(pairingIntervalRef.current);
-                pairingIntervalRef.current = null;
-            }
+            if (interval) clearInterval(interval);
         };
-    }, [isRunning, isPaired, connectAndPair]);
+    }, [isRunning, isPaired, agent.agentId, agent.gatewayToken]);
 
     return (
         <div className={`${styles.agentCard} ${isProvisioning ? styles.agentCardProvisioning : ''} ${isStarting ? styles.agentCardStarting : ''}`}>
@@ -228,14 +181,32 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                             className={isPaired ? styles.pairedButton : ''}
                             onClick={async () => {
                                 setIsPairing(true);
-                                try {
-                                    await connectAndPair();
+                                
+                                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                                const baseDomain = isLocal ? '127.0.0.1.nip.io' : 'agents.openloft.xyz';
+                                const protocol = isLocal ? 'ws' : 'wss';
+                                const wsUrl = `${protocol}://${agent.agentId}.${baseDomain}?token=${agent.gatewayToken}`;
+
+                                const ws = new WebSocket(wsUrl);
+                                ws.onopen = () => {
+                                    ws.close();
                                     setIsPaired(true);
-                                } catch (err) {
-                                    console.error('Pairing process failed:', err);
-                                } finally {
                                     setIsPairing(false);
-                                }
+                                };
+                                ws.onclose = async (e) => {
+                                    if (e.code === 1008 || e.code === 1005) {
+                                        try {
+                                            await approveAgentDevice(agent.agentId);
+                                            setTimeout(() => {
+                                                const r = new WebSocket(wsUrl);
+                                                r.onopen = () => { r.close(); setIsPaired(true); setIsPairing(false); };
+                                                r.onclose = () => setIsPairing(false);
+                                                r.onerror = () => setIsPairing(false);
+                                            }, 2000);
+                                        } catch (err) { setIsPairing(false); }
+                                    } else { setIsPairing(false); }
+                                };
+                                ws.onerror = () => setIsPairing(false);
                             }}
                         >
                             {isPaired ? 'Paired' : isPairing ? 'Pairing...' : 'Pair Device'}
