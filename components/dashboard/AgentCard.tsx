@@ -6,7 +6,9 @@ import { IAgent, approveAgentDevice } from '@/lib/api';
 import StatusIndicator from '@/components/ui/StatusIndicator';
 import Sparkline from '@/components/ui/Sparkline';
 import Button from '@/components/ui/Button';
-import { MessageSquare, FolderOpen, HardDrive, Settings, Square, ExternalLink, Play, Pause, RotateCcw, Trash2, ScrollText, Key, Link } from 'lucide-react';
+import { MessageSquare, FolderOpen, HardDrive, Settings, Square, ExternalLink, Play, Pause, RotateCcw, Trash2, ScrollText, Key, Link, Terminal } from 'lucide-react';
+import HttpDetailsModal from './HttpDetailsModal';
+import { useEffect, useCallback, useRef } from 'react';
 
 interface AgentCardProps {
     agent: IAgent;
@@ -27,6 +29,11 @@ interface AgentCardProps {
 
 export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings, onStop, onStart, onPause, onResume, onRestart, onDelete, onLogs, onCustomKey, onChannels }: AgentCardProps) {
     const [isPairing, setIsPairing] = useState(false);
+    const [isPaired, setIsPaired] = useState(false);
+    const [showHttpDetails, setShowHttpDetails] = useState(false);
+    
+    const pairingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
     const mockData = Array.from({ length: 12 }, () => Math.random() * 100);
     const isProvisioning = agent.status === 'provisioning';
     const isStarting = agent.status === 'starting';
@@ -34,6 +41,90 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
     const isStopped = agent.status === 'stopped';
     const isPaused = (agent.status as string) === 'paused';
     const disabled = isProvisioning || isStarting;
+
+    const connectAndPair = useCallback(() => {
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const baseDomain = isLocal ? '127.0.0.1.nip.io' : 'agents.openloft.xyz';
+        const protocol = isLocal ? 'ws' : 'wss';
+        const wsUrl = `${protocol}://${agent.agentId}.${baseDomain}?token=${agent.gatewayToken}`;
+
+        return new Promise<void>((resolve, reject) => {
+            console.log(`[Pair] Attempting connection to ${wsUrl}`);
+            const ws = new WebSocket(wsUrl);
+
+            const timeout = setTimeout(() => {
+                ws.close();
+                reject(new Error('Connection timeout'));
+            }, 5000);
+
+            ws.onopen = () => {
+                clearTimeout(timeout);
+                console.log(`🟢 [${agent.agentId}] Connected to OpenClaw Agent!`);
+                ws.close();
+                resolve();
+            };
+
+            ws.onclose = async (event) => {
+                clearTimeout(timeout);
+                if (event.code === 1008 || event.code === 1005) {
+                    console.log(`🔒 [${agent.agentId}] Device not paired. Requesting auto-approval...`);
+                    try {
+                        await approveAgentDevice(agent.agentId);
+                        // Wait for RPC propagation
+                        setTimeout(async () => {
+                            try {
+                                const retryWs = new WebSocket(wsUrl);
+                                retryWs.onopen = () => {
+                                    retryWs.close();
+                                    resolve();
+                                };
+                                retryWs.onclose = (e) => reject(new Error(`Retry failed: ${e.code}`));
+                                retryWs.onerror = () => reject(new Error('Retry error'));
+                            } catch (e) { reject(e); }
+                        }, 2000);
+                    } catch (err) { reject(err); }
+                } else if (event.code !== 1000) {
+                    reject(new Error(`Closed: ${event.code}`));
+                }
+            };
+
+            ws.onerror = () => {
+                clearTimeout(timeout);
+                reject(new Error('WebSocket error'));
+            };
+        });
+    }, [agent.agentId, agent.gatewayToken]);
+
+    useEffect(() => {
+        if (isRunning && !isPaired) {
+            // Initial check
+            connectAndPair()
+                .then(() => setIsPaired(true))
+                .catch(() => {
+                    // Start polling if initial check fails
+                    pairingIntervalRef.current = setInterval(() => {
+                        connectAndPair()
+                            .then(() => {
+                                setIsPaired(true);
+                                if (pairingIntervalRef.current) {
+                                    clearInterval(pairingIntervalRef.current);
+                                    pairingIntervalRef.current = null;
+                                }
+                            })
+                            .catch(() => {});
+                    }, 5000);
+                });
+        } else if (!isRunning && isPaired) {
+            setIsPaired(false);
+        }
+
+        return () => {
+            if (pairingIntervalRef.current) {
+                clearInterval(pairingIntervalRef.current);
+                pairingIntervalRef.current = null;
+            }
+        };
+    }, [isRunning, isPaired, connectAndPair]);
 
     return (
         <div className={`${styles.agentCard} ${isProvisioning ? styles.agentCardProvisioning : ''} ${isStarting ? styles.agentCardStarting : ''}`}>
@@ -109,6 +200,7 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                             variant="ghost"
                             size="sm"
                             icon={<ExternalLink size={12} />}
+                            disabled={!isPaired}
                             onClick={async () => {
                                 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                                 const baseDomain = isLocal ? '127.0.0.1.nip.io' : 'agents.openloft.xyz';
@@ -116,81 +208,29 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                                 const webUiUrl = `${protocol}://${agent.agentId}.${baseDomain}?token=${agent.gatewayToken}`;
 
                                 window.open(webUiUrl, '_blank');
-                                // Trigger background approval for the newly opened session
-                                try {
-                                    await approveAgentDevice(agent.agentId);
-                                } catch (err) {
-                                    console.error('Failed to trigger device approval:', err);
-                                }
                             }}
                         >
-                            WebUI
+                            {isPaired ? 'WebUI' : 'Propagating...'}
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            icon={<Terminal size={12} />}
+                            onClick={() => setShowHttpDetails(true)}
+                            disabled={disabled}
+                        >
+                            HTTP API
                         </Button>
                         <Button
                             variant="ghost"
                             size="sm"
                             icon={<Link size={12} />}
-                            disabled={isPairing}
+                            disabled={isPaired || isPairing}
                             onClick={async () => {
                                 setIsPairing(true);
-
-                                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                                const baseDomain = isLocal ? '127.0.0.1.nip.io' : 'agents.openloft.xyz';
-                                const protocol = isLocal ? 'ws' : 'wss';
-
-                                // FIX 1: Attach the gateway token to authenticate the WebSocket handshake
-                                const wsUrl = `${protocol}://${agent.agentId}.${baseDomain}?token=${agent.gatewayToken}`;
-
-                                const connectAndPair = () => {
-                                    return new Promise<void>((resolve, reject) => {
-                                        console.log(`[Pair] Attempting connection to ${wsUrl}`);
-                                        const ws = new WebSocket(wsUrl);
-
-                                        ws.onopen = () => {
-                                            console.log('🟢 Connected to OpenClaw Agent!');
-                                            ws.close(); // Close the test connection
-                                            resolve();
-                                        };
-
-                                        ws.onclose = async (event) => {
-                                            console.log(`[WS Close] Code: ${event.code}`);
-
-                                            // FIX 2: Catch both 1008 (Pairing Required) AND 1005 (Abrupt Auth Drop)
-                                            if (event.code === 1008 || event.code === 1005) {
-                                                console.log('🔒 Device not paired. Requesting auto-approval via RPC...');
-                                                try {
-                                                    // This fires the POST request to your backend controller
-                                                    await approveAgentDevice(agent.agentId);
-                                                    console.log('✅ Device approved! Reconnecting...');
-
-                                                    // Wait 1.5s for Swarm RPC to process the .req file on EFS, then retry
-                                                    setTimeout(() => {
-                                                        const retryWs = new WebSocket(wsUrl);
-                                                        retryWs.onopen = () => {
-                                                            console.log('🟢 Reconnection successful!');
-                                                            retryWs.close();
-                                                            resolve();
-                                                        };
-                                                        retryWs.onclose = (e) => reject(new Error(`Failed after approval. Code: ${e.code}`));
-                                                        retryWs.onerror = () => reject(new Error('WebSocket error after approval'));
-                                                    }, 1500);
-
-                                                } catch (err) {
-                                                    reject(err);
-                                                }
-                                            } else if (event.code !== 1000) {
-                                                reject(new Error(`Connection closed: ${event.code}`));
-                                            }
-                                        };
-
-                                        ws.onerror = () => {
-                                            console.error('WebSocket connection encountered an error.');
-                                        };
-                                    });
-                                };
-
                                 try {
                                     await connectAndPair();
+                                    setIsPaired(true);
                                 } catch (err) {
                                     console.error('Pairing process failed:', err);
                                 } finally {
@@ -198,7 +238,7 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                                 }
                             }}
                         >
-                            {isPairing ? 'Pairing...' : 'Pair Device'}
+                            {isPaired ? 'Paired ✅' : isPairing ? 'Pairing...' : 'Pair Device'}
                         </Button>
                         <Button variant="ghost" size="sm" icon={<Square size={12} />} onClick={() => onStop(agent)}>
                             Stop
@@ -234,6 +274,12 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                     </Button>
                 )}
             </div>
+            </div>
+            <HttpDetailsModal 
+                agent={agent} 
+                open={showHttpDetails} 
+                onClose={() => setShowHttpDetails(false)} 
+            />
         </div>
     );
 }
