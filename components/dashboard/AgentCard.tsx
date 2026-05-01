@@ -274,7 +274,6 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                     </Button>
                 )}
             </div>
-            </div>
             <HttpDetailsModal 
                 agent={agent} 
                 open={showHttpDetails} 
