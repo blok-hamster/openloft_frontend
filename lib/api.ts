@@ -357,8 +357,8 @@ export const fetchAgentLogs = async (agentId: string): Promise<string> => {
   return data.logs;
 };
 
-export const approveAgentDevice = async (agentId: string): Promise<{ success: boolean; message: string }> => {
-  const { data } = await api.post<{ success: boolean; message: string }>(`/agents/${agentId}/device/approve`);
+export const approveAgentDevice = async (agentId: string, requestId?: string): Promise<{ success: boolean; message: string }> => {
+  const { data } = await api.post<{ success: boolean; message: string }>(`/agents/${agentId}/device/approve`, { requestId });
   return data;
 };
 

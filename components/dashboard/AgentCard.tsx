@@ -61,7 +61,9 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                     // If not paired, request approval
                     if (e.code === 1008 || e.code === 1005) {
                         try {
-                            await approveAgentDevice(agent.agentId);
+                            const match = e.reason?.match(/requestId:\s*([0-9a-f-]+)/);
+                            const requestId = match ? match[1] : undefined;
+                            await approveAgentDevice(agent.agentId, requestId);
                         } catch (err) {
                             // Silent fail on background approval
                         }
