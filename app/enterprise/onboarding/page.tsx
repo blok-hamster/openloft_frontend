@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import DiscoveryStep from '@/components/enterprise/DiscoveryStep';
@@ -12,6 +12,14 @@ import styles from './Onboarding.module.css';
 const STEPS = ['Discovery', 'Integrations', 'Configuration', 'Go Live'];
 
 export default function EnterpriseOnboardingPage() {
+  return (
+    <Suspense fallback={<div />}>
+      <EnterpriseOnboardingInner />
+    </Suspense>
+  );
+}
+
+function EnterpriseOnboardingInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tier = searchParams.get('tier') || 'starter';

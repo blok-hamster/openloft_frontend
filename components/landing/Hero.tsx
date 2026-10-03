@@ -52,18 +52,18 @@ export default function Hero() {
                     transition={{ duration: 0.6, ease: "easeOut" }}
                 >
                     <h1 className={styles.heroHeadline}>
-                        The new standard for agent orchestration
+                        Memory is what makes an agent an agent
                     </h1>
                     <p className={styles.heroDescription}>
-                        OpenLoft delivers the world&apos;s most powerful execution environment to spin up <span style={{ color: '#F47A4A' }}>OpenClaw AI agent</span> instances with just a couple clicks, powering complete enterprise automation.
+                        Most assistants forget the moment the transcript scrolls away. <span style={{ color: '#F47A4A' }}>NMAFC</span> is an open-source memory layer that keeps a dated, decay-aware, source-attributed record of everything it learns — and hands back a small, precise context hundreds of sessions later.
                     </p>
                     <div className={styles.heroActions}>
                         {isAuthenticated ? (
                             <Link href="/dashboard" className="btn-primary">Go to Dashboard</Link>
                         ) : (
                             <>
-                                <Link href="/auth/login" className="btn-secondary">Sign In</Link>
-                                <Link href="/auth/register" className="btn-primary">Deploy Agent</Link>
+                                <Link href="/docs" className="btn-secondary">Read the docs</Link>
+                                <Link href="/auth/register" className="btn-primary">Get OpenLoft Memory</Link>
                             </>
                         )}
                     </div>
@@ -90,13 +90,6 @@ export default function Hero() {
                     </div>
                 </motion.div>
 
-            </div>
-
-            {/* Social Proof / Trusted By */}
-            <div className={styles.socialProof}>
-                <span className={styles.trustedText}>
-                    Trusted by over 2000 forward thinking teams and individuals
-                </span>
             </div>
 
         </section>
