@@ -5,11 +5,12 @@ import { ReactNode, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
-import { LayoutGrid, Puzzle, Settings, Shield, LogOut, Users, CreditCard } from 'lucide-react';
+import { LayoutGrid, Puzzle, Settings, Shield, LogOut, Users, CreditCard, Briefcase } from 'lucide-react';
 import styles from '@/components/dashboard/Dashboard.module.css';
 
 const navItems = [
     { href: '/dashboard', label: 'Agents', icon: LayoutGrid },
+    { href: '/dashboard/team', label: 'Sales Team', icon: Briefcase },
     { href: '/dashboard/lobby', label: 'Lobby', icon: Users },
     { href: '/dashboard/skills', label: 'Skills', icon: Puzzle },
     { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },

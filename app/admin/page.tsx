@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { getFleetHealth, getTenants, restartFleet, syncPolicy, uploadSkill, getCoupons, createCoupon, deactivateCoupon, scaleOutCluster, scaleInCluster, IFleetHealthResponse, ITenant, ICoupon } from '@/lib/api';
+import { getFleetHealth, getTenants, restartFleet, syncPolicy, uploadSkill, getCoupons, createCoupon, deactivateCoupon, scaleOutCluster, scaleInCluster, adminGetAllAgents, adminStopAgent, adminRestartAgent, adminDeleteAgent, IFleetHealthResponse, ITenant, ICoupon, IAgent } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -17,6 +17,7 @@ export default function AdminPage() {
 
     const [health, setHealth] = useState<IFleetHealthResponse | null>(null);
     const [tenants, setTenants] = useState<ITenant[]>([]);
+    const [agents, setAgents] = useState<IAgent[]>([]);
     const [coupons, setCoupons] = useState<ICoupon[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -35,13 +36,15 @@ export default function AdminPage() {
 
     const loadData = useCallback(async () => {
         try {
-            const [healthData, tenantData, couponData] = await Promise.all([
+            const [healthData, tenantData, agentData, couponData] = await Promise.all([
                 getFleetHealth(),
                 getTenants(),
+                adminGetAllAgents(),
                 getCoupons()
             ]);
             setHealth(healthData);
             setTenants(tenantData);
+            setAgents(agentData);
             setCoupons(couponData);
         } catch {
             toast('Failed to load admin data', 'error');
@@ -91,6 +94,31 @@ export default function AdminPage() {
         } catch (error: any) {
              toast(error?.response?.data?.error || 'Failed to scale in', 'error');
         }
+    };
+
+    const handleAgentStop = async (agentId: string) => {
+        try {
+            await adminStopAgent(agentId);
+            toast('Agent stopped', 'success');
+            loadData();
+        } catch { toast('Failed to stop agent', 'error'); }
+    };
+
+    const handleAgentRestart = async (agentId: string) => {
+        try {
+            await adminRestartAgent(agentId);
+            toast('Agent restarted', 'success');
+            loadData();
+        } catch { toast('Failed to restart agent', 'error'); }
+    };
+
+    const handleAgentDelete = async (agentId: string) => {
+        if (!confirm(`Delete agent ${agentId}? This cannot be undone.`)) return;
+        try {
+            await adminDeleteAgent(agentId);
+            toast('Agent deleted', 'success');
+            loadData();
+        } catch { toast('Failed to delete agent', 'error'); }
     };
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -197,6 +225,67 @@ export default function AdminPage() {
                         </div>
                     </div>
                 ) : null}
+            </div>
+
+            {/* Agent Management */}
+            <div className={styles.heatmapSection}>
+                <div className={styles.sectionTitle}>All Agents ({agents.length})</div>
+                <div style={{ overflowX: 'auto' }}>
+                    <table className={styles.tenantTable}>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Agent ID</th>
+                                <th>Tenant</th>
+                                <th>Type</th>
+                                <th>Provider</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {agents.map((a) => (
+                                <tr key={a.agentId}>
+                                    <td>{a.name || '—'}</td>
+                                    <td style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>{a.agentId}</td>
+                                    <td style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>{a.tenantId}</td>
+                                    <td>
+                                        <span style={{
+                                            padding: '2px 6px', borderRadius: '4px', fontSize: '0.625rem',
+                                            fontWeight: 700, textTransform: 'uppercase',
+                                            background: a.agentType === 'hermes' ? 'rgba(168,85,247,0.15)' : 'rgba(39,121,255,0.15)',
+                                            color: a.agentType === 'hermes' ? '#a855f7' : 'var(--accent-blue)',
+                                        }}>
+                                            {a.agentType === 'hermes' ? 'Hermes' : 'OpenClaw'}
+                                        </span>
+                                    </td>
+                                    <td>{a.llmProvider}</td>
+                                    <td>
+                                        <span style={{
+                                            padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold',
+                                            backgroundColor: a.status === 'running' ? 'rgba(46,160,67,0.15)' : a.status === 'failed' ? 'rgba(229,77,46,0.15)' : 'rgba(139,148,158,0.15)',
+                                            color: a.status === 'running' ? '#3fb950' : a.status === 'failed' ? '#ff7b72' : '#8b949e',
+                                        }}>
+                                            {a.status}
+                                        </span>
+                                    </td>
+                                    <td style={{ display: 'flex', gap: '4px' }}>
+                                        {a.status === 'running' && (
+                                            <>
+                                                <Button variant="ghost" size="sm" onClick={() => handleAgentRestart(a.agentId)}>Restart</Button>
+                                                <Button variant="ghost" size="sm" onClick={() => handleAgentStop(a.agentId)}>Stop</Button>
+                                            </>
+                                        )}
+                                        <Button variant="danger" size="sm" onClick={() => handleAgentDelete(a.agentId)}>Delete</Button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {agents.length === 0 && (
+                                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '24px', color: 'var(--mid-grey)' }}>No agents deployed</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* Tenant Management */}

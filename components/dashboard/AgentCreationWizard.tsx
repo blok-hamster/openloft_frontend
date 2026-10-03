@@ -9,6 +9,7 @@ import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
+import AgentTypeSelector from './AgentTypeSelector';
 import styles from './Dashboard.module.css';
 
 interface AgentCreationWizardProps {
@@ -98,6 +99,7 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
     const { toast } = useToast();
 
     const [step, setStep] = useState(0);
+    const [agentType, setAgentType] = useState<'openclaw' | 'hermes'>('openclaw');
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [llmProvider, setLlmProvider] = useState('');
@@ -189,11 +191,12 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
                 secrets[providerKeyMap[llmProvider]] = customSecret;
             }
 
-            await deployAgent({ 
-                tenantId: user.tenantId, 
+            await deployAgent({
+                tenantId: user.tenantId,
                 name,
                 description,
-                llmProvider, 
+                agentType,
+                llmProvider,
                 model,
                 usePlatformCredits,
                 saveToSecretManager,
@@ -212,6 +215,7 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
 
     const handleClose = () => {
         setStep(0);
+        setAgentType('openclaw');
         setName('');
         setDescription('');
         setLlmProvider('');
@@ -224,13 +228,27 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
     return (
         <Modal open={open} onClose={handleClose} title="Deploy New Agent">
             <div className={styles.wizardProgress}>
-                <div className={styles.progressLine} style={{ width: `${(step / 4) * 100}%` }} />
-                {[0, 1, 2, 3, 4].map((s) => (
+                <div className={styles.progressLine} style={{ width: `${(step / 5) * 100}%` }} />
+                {[0, 1, 2, 3, 4, 5].map((s) => (
                     <div key={s} className={`${styles.progressStep} ${step >= s ? styles.progressStepActive : ''}`} />
                 ))}
             </div>
 
             {step === 0 && (
+                <div className={styles.wizardSteps}>
+                    <div className={styles.headerTitle} style={{ fontSize: 'var(--font-size-sm)', marginBottom: '1rem' }}>
+                        Choose Agent Runtime
+                    </div>
+                    <AgentTypeSelector value={agentType} onChange={setAgentType} />
+                    <div className={styles.wizardActionsEnd}>
+                        <Button variant="primary" onClick={() => setStep(1)}>
+                            Next: Name Your Agent
+                        </Button>
+                    </div>
+                </div>
+            )}
+
+            {step === 1 && (
                 <div className={styles.wizardSteps}>
                     <Input
                         label="Agent Name"
@@ -244,30 +262,31 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                     />
-                    <div className={styles.wizardActionsEnd}>
-                        <Button variant="primary" onClick={() => setStep(1)} disabled={!name.trim()}>
+                    <div className={styles.wizardActions}>
+                        <Button variant="ghost" onClick={() => setStep(0)}>Back</Button>
+                        <Button variant="primary" onClick={() => setStep(2)} disabled={!name.trim()}>
                             Next: Billing Strategy
                         </Button>
                     </div>
                 </div>
             )}
 
-            {step === 1 && (
+            {step === 2 && (
                 <div className={styles.wizardSteps}>
                     <div className={styles.headerTitle} style={{ fontSize: 'var(--font-size-sm)', marginBottom: '1rem' }}>
                         Choose Billing Strategy
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <Card 
-                            className={usePlatformCredits ? styles.activePlanCard : ''} 
+                        <Card
+                            className={usePlatformCredits ? styles.activePlanCard : ''}
                             onClick={() => setUsePlatformCredits(true)}
                             style={{ cursor: 'pointer', padding: '1.25rem' }}
                         >
                             <h4 style={{ fontSize: '0.8125rem', marginBottom: '0.5rem' }}>Platform Credits</h4>
                             <p style={{ fontSize: '0.75rem', opacity: 0.7 }}>Use OpenLoft managed keys. Pay per token from your balance.</p>
                         </Card>
-                        <Card 
-                            className={!usePlatformCredits ? styles.activePlanCard : ''} 
+                        <Card
+                            className={!usePlatformCredits ? styles.activePlanCard : ''}
                             onClick={() => setUsePlatformCredits(false)}
                             style={{ cursor: 'pointer', padding: '1.25rem' }}
                         >
@@ -276,13 +295,13 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
                         </Card>
                     </div>
                     <div className={styles.wizardActions}>
-                        <Button variant="ghost" onClick={() => setStep(0)}>Back</Button>
-                        <Button variant="primary" onClick={() => setStep(2)}>Next: Select Provider</Button>
+                        <Button variant="ghost" onClick={() => setStep(1)}>Back</Button>
+                        <Button variant="primary" onClick={() => setStep(3)}>Next: Select Provider</Button>
                     </div>
                 </div>
             )}
 
-            {step === 2 && (
+            {step === 3 && (
                 <div className={styles.wizardSteps}>
                     <Select
                         label="LLM Provider"
@@ -291,13 +310,13 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
                         options={llmProviderOptions}
                     />
                     <div className={styles.wizardActions}>
-                        <Button variant="ghost" onClick={() => setStep(1)}>Back</Button>
-                        <Button variant="primary" onClick={() => setStep(3)} disabled={!llmProvider}>Next: Configuration</Button>
+                        <Button variant="ghost" onClick={() => setStep(2)}>Back</Button>
+                        <Button variant="primary" onClick={() => setStep(4)} disabled={!llmProvider}>Next: Configuration</Button>
                     </div>
                 </div>
             )}
 
-            {step === 3 && (
+            {step === 4 && (
                 <div className={styles.wizardSteps}>
                     <Select
                         label="Model"
@@ -305,20 +324,20 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
                         onChange={(e) => setModel(e.target.value)}
                         options={currentModels}
                     />
-                    
+
                     {!usePlatformCredits && (
                         <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
                             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-                                <Button 
-                                    variant={useSavedKey ? "secondary" : "ghost"} 
+                                <Button
+                                    variant={useSavedKey ? "secondary" : "ghost"}
                                     onClick={() => setUseSavedKey(true)}
                                     size="sm"
                                     disabled={!hasSavedKeyForProvider}
                                 >
                                     Use Saved Key {hasSavedKeyForProvider ? '✅' : '(None)'}
                                 </Button>
-                                <Button 
-                                    variant={!useSavedKey ? "secondary" : "ghost"} 
+                                <Button
+                                    variant={!useSavedKey ? "secondary" : "ghost"}
                                     onClick={() => setUseSavedKey(false)}
                                     size="sm"
                                 >
@@ -341,17 +360,17 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
                             )}
                         </div>
                     )}
-                    
+
                     <div className={styles.wizardActions}>
-                        <Button variant="ghost" onClick={() => setStep(2)}>Back</Button>
-                        <Button variant="primary" onClick={() => setStep(4)} disabled={!model || (!usePlatformCredits && !useSavedKey && !customSecret)}>
+                        <Button variant="ghost" onClick={() => setStep(3)}>Back</Button>
+                        <Button variant="primary" onClick={() => setStep(5)} disabled={!model || (!usePlatformCredits && !useSavedKey && !customSecret)}>
                             Next: Review
                         </Button>
                     </div>
                 </div>
             )}
 
-            {step === 4 && (
+            {step === 5 && (
                 <div className={styles.wizardSteps}>
                     <div style={{ textAlign: 'center' }}>
                         <div className={styles.headerTitle} style={{ fontSize: 'var(--font-size-sm)', marginBottom: '1rem' }}>
@@ -360,15 +379,16 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
                         <Card style={{ textAlign: 'left', background: 'rgba(26,26,26,0.02)' }}>
                             <div className={styles.agentName}>{name}</div>
                             <div className={styles.agentMetaItem} style={{ marginBottom: '1rem' }}>{description}</div>
-                            
+
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.75rem' }}>
+                                <div><strong>Runtime:</strong> {agentType === 'hermes' ? 'Hermes Agent' : 'OpenClaw Agent'}</div>
                                 <div><strong>Provider:</strong> {providerModels[llmProvider]?.label}</div>
                                 <div><strong>Model:</strong> {currentModels.find(m => m.value === model)?.label}</div>
-                                <div style={{ 
+                                <div style={{
                                     marginTop: '0.5rem',
-                                    padding: '0.5rem', 
-                                    borderRadius: '6px', 
-                                    background: usePlatformCredits ? 'rgba(39, 121, 255, 0.1)' : 'rgba(34, 197, 94, 0.1)', 
+                                    padding: '0.5rem',
+                                    borderRadius: '6px',
+                                    background: usePlatformCredits ? 'rgba(39, 121, 255, 0.1)' : 'rgba(34, 197, 94, 0.1)',
                                     color: usePlatformCredits ? 'var(--accent-blue)' : '#22c55e',
                                     fontWeight: 700,
                                     textAlign: 'center'
@@ -379,7 +399,7 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
                         </Card>
                     </div>
                     <div className={styles.wizardActions}>
-                        <Button variant="ghost" onClick={() => setStep(3)}>Back</Button>
+                        <Button variant="ghost" onClick={() => setStep(4)}>Back</Button>
                         <Button variant="primary" loading={loading} onClick={handleDeploy}>
                             Deploy Agent
                         </Button>

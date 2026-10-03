@@ -1,0 +1,100 @@
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: var(--color-text-secondary, #6b7280);
+  max-width: 600px;
+  margin: 0 auto 0.5rem;
+}
+
+.delivery {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-primary, #6366f1);
+}
+
+.tierGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.tierCard {
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 12px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tierName {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.tierPrice {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-primary, #6366f1);
+}
+
+.tierAgents {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary, #6b7280);
+}
+
+.tierBestFor {
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--color-text-secondary, #6b7280);
+}
+
+.tierFeatures {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+  flex: 1;
+}
+
+.tierFeatures li {
+  padding: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.tierFeatures li::before {
+  content: '✓ ';
+  color: var(--color-primary, #6366f1);
+  font-weight: 600;
+}
+
+.tierCta {
+  display: block;
+  text-align: center;
+  padding: 0.75rem 1.5rem;
+  background: var(--color-primary, #6366f1);
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.tierCta:hover {
+  opacity: 0.9;
+}

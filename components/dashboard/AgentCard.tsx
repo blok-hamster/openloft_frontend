@@ -42,43 +42,40 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
     const disabled = isProvisioning || isStarting;
 
     useEffect(() => {
+        // Hermes doesn't use WebSocket pairing — mark as paired immediately
+        if (agent.agentType === 'hermes' && isRunning) {
+            setIsPaired(true);
+            return;
+        }
+
         let interval: NodeJS.Timeout;
-        
+
         if (isRunning && !isPaired) {
-            const checkAndPair = async () => {
-                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const checkConnection = () => {
+                const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
                 const baseDomain = isLocal ? '127.0.0.1.nip.io' : 'agents.openloft.xyz';
                 const protocol = isLocal ? 'ws' : 'wss';
                 const wsUrl = `${protocol}://${agent.agentId}.${baseDomain}?token=${agent.gatewayToken}`;
 
-                // Try to connect to see if already paired
                 const ws = new WebSocket(wsUrl);
+                const timeout = setTimeout(() => { ws.close(); }, 8000);
                 ws.onopen = () => {
+                    clearTimeout(timeout);
                     ws.close();
                     setIsPaired(true);
                 };
-                ws.onclose = async (e) => {
-                    // If not paired, request approval
-                    if (e.code === 1008 || e.code === 1005) {
-                        try {
-                            const match = e.reason?.match(/requestId:\s*([0-9a-f-]+)/);
-                            const requestId = match ? match[1] : undefined;
-                            await approveAgentDevice(agent.agentId, requestId);
-                        } catch (err) {
-                            // Silent fail on background approval
-                        }
-                    }
-                };
+                ws.onerror = () => { clearTimeout(timeout); };
+                ws.onclose = () => { clearTimeout(timeout); };
             };
 
-            checkAndPair();
-            interval = setInterval(checkAndPair, 5000);
+            checkConnection();
+            interval = setInterval(checkConnection, 5000);
         }
 
         return () => {
             if (interval) clearInterval(interval);
         };
-    }, [isRunning, isPaired, agent.agentId, agent.gatewayToken]);
+    }, [isRunning, isPaired, agent.agentId, agent.agentType, agent.gatewayToken]);
 
     return (
         <div className={`${styles.agentCard} ${isProvisioning ? styles.agentCardProvisioning : ''} ${isStarting ? styles.agentCardStarting : ''}`}>
@@ -104,6 +101,18 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
             )}
 
             <div className={styles.agentMeta}>
+                <span className={styles.agentMetaItem} style={{
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontSize: '0.625rem',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    background: agent.agentType === 'hermes' ? 'rgba(168, 85, 247, 0.15)' : 'rgba(39, 121, 255, 0.15)',
+                    color: agent.agentType === 'hermes' ? '#a855f7' : 'var(--accent-blue)',
+                }}>
+                    {agent.agentType === 'hermes' ? 'Hermes' : 'OpenClaw'}
+                </span>
                 <span className={styles.agentMetaItem}>
                     LLM: {agent.llmProvider}
                 </span>
@@ -159,7 +168,9 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                                 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
                                 const baseDomain = isLocal ? '127.0.0.1.nip.io' : 'agents.openloft.xyz';
                                 const protocol = isLocal ? 'http' : 'https';
-                                const webUiUrl = `${protocol}://${agent.agentId}.${baseDomain}?token=${agent.gatewayToken}`;
+                                const webUiUrl = agent.agentType === 'hermes'
+                                    ? `${protocol}://${agent.agentId}.${baseDomain}/login`
+                                    : `${protocol}://${agent.agentId}.${baseDomain}?token=${agent.gatewayToken}`;
 
                                 window.open(webUiUrl, '_blank');
                             }}

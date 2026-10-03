@@ -46,6 +46,7 @@ export interface IAgent {
   tenantId: string;
   agentId: string;
   name?: string;
+  agentType?: 'openclaw' | 'hermes';
   status: 'provisioning' | 'starting' | 'running' | 'stopped' | 'failed';
   containerId?: string;
   llmProvider: string;
@@ -139,13 +140,14 @@ export interface IRegisterResponse { message: string; email: string; }
 export interface ICreateTenantRequest { name: string; }
 
 // Agents
-export interface IDeployAgentRequest { 
-  tenantId: string; 
-  name: string; 
+export interface IDeployAgentRequest {
+  tenantId: string;
+  name: string;
   description?: string;
-  llmProvider: string; 
-  model?: string; 
-  secrets?: Record<string, string>; 
+  agentType?: 'openclaw' | 'hermes';
+  llmProvider: string;
+  model?: string;
+  secrets?: Record<string, string>;
   usePlatformCredits?: boolean;
   saveToSecretManager?: boolean;
 }
@@ -483,6 +485,28 @@ export const scaleOutCluster = async (): Promise<IAdminActionResponse> => {
 
 export const scaleInCluster = async (): Promise<IAdminActionResponse> => {
   const { data } = await api.post<IAdminActionResponse>('/admin/cluster/scale-in');
+  return data;
+};
+
+// --- Admin Agent Management ---
+
+export const adminGetAllAgents = async (): Promise<IAgent[]> => {
+  const { data } = await api.get<IAgent[]>('/admin/agents');
+  return data;
+};
+
+export const adminStopAgent = async (agentId: string): Promise<IAdminActionResponse> => {
+  const { data } = await api.post<IAdminActionResponse>(`/admin/agents/${agentId}/stop`);
+  return data;
+};
+
+export const adminRestartAgent = async (agentId: string): Promise<IAdminActionResponse> => {
+  const { data } = await api.post<IAdminActionResponse>(`/admin/agents/${agentId}/restart`);
+  return data;
+};
+
+export const adminDeleteAgent = async (agentId: string): Promise<IAdminActionResponse> => {
+  const { data } = await api.delete<IAdminActionResponse>(`/admin/agents/${agentId}`);
   return data;
 };
 

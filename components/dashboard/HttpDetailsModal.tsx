@@ -20,10 +20,9 @@ export default function HttpDetailsModal({ agent, open, onClose }: HttpDetailsMo
     const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     const baseDomain = isLocal ? '127.0.0.1.nip.io' : 'agents.openloft.xyz';
     const protocol = isLocal ? 'http' : 'https';
-
     const apiUrl = `${protocol}://${agent.agentId}.${baseDomain}/v1/chat/completions`;
     const token = agent.gatewayToken;
-    const model = 'openclaw';
+    const model = agent.agentType === 'hermes' ? 'hermes-agent' : 'openclaw';
 
     const handleCopy = (text: string, id: string) => {
         navigator.clipboard.writeText(text);

@@ -17,11 +17,16 @@ interface ChatMessage {
 }
 
 export default function AgentChatPanel({ agent, onClose }: AgentChatPanelProps) {
-    // OpenClaw's native WebUI handles WebSocket connections, markdown rendering, tool call views, and thinking steps.
-    // By embedding it in an iframe, we get the full cohesive chat experience without reverse-engineering the JSON-RPC protocol.
-    const webUiUrl = typeof window !== 'undefined'
-        ? `http://${agent.agentId}.127.0.0.1.nip.io/?token=${agent.gatewayToken}`
-        : '';
+    const iframeRef = useRef<HTMLIFrameElement>(null);
+
+    const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    const baseDomain = isLocal ? '127.0.0.1.nip.io' : 'agents.openloft.xyz';
+    const protocol = isLocal ? 'http' : 'https';
+
+    const isHermes = agent.agentType === 'hermes';
+    const webUiUrl = isHermes
+        ? `${protocol}://${agent.agentId}.${baseDomain}/login`
+        : `${protocol}://${agent.agentId}.${baseDomain}/?token=${agent.gatewayToken}`;
 
     return (
         <div className={styles.chatPanel} style={{ padding: 0, overflow: 'hidden' }}>
@@ -32,11 +37,18 @@ export default function AgentChatPanel({ agent, onClose }: AgentChatPanelProps) 
                 </button>
             </div>
 
+            {isHermes && (
+                <div style={{ padding: '0.5rem 1rem', background: 'var(--panel-bg)', borderBottom: '1px solid var(--border-color)', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                    Login: <strong>admin</strong> / <code style={{ fontSize: '0.7rem', userSelect: 'all' }}>{agent.gatewayToken}</code>
+                </div>
+            )}
+
             <iframe
+                ref={iframeRef}
                 src={webUiUrl}
                 style={{
                     width: '100%',
-                    height: 'calc(100% - 50px)', // Subtract header height
+                    height: isHermes ? 'calc(100% - 82px)' : 'calc(100% - 50px)',
                     border: 'none',
                     background: 'var(--bg-color)'
                 }}

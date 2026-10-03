@@ -119,7 +119,7 @@ export default function MemoryEditor({ agent, open, onClose }: MemoryEditorProps
                                     className={`${styles.memoryTab} ${index === activeFile ? styles.memoryTabActive : ''}`}
                                     onClick={() => setActiveFile(index)}
                                 >
-                                    {file.filename.replace('.md', '')}
+                                    {file.filename.endsWith('.md') ? file.filename.replace('.md', '') : file.filename}
                                     {dirty.has(file.filename) && <span className={styles.memoryTabDot} />}
                                 </button>
                             ))}
