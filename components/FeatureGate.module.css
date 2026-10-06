@@ -1,0 +1,163 @@
+/* ============================================================
+   FeatureGate — pre-launch notice for the account area
+   Viewport-independent: this renders identically at every screen
+   size, so sign-in cannot be reachable on one device and not
+   another.
+   ============================================================ */
+
+.gate {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.5rem;
+    background: var(--bg-color);
+}
+
+.gateCard {
+    width: 100%;
+    max-width: 560px;
+    border: var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-color);
+    padding: 2.5rem 2rem;
+}
+
+.gateEyebrow {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent-coral);
+    margin-bottom: 0.75rem;
+}
+
+.gateTitle {
+    font-size: var(--font-size-xl);
+    margin-bottom: 1rem;
+}
+
+.gateBody {
+    font-size: var(--font-size-base);
+    line-height: 1.7;
+    color: var(--text-primary);
+    margin-bottom: 1.75rem;
+}
+
+.gateList {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.gateItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(26, 26, 26, 0.08);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.gateItem strong {
+    color: var(--text-primary);
+}
+
+.gateIcon {
+    flex-shrink: 0;
+    margin-top: 0.2rem;
+    color: var(--text-secondary);
+}
+
+.gateState {
+    display: inline-block;
+    margin-left: 0.35rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: var(--radius-sm);
+    background: rgba(244, 122, 74, 0.15);
+    color: var(--accent-coral);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+.gateAvailable {
+    font-size: var(--font-size-sm);
+    line-height: 1.7;
+    color: var(--text-secondary);
+    padding: 0.9rem 1rem;
+    border-radius: var(--radius-md);
+    background: rgba(10, 92, 58, 0.06);
+    border: 1px solid rgba(10, 92, 58, 0.18);
+    margin-bottom: 1.75rem;
+}
+
+.gateAvailable strong {
+    color: var(--accent-forest);
+}
+
+.gateActions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.gateActions > * {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-height: var(--touch-target);
+}
+
+.gateTertiary {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+
+/* Horizontal CTAs only where there is genuinely room for them. */
+@media (min-width: 560px) {
+    .gateActions {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .gateActions > * {
+        width: auto;
+        flex: 1 1 auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .gate {
+        padding: 1rem;
+        align-items: flex-start;
+    }
+
+    .gateCard {
+        padding: 1.75rem 1.25rem;
+    }
+
+    .gateTitle {
+        font-size: var(--font-size-lg);
+    }
+
+    .gateState {
+        /* Stops the pill forcing the label onto its own line at 320px */
+        margin-left: 0;
+    }
+}
