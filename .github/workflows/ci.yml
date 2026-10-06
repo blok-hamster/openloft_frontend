@@ -1,7 +1,4 @@
-# Frontend CI — M0.2
-#
-# There was no workflow in this directory before. The backend's deploy.yml was
-# the only CI in either repo, so a frontend regression could not fail a build.
+# Frontend CI
 #
 # Order is deliberate and cheapest-fails-first:
 #   typecheck → lint → test → build
@@ -9,10 +6,21 @@
 # `tsc --noEmit` runs before lint because a type error is a hard failure that
 # lint will not catch, and running it first means the fast check reports first.
 #
-# `npm run build` is last because it is by far the slowest. It was previously
-# absent, which let a CSS-module error ship: `composes` is illegal inside an
-# `@media` block, and neither tsc, eslint nor vitest evaluate CSS — only the
-# Turbopack build does. Typecheck and lint stayed green the whole time.
+# `npm run build` is last because it is by far the slowest. It is also the only
+# step that evaluates CSS Modules, so it is the only thing that catches
+# `composes` inside an @media block, an undefined `var()` target, or a bad
+# CSS-module import path. Typecheck, lint and test all pass on those.
+#
+# LAYOUT NOTE — this repository's root IS the frontend directory.
+#
+# There is no package.json one level up; `frontend/package.json` does not exist.
+# Earlier revisions of this file used `working-directory: frontend` and
+# `cache-dependency-path: frontend/package-lock.json`, which was written for a
+# monorepo where the app sat in a subdirectory. Both resolve to paths that do
+# not exist here, so every run failed in the setup-node cache step before
+# executing a single check. Runs 37100307988, 37102641442 and 37507084685 were
+# all red for that reason and nothing was ever verified. Do not reintroduce the
+# `frontend/` prefix unless the app is actually moved into a subdirectory.
 
 name: CI
 
@@ -38,30 +46,22 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        working-directory: frontend
         # `npm ci` rather than `npm install`: it installs exactly the lockfile,
         # so a lockfile that has drifted from package.json fails here rather
         # than silently passing in CI and failing on a developer machine.
         run: npm ci
 
       - name: Typecheck
-        working-directory: frontend
         run: npm run typecheck
 
       - name: Lint
-        working-directory: frontend
         run: npm run lint
 
       - name: Test
-        working-directory: frontend
         run: npm test
 
       - name: Build
-        working-directory: frontend
-        # The only step that evaluates CSS Modules, so it is the only thing
-        # that catches `composes` inside a media query, an undefined
-        # `var()` target, or a bad CSS-module import path.
         run: npm run build
