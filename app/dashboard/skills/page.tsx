@@ -14,6 +14,7 @@ import SkeletonLoader from '@/components/ui/SkeletonLoader';
 import Modal from '@/components/ui/Modal';
 import { Upload, Box, Cpu, Info, Search, Download, ShieldCheck, ShieldAlert, FileText, CheckCircle, ExternalLink, Code, Eye, Star, TrendingUp } from 'lucide-react';
 import styles from '@/components/dashboard/Dashboard.module.css';
+import marketplace from './Marketplace.module.css';
 
 interface Extension {
     id: string;
@@ -254,7 +255,7 @@ function MarketplaceContent() {
                         <h1 className={styles.headerTitle}>Marketplace</h1>
                     </div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className={marketplace.stackLg}>
                     <SkeletonLoader variant="card" count={4} />
                 </div>
             </>
@@ -274,10 +275,10 @@ function MarketplaceContent() {
                     <h1 className={styles.headerTitle}>Unified Marketplace</h1>
                     <span className={styles.headerSubtitle}>Discover and manage agent extensions</span>
                 </div>
-                <div className={styles.headerActions} style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <div style={{ position: 'relative', width: '240px' }}>
-                        <Input 
-                            placeholder="Search ClawHub..." 
+                <div className={styles.headerActions}>
+                    <div className={marketplace.searchWrap}>
+                        <Input
+                            placeholder="Search ClawHub..."
                             value={searchQuery}
                             onChange={(e) => handleSearch(e.target.value)}
                         />
@@ -286,7 +287,7 @@ function MarketplaceContent() {
                         type="file"
                         accept=".zip,.json"
                         ref={fileInputRef}
-                        style={{ display: 'none' }}
+                        className={marketplace.hiddenInput}
                         onChange={handleFileUpload}
                     />
                     <Button 
@@ -306,7 +307,7 @@ function MarketplaceContent() {
                 </div>
             </div>
 
-            <div className={styles.memoryTabs} style={{ marginBottom: '1.5rem' }}>
+            <div className={`${styles.memoryTabs} ${marketplace.tabsSpaced}`}>
                 <button 
                     className={`${styles.memoryTab} ${activeTab === 'discover' ? styles.memoryTabActive : ''}`}
                     onClick={() => setActiveTab('discover')}
@@ -331,11 +332,11 @@ function MarketplaceContent() {
             </div>
 
             {searchQuery.trim().length > 2 && activeTab === 'discover' && (
-                <div style={{ marginBottom: '2rem' }}>
-                    <h3 className={styles.agentName} style={{ marginBottom: '1rem', color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className={marketplace.sectionBlock}>
+                    <h3 className={`${styles.agentName} ${marketplace.sectionHeadingBlue}`}>
                         <Search size={16} /> Discovery Results (ClawHub)
                     </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div className={marketplace.stack}>
                         {searchingRemote ? (
                             <SkeletonLoader variant="card" count={2} />
                         ) : remoteResults.length > 0 ? (
@@ -343,19 +344,19 @@ function MarketplaceContent() {
                                 const isInstalled = skills.some(s => s.id === res.slug);
                                 return (
                                     <Card key={res.slug}>
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                                <div style={{ width: '40px', height: '40px', background: 'rgba(39, 121, 255, 0.08)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-blue)' }}>
+                                        <div className={marketplace.resultRow}>
+                                             <div className={marketplace.resultMain}>
+                                                <div className={marketplace.iconTileBlue}>
                                                     <Download size={20} />
                                                 </div>
-                                                 <div>
-                                                    <div className={styles.agentName} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                        {res.displayName || res.name} 
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '10px', marginLeft: '0.5rem' }}>
-                                                            <span style={{ color: '#FFB800', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                                <div className={marketplace.resultText}>
+                                                    <div className={`${styles.agentName} ${marketplace.resultNameRow}`}>
+                                                        {res.displayName || res.name}
+                                                        <div className={marketplace.resultStats}>
+                                                            <span className={marketplace.statStar}>
                                                                 <Star size={10} fill={res.stats?.stars > 0 ? "#FFB800" : "none"} /> {res.stats?.stars || 0}
                                                             </span>
-                                                            <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                                            <span className={marketplace.statDownload}>
                                                                 <Download size={10} /> {res.stats?.downloads ? (res.stats.downloads > 1000 ? (res.stats.downloads/1000).toFixed(1)+'k' : res.stats.downloads) : 0}
                                                             </span>
                                                         </div>
@@ -363,16 +364,16 @@ function MarketplaceContent() {
                                                     <div className={styles.agentMetaItem}>{res.summary || res.description}</div>
                                                 </div>
                                              </div>
-                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                                <Button 
-                                                    variant="ghost" 
+                                             <div className={marketplace.resultActions}>
+                                                <Button
+                                                    variant="ghost"
                                                     size="sm"
                                                     onClick={() => handleOpenDetails(res.slug!)}
                                                 >
                                                     Details
                                                 </Button>
-                                                <Button 
-                                                    variant="secondary" 
+                                                <Button
+                                                    variant="secondary"
                                                     size="sm"
                                                     disabled={isInstalled}
                                                     loading={installing === res.slug}
@@ -386,7 +387,7 @@ function MarketplaceContent() {
                                 );
                             })
                         ) : (
-                            <div className={styles.emptyState} style={{ padding: '2rem' }}>
+                            <div className={`${styles.emptyState} ${marketplace.emptyPadded}`}>
                                 <div className={styles.emptyDescription}>No matching skills found on ClawHub.</div>
                             </div>
                         )}
@@ -395,11 +396,11 @@ function MarketplaceContent() {
             )}
 
             {searchQuery.trim().length <= 2 && activeTab === 'discover' && (
-                <div style={{ marginBottom: '2rem' }}>
-                    <h3 className={styles.agentName} style={{ marginBottom: '1.25rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.1rem' }}>
+                <div className={marketplace.sectionBlock}>
+                    <h3 className={`${styles.agentName} ${marketplace.sectionHeadingLg}`}>
                         <TrendingUp size={18} style={{ color: '#ff4b4b' }} /> Trending Now
                     </h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div className={marketplace.stack}>
                         {loadingTrending ? (
                             <SkeletonLoader variant="card" count={3} />
                         ) : trendingResults.length > 0 ? (
@@ -407,19 +408,19 @@ function MarketplaceContent() {
                                 const isInstalled = skills.some(s => s.id === res.slug);
                                 return (
                                     <Card key={res.slug}>
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                                <div style={{ width: '40px', height: '40px', background: 'rgba(255, 75, 75, 0.08)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff4b4b' }}>
+                                        <div className={marketplace.resultRow}>
+                                             <div className={marketplace.resultMain}>
+                                                <div className={marketplace.iconTileRed}>
                                                     <Download size={20} />
                                                 </div>
-                                                <div>
-                                                    <div className={styles.agentName} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                        {res.displayName} 
-                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '10px', marginLeft: '0.5rem' }}>
-                                                            <span style={{ color: '#FFB800', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                                <div className={marketplace.resultText}>
+                                                    <div className={`${styles.agentName} ${marketplace.resultNameRow}`}>
+                                                        {res.displayName}
+                                                        <div className={marketplace.resultStats}>
+                                                            <span className={marketplace.statStar}>
                                                                 <Star size={10} fill={res.stats?.stars > 0 ? "#FFB800" : "none"} /> {res.stats?.stars || 0}
                                                             </span>
-                                                            <span style={{ color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                                            <span className={marketplace.statDownload}>
                                                                 <Download size={10} /> {res.stats?.downloads ? (res.stats.downloads > 1000 ? (res.stats.downloads/1000).toFixed(1)+'k' : res.stats.downloads) : 0}
                                                             </span>
                                                         </div>
@@ -427,16 +428,16 @@ function MarketplaceContent() {
                                                     <div className={styles.agentMetaItem}>{res.summary}</div>
                                                 </div>
                                              </div>
-                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                                <Button 
-                                                    variant="ghost" 
+                                             <div className={marketplace.resultActions}>
+                                                <Button
+                                                    variant="ghost"
                                                     size="sm"
                                                     onClick={() => handleOpenDetails(res.slug)}
                                                 >
                                                     Details
                                                 </Button>
-                                                <Button 
-                                                    variant="primary" 
+                                                <Button
+                                                    variant="primary"
                                                     size="sm"
                                                     disabled={isInstalled || installing === res.slug}
                                                     onClick={() => handleInstall(res.slug)}
@@ -449,7 +450,7 @@ function MarketplaceContent() {
                                 );
                             })
                         ) : (
-                            <div style={{ textAlign: 'center', padding: '2rem', opacity: 0.5 }}>No trending skills found at the moment.</div>
+                            <div className={marketplace.centerNote}>No trending skills found at the moment.</div>
                         )}
                     </div>
                 </div>
@@ -462,33 +463,33 @@ function MarketplaceContent() {
                     title={`Skill Inspection: ${detailSlug}`}
                 >
                     {loadingDetails ? (
-                        <div style={{ padding: '2rem' }}><SkeletonLoader variant="card" count={3} /></div>
+                        <div className={marketplace.emptyPadded}><SkeletonLoader variant="card" count={3} /></div>
                     ) : detailData ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                            <div style={{ padding: '1rem', border: '1px solid rgba(0,0,0,0.05)', borderRadius: '12px', background: 'rgba(255,255,255,0.5)' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-                                    <div style={{ fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div className={marketplace.stackXl}>
+                            <div className={marketplace.detailCard}>
+                                <div className={marketplace.detailHeader}>
+                                    <div className={marketplace.detailTitle}>
                                         {detailData.displayName}
-                                        <span style={{ fontSize: '12px', opacity: 0.5, fontWeight: 400 }}>{detailData.slug}</span>
+                                        <span className={marketplace.detailSlug}>{detailData.slug}</span>
                                     </div>
-                                    <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-                                            <Star size={14} fill={detailData.stats?.stars > 0 ? "#FFB800" : "none"} color={detailData.stats?.stars > 0 ? "#FFB800" : "currentColor"} /> 
+                                    <div className={marketplace.detailStats}>
+                                        <div className={marketplace.detailStat}>
+                                            <Star size={14} fill={detailData.stats?.stars > 0 ? "#FFB800" : "none"} color={detailData.stats?.stars > 0 ? "#FFB800" : "currentColor"} />
                                             <strong>{detailData.stats?.stars || 0}</strong> stars
                                         </div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
-                                            <Download size={14} /> 
+                                        <div className={marketplace.detailStat}>
+                                            <Download size={14} />
                                             <strong>{detailData.stats?.downloads?.toLocaleString() || 0}</strong> downloads
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className={styles.agentMetaItem} style={{ fontSize: '0.9rem', marginBottom: '1rem' }}>{detailData.summary}</div>
-                                
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '0.75rem', background: 'rgba(0,0,0,0.02)', borderRadius: '8px' }}>
-                                     <div style={{ fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <div className={`${styles.agentMetaItem} ${marketplace.detailSummary}`}>{detailData.summary}</div>
+
+                                <div className={marketplace.statusStrip}>
+                                     <div className={marketplace.statusStripLabel}>
                                         <ShieldCheck size={16} /> Status:
-                                        <span style={{ color: detailData.latestVersion?.llmAnalysis?.verdict === 'safe' ? 'var(--accent-blue)' : '#ff4b4b' }}>
+                                        <span className={detailData.latestVersion?.llmAnalysis?.verdict === 'safe' ? marketplace.statusValueSafe : marketplace.statusValue}>
                                             {detailData.latestVersion?.llmAnalysis?.verdict?.toUpperCase() || 'UNKNOWN'}
                                         </span>
                                      </div>
@@ -496,95 +497,82 @@ function MarketplaceContent() {
                             </div>
 
                             <div>
-                        <div className={styles.sectionHeader} style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div className={`${styles.sectionHeader} ${marketplace.headingSm}`}>
                             <ShieldAlert size={18} /> Deep Security Scan
                         </div>
-                        
+
                         {detailData.latestVersion?.llmAnalysis ? (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                <div style={{ padding: '1rem', background: detailData.latestVersion.llmAnalysis.verdict === 'safe' ? 'rgba(34, 197, 94, 0.05)' : 'rgba(234, 179, 8, 0.08)', borderRadius: '12px', border: `1px solid ${detailData.latestVersion.llmAnalysis.verdict === 'safe' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(234, 179, 8, 0.2)'}` }}>
-                                    <div style={{ fontWeight: 700, marginBottom: '0.5rem', color: detailData.latestVersion.llmAnalysis.verdict === 'safe' ? '#22c55e' : '#b25e00', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <div className={marketplace.stack}>
+                                <div className={detailData.latestVersion.llmAnalysis.verdict === 'safe' ? marketplace.verdictBoxSafe : marketplace.verdictBoxWarn}>
+                                    <div className={detailData.latestVersion.llmAnalysis.verdict === 'safe' ? marketplace.verdictTitleSafe : marketplace.verdictTitleWarn}>
                                         {detailData.latestVersion.llmAnalysis.verdict === 'safe' ? <ShieldCheck size={18} /> : <ShieldAlert size={18} />}
                                         Security Verdict: {detailData.latestVersion.llmAnalysis.verdict?.toUpperCase()}
                                     </div>
-                                    <div style={{ fontSize: '0.9rem', lineHeight: '1.5', opacity: 0.8 }}>{detailData.latestVersion.llmAnalysis.summary}</div>
+                                    <div className={marketplace.prose}>{detailData.latestVersion.llmAnalysis.summary}</div>
                                 </div>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+                                <div className={marketplace.dimGrid}>
                                     {detailData.latestVersion.llmAnalysis.dimensions?.map((dim: any, i: number) => (
-                                        <div key={i} style={{ padding: '0.75rem', background: 'rgba(0,0,0,0.02)', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.05)' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                                <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{dim.label}</div>
-                                                <span style={{ 
-                                                    fontSize: '9px', 
-                                                    padding: '2px 6px', 
-                                                    borderRadius: '4px', 
-                                                    background: dim.rating === 'ok' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(234, 179, 8, 0.1)',
-                                                    color: dim.rating === 'ok' ? '#22c55e' : '#b25e00'
-                                                }}>
+                                        <div key={i} className={marketplace.dimCard}>
+                                            <div className={marketplace.dimHead}>
+                                                <div className={marketplace.dimLabel}>{dim.label}</div>
+                                                <span className={dim.rating === 'ok' ? marketplace.dimBadgeOk : marketplace.dimBadgeWarn}>
                                                     {dim.rating?.toUpperCase()}
                                                 </span>
                                             </div>
-                                            <div style={{ fontSize: '0.75rem', opacity: 0.7, lineHeight: '1.4' }}>{dim.detail}</div>
+                                            <div className={marketplace.dimDetail}>{dim.detail}</div>
                                         </div>
                                     ))}
                                 </div>
 
-                                <div style={{ padding: '1rem', background: 'rgba(39, 121, 255, 0.05)', borderRadius: '12px', border: '1px solid rgba(39, 121, 255, 0.1)' }}>
-                                    <div style={{ fontWeight: 700, marginBottom: '0.5rem', color: 'var(--accent-blue)', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
+                                <div className={marketplace.guidanceBox}>
+                                    <div className={marketplace.guidanceTitle}>
                                         <Info size={16} /> Technical Guidance
                                     </div>
-                                    <div style={{ fontSize: '0.85rem', lineHeight: '1.5', opacity: 0.9 }}>{detailData.latestVersion.llmAnalysis.guidance}</div>
+                                    <div className={marketplace.guidanceBody}>{detailData.latestVersion.llmAnalysis.guidance}</div>
                                 </div>
                             </div>
                         ) : (
-                            <div style={{ padding: '2rem', textAlign: 'center', opacity: 0.5, border: '1px dashed rgba(0,0,0,0.1)', borderRadius: '12px' }}>
+                            <div className={marketplace.noScan}>
                                 No deep security scan available for this version.
                             </div>
                         )}
                     </div>
 
                             <div>
-                                <div className={styles.sectionHeader} style={{ fontSize: '1rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <div className={`${styles.sectionHeader} ${marketplace.headingSm}`}>
                                     <FileText size={18} /> File Manifest
                                 </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: previewFile ? '250px 1fr' : '1fr', gap: '1rem' }}>
-                                    <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid rgba(0,0,0,0.05)', borderRadius: '6px' }}>
+                                <div className={previewFile ? marketplace.manifestGridSplit : marketplace.manifestGrid}>
+                                    <div className={marketplace.manifestList}>
                                         {detailData.files?.map((f: any, i: number) => (
-                                            <div 
-                                                key={i} 
+                                            <div
+                                                key={i}
                                                 onClick={() => handlePreviewFile(f.path)}
-                                                style={{ 
-                                                    display: 'flex', 
-                                                    alignItems: 'center', 
-                                                    justifyContent: 'space-between', 
-                                                    padding: '0.5rem 0.75rem', 
-                                                    background: previewFile === f.path ? 'rgba(39, 121, 255, 0.08)' : (i % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.01)'),
-                                                    fontSize: '0.85rem',
-                                                    cursor: 'pointer',
-                                                    borderLeft: previewFile === f.path ? '3px solid var(--accent-blue)' : 'none'
-                                                }}
+                                                className={previewFile === f.path
+                                                    ? marketplace.manifestRowActive
+                                                    : (i % 2 === 0 ? marketplace.manifestRowAlt : marketplace.manifestRow)}
                                             >
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <div className={marketplace.manifestPathWrap}>
                                                     <Code size={14} style={{ opacity: 0.5 }} />
-                                                    <code style={{ color: previewFile === f.path ? 'var(--accent-blue)' : 'inherit' }}>{f.path}</code>
+                                                    <code className={previewFile === f.path ? marketplace.manifestCodeActive : marketplace.manifestCode}>{f.path}</code>
                                                 </div>
-                                                <span style={{ opacity: 0.5, fontSize: '0.75rem' }}>{(f.size / 1024).toFixed(1)} KB</span>
+                                                <span className={marketplace.manifestSize}>{(f.size / 1024).toFixed(1)} KB</span>
                                             </div>
                                         ))}
                                     </div>
-                                    
+
                                     {previewFile && (
-                                        <div style={{ border: '1px solid rgba(0,0,0,0.05)', borderRadius: '6px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                                            <div style={{ padding: '0.5rem 0.75rem', background: 'rgba(0,0,0,0.02)', borderBottom: '1px solid rgba(0,0,0,0.05)', fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <div className={marketplace.previewPane}>
+                                            <div className={marketplace.previewHead}>
                                                 <span>Previewing: {previewFile}</span>
-                                                <Button variant="ghost" size="sm" style={{ height: '20px', fontSize: '10px' }} onClick={() => setPreviewFile(null)}>Close</Button>
+                                                <Button variant="ghost" size="sm" className={marketplace.previewClose} onClick={() => setPreviewFile(null)}>Close</Button>
                                             </div>
-                                            <div style={{ flex: 1, maxHeight: '250px', overflowY: 'auto' }}>
+                                            <div className={marketplace.previewBody}>
                                                 {loadingContent ? (
-                                                    <div style={{ padding: '2rem', textAlign: 'center' }}><SkeletonLoader count={5} /></div>
+                                                    <div className={marketplace.centerNote}><SkeletonLoader count={5} /></div>
                                                 ) : (
-                                                    <pre style={{ margin: 0, padding: '1rem', fontSize: '0.8rem', whiteSpace: 'pre-wrap', fontFamily: 'monospace', color: '#333' }}>
+                                                    <pre className={marketplace.previewPre}>
                                                         {previewContent}
                                                     </pre>
                                                 )}
@@ -594,12 +582,12 @@ function MarketplaceContent() {
                                 </div>
                             </div>
 
-                            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-                                <a 
-                                    href={`https://clawhub.ai/sit-in/${detailSlug}`} 
-                                    target="_blank" 
+                            <div className={marketplace.detailFooter}>
+                                <a
+                                    href={`https://clawhub.ai/sit-in/${detailSlug}`}
+                                    target="_blank"
                                     rel="noopener noreferrer"
-                                    style={{ fontSize: '0.8rem', color: 'var(--accent-blue)', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                                    className={marketplace.clawhubLink}
                                 >
                                     View full details on ClawHub <ExternalLink size={12} />
                                 </a>
@@ -615,41 +603,41 @@ function MarketplaceContent() {
                     onClose={() => setFlockModalOpen(false)}
                     title="FLock-io Authentication"
                 >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        <div style={{ padding: '1.25rem', background: 'rgba(39, 121, 255, 0.05)', borderRadius: '12px', border: '1px solid rgba(39, 121, 255, 0.1)' }}>
-                            <div style={{ fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div className={marketplace.stackXl}>
+                        <div className={marketplace.infoBox}>
+                            <div className={marketplace.infoTitle}>
                                 <ShieldCheck size={18} /> Provider Authentication
                             </div>
-                            <div style={{ fontSize: '0.85rem', opacity: 0.8, lineHeight: '1.5' }}>
-                                To use the FLock decentralised AI models, you must provide your <strong>FLock API Key</strong>. 
+                            <div className={marketplace.infoBody}>
+                                To use the FLock decentralised AI models, you must provide your <strong>FLock API Key</strong>.
                                 This key will be stored securely in your agent's private Vault.
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                            <label style={{ fontSize: '0.85rem', fontWeight: 600 }}>FLock API Key</label>
-                            <Input 
+                        <div className={marketplace.fieldStack}>
+                            <label className={marketplace.fieldLabel}>FLock API Key</label>
+                            <Input
                                 type="password"
                                 placeholder="Enter your flock-api-key"
                                 value={flockApiKey}
                                 onChange={(e) => setFlockApiKey(e.target.value)}
                             />
-                            <a 
-                                href="https://beta.flock.io/" 
-                                target="_blank" 
+                            <a
+                                href="https://beta.flock.io/"
+                                target="_blank"
                                 rel="noopener noreferrer"
-                                style={{ fontSize: '0.75rem', color: 'var(--accent-blue)', textAlign: 'right' }}
+                                className={marketplace.externalRight}
                             >
                                 Get a key from the FLock Dashboard →
                             </a>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                        <div className={marketplace.modalActions}>
                             <Button variant="ghost" onClick={() => setFlockModalOpen(false)}>
                                 Cancel
                             </Button>
-                            <Button 
-                                variant="primary" 
+                            <Button
+                                variant="primary"
                                 onClick={handleFlockAuth}
                                 loading={savingFlockKey}
                             >
@@ -666,34 +654,26 @@ function MarketplaceContent() {
                     onClose={() => setInstallConfirmSlug(null)}
                     title="Security Warning: Third-Party Skill"
                 >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        <div style={{ 
-                            padding: '1.25rem', 
-                            background: 'rgba(255, 75, 75, 0.05)', 
-                            border: '1px solid rgba(255, 75, 75, 0.1)', 
-                            borderRadius: '12px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '0.75rem'
-                        }}>
-                            <div style={{ fontWeight: 700, color: '#ff4b4b', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div className={marketplace.stackXl}>
+                        <div className={marketplace.riskBox}>
+                            <div className={marketplace.riskTitle}>
                                 <ShieldAlert size={20} /> Execution Risks
                             </div>
-                            <div style={{ fontSize: '0.9rem', lineHeight: '1.5', opacity: 0.9 }}>
-                                You are about to install <strong>{installConfirmSlug}</strong>. 
+                            <div className={marketplace.riskBody}>
+                                You are about to install <strong>{installConfirmSlug}</strong>.
                                 This skill was developed by a third party and will have permission to:
                             </div>
-                            <ul style={{ fontSize: '0.85rem', paddingLeft: '1.25rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                            <ul className={marketplace.riskList}>
                                 <li>Execute code within your agent's secure container</li>
                                 <li>Access environment variables and configured API keys</li>
                                 <li>Interact with your linked social channels (if permitted by code)</li>
                             </ul>
-                            <div style={{ fontSize: '0.85rem', fontWeight: 600, marginTop: '0.5rem' }}>
+                            <div className={marketplace.riskFooter}>
                                 Ensure you have reviewed the code manifest and the LLM Security Scan before proceeding.
                             </div>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                        <div className={marketplace.modalActions}>
                             <Button variant="ghost" onClick={() => setInstallConfirmSlug(null)}>
                                 Cancel
                             </Button>
@@ -706,7 +686,7 @@ function MarketplaceContent() {
             )}
 
             {activeTab === 'plugins' && (
-                <div className={styles.provisioningBanner} style={{ marginBottom: '1rem' }}>
+                <div className={`${styles.provisioningBanner} ${marketplace.bannerSpaced}`}>
                     <Info size={14} />
                     <span>Activating or deactivating plugins requires an agent restart to re-map container volumes.</span>
                 </div>
@@ -714,35 +694,26 @@ function MarketplaceContent() {
 
             {(activeTab === 'installed' || activeTab === 'plugins') && (
                 <>
-                    <h3 className={styles.agentName} style={{ marginBottom: '1rem' }}>
+                    <h3 className={`${styles.agentName} ${marketplace.localHeading}`}>
                         {searchQuery ? 'Local Results' : `Installed ${activeTab === 'plugins' ? 'Plugins' : 'Skills'}`}
                     </h3>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div className={marketplace.stack}>
                         {filteredLocal.map((item) => {
-                            const isActive = activeTab !== 'plugins' 
-                                ? currentAgent?.activeSkills.includes(item.id) 
+                            const isActive = activeTab !== 'plugins'
+                                ? currentAgent?.activeSkills.includes(item.id)
                                 : currentAgent?.activePlugins.includes(item.id);
                             return (
                                 <Card key={item.id}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                            <div style={{ 
-                                                width: '40px', 
-                                                height: '40px', 
-                                                background: 'rgba(26, 26, 26, 0.04)', 
-                                                borderRadius: '8px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                color: 'var(--text-secondary)'
-                                            }}>
+                                    <div className={marketplace.resultRow}>
+                                        <div className={marketplace.resultMain}>
+                                            <div className={marketplace.iconTileNeutral}>
                                                 {activeTab === 'installed' ? <Cpu size={20} /> : <Box size={20} />}
                                             </div>
-                                            <div>
+                                            <div className={marketplace.resultText}>
                                                 <div className={styles.agentName}>{item.name || item.id}</div>
                                                 {item.description && (
-                                                    <div className={styles.agentMetaItem} style={{ marginTop: '0.25rem' }}>
+                                                    <div className={`${styles.agentMetaItem} ${marketplace.localDesc}`}>
                                                         {item.description}
                                                     </div>
                                                 )}
@@ -751,6 +722,7 @@ function MarketplaceContent() {
                                         <Toggle
                                             checked={isActive || false}
                                             disabled={!selectedAgent}
+                                            ariaLabel={`Enable ${item.name || item.id}`}
                                             onChange={(checked) => handleToggle(item.id, checked)}
                                         />
                                     </div>
@@ -777,7 +749,7 @@ function MarketplaceContent() {
 
 export default function MarketplacePage() {
     return (
-        <Suspense fallback={<div style={{ padding: '2rem' }}><SkeletonLoader variant="card" count={4} /></div>}>
+        <Suspense fallback={<div className={marketplace.emptyPadded}><SkeletonLoader variant="card" count={4} /></div>}>
             <MarketplaceContent />
         </Suspense>
     );

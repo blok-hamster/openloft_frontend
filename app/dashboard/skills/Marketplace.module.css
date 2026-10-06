@@ -1,0 +1,676 @@
+/* ============================================================
+   Marketplace (app/dashboard/skills)
+   Extracted from inline styles. Desktop rendering is unchanged;
+   mobile rules added at the bottom of each section.
+   ============================================================ */
+
+/* --- Layout helpers --- */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.stackLg {
+  composes: stack;
+  gap: 1rem;
+}
+
+.stackXl {
+  composes: stack;
+  gap: 1.5rem;
+}
+
+.sectionBlock {
+  margin-bottom: 2rem;
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.sectionHeadingLg {
+  composes: sectionHeading;
+  margin-bottom: 1.25rem;
+  font-size: 1.1rem;
+}
+
+.sectionHeadingBlue {
+  composes: sectionHeading;
+  color: var(--accent-blue);
+}
+
+.headingSm {
+  composes: sectionHeading;
+  font-size: 1rem;
+}
+
+/* --- Header actions --- */
+
+.searchWrap {
+  position: relative;
+  width: 240px;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.tabsSpaced {
+  margin-bottom: 1.5rem;
+}
+
+/* --- Result rows --- */
+
+.resultRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.resultMain {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.resultText {
+  min-width: 0;
+}
+
+.resultNameRow {
+  composes: sectionHeading;
+  margin-bottom: 0;
+}
+
+.resultStats {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 10px;
+  margin-left: 0.5rem;
+}
+
+.statStar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: #ffb800;
+}
+
+.statDownload {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--text-secondary);
+}
+
+.resultActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* --- Icon tiles --- */
+
+.iconTile {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.iconTileBlue {
+  composes: iconTile;
+  background: rgba(39, 121, 255, 0.08);
+  color: var(--accent-blue);
+}
+
+.iconTileRed {
+  composes: iconTile;
+  background: rgba(255, 75, 75, 0.08);
+  color: #ff4b4b;
+}
+
+.iconTileNeutral {
+  composes: iconTile;
+  background: rgba(26, 26, 26, 0.04);
+  color: var(--text-secondary);
+}
+
+/* --- Empty / note states --- */
+
+.emptyPadded {
+  padding: 2rem;
+}
+
+.centerNote {
+  text-align: center;
+  padding: 2rem;
+  opacity: 0.5;
+}
+
+/* ============================================================
+   Skill detail modal
+   ============================================================ */
+
+.detailCard {
+  padding: 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.detailTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detailSlug {
+  font-size: 12px;
+  opacity: 0.5;
+  font-weight: 400;
+}
+
+.detailStats {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.detailStat {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.detailSummary {
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+}
+
+.statusStrip {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+}
+
+.statusStripLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.statusValue {
+  color: #ff4b4b;
+}
+
+.statusValueSafe {
+  composes: statusValue;
+  color: var(--accent-blue);
+}
+
+/* --- Security scan --- */
+
+.verdictBox {
+  padding: 1rem;
+  border-radius: 12px;
+}
+
+.verdictBoxSafe {
+  composes: verdictBox;
+  background: rgba(34, 197, 94, 0.05);
+  border: 1px solid rgba(34, 197, 94, 0.1);
+}
+
+.verdictBoxWarn {
+  composes: verdictBox;
+  background: rgba(234, 179, 8, 0.08);
+  border: 1px solid rgba(234, 179, 8, 0.2);
+}
+
+.verdictTitle {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.verdictTitleSafe {
+  composes: verdictTitle;
+  color: #22c55e;
+}
+
+.verdictTitleWarn {
+  composes: verdictTitle;
+  color: #b25e00;
+}
+
+.prose {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  opacity: 0.8;
+}
+
+.dimGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.dimCard {
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.dimHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.dimLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.dimBadge {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.dimBadgeOk {
+  composes: dimBadge;
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.dimBadgeWarn {
+  composes: dimBadge;
+  background: rgba(234, 179, 8, 0.1);
+  color: #b25e00;
+}
+
+.dimDetail {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  line-height: 1.4;
+}
+
+.guidanceBox {
+  padding: 1rem;
+  background: rgba(39, 121, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(39, 121, 255, 0.1);
+}
+
+.guidanceTitle {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--accent-blue);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.guidanceBody {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  opacity: 0.9;
+}
+
+.noScan {
+  padding: 2rem;
+  text-align: center;
+  opacity: 0.5;
+  border: 1px dashed rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+}
+
+/* --- File manifest --- */
+
+.manifestGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.manifestGridSplit {
+  composes: manifestGrid;
+  grid-template-columns: 250px 1fr;
+}
+
+.manifestList {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+}
+
+.manifestRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.01);
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-left: none;
+}
+
+.manifestRowAlt {
+  composes: manifestRow;
+  background: transparent;
+}
+
+.manifestRowActive {
+  composes: manifestRow;
+  background: rgba(39, 121, 255, 0.08);
+  border-left: 3px solid var(--accent-blue);
+}
+
+.manifestPathWrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.manifestCode {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manifestCodeActive {
+  composes: manifestCode;
+  color: var(--accent-blue);
+}
+
+.manifestSize {
+  opacity: 0.5;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+.previewPane {
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.previewHead {
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.previewClose {
+  height: 20px;
+  min-height: 20px;
+  font-size: 10px;
+  padding: 0 0.5rem;
+}
+
+.previewBody {
+  flex: 1;
+  max-height: 250px;
+  overflow: auto;
+}
+
+.previewPre {
+  margin: 0;
+  padding: 1rem;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  font-family: var(--font-family-mono);
+  color: #333;
+}
+
+.detailFooter {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.clawhubLink {
+  font-size: 0.8rem;
+  color: var(--accent-blue);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: var(--touch-target);
+}
+
+/* ============================================================
+   FLock modal + install confirmation (shared)
+   ============================================================ */
+
+.modalActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.infoBox {
+  padding: 1.25rem;
+  border-radius: 12px;
+  border: 1px solid rgba(39, 121, 255, 0.1);
+  background: rgba(39, 121, 255, 0.05);
+}
+
+.infoTitle {
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.infoBody {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  line-height: 1.5;
+}
+
+.fieldStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fieldLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.externalRight {
+  font-size: 0.75rem;
+  color: var(--accent-blue);
+  text-align: right;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: var(--touch-target);
+}
+
+.riskBox {
+  padding: 1.25rem;
+  background: rgba(255, 75, 75, 0.05);
+  border: 1px solid rgba(255, 75, 75, 0.1);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.riskTitle {
+  font-weight: 700;
+  color: #ff4b4b;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.riskBody {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  opacity: 0.9;
+}
+
+.riskList {
+  font-size: 0.85rem;
+  padding-left: 1.25rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.riskFooter {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+/* --- Local skill / plugin list --- */
+
+.localHeading {
+  margin-bottom: 1rem;
+}
+
+.localDesc {
+  margin-top: 0.25rem;
+}
+
+.bannerSpaced {
+  margin-bottom: 1rem;
+}
+
+/* ============================================================
+   Mobile
+   ============================================================ */
+
+@media (max-width: 900px) {
+  .searchWrap {
+    width: 100%;
+  }
+
+  /* Rows stack: identity on top, actions on a full-width row beneath */
+  .resultRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .resultActions {
+    justify-content: flex-end;
+  }
+
+  .resultNameRow {
+    flex-wrap: wrap;
+  }
+
+  /* Manifest list and preview cannot sit side by side */
+  .manifestGridSplit {
+    grid-template-columns: 1fr;
+  }
+
+  .manifestList {
+    max-height: 220px;
+  }
+
+  .previewBody {
+    max-height: 200px;
+  }
+
+  .detailHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .detailStats {
+    margin-left: 0;
+    gap: 0.75rem;
+  }
+
+  .dimGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .modalActions {
+    flex-direction: column-reverse;
+  }
+
+  .modalActions > * {
+    width: 100%;
+  }
+
+  .previewClose {
+    min-height: var(--touch-target);
+    height: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .resultActions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .resultActions > * {
+    width: 100%;
+  }
+
+  .detailTitle {
+    font-size: 1.1rem;
+    flex-wrap: wrap;
+  }
+
+  .detailStats {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+}

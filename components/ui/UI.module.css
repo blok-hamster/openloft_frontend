@@ -67,12 +67,28 @@
     letter-spacing: 0.05em;
 }
 
-.inputIcon {
+/* Icon slot rendered by Input when an `icon` prop is supplied.
+   Previously this class positioned the icon on the right and was
+   referenced by nothing — Input positioned its own icon inline on the
+   left, which meant the padding indent could not be overridden by CSS. */
+.inputControl {
+    position: relative;
+    width: 100%;
+}
+
+.inputIconLeft {
     position: absolute;
-    right: 1rem;
+    left: 0.75rem;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--mid-grey);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+}
+
+.inputFieldWithIcon {
+    padding-left: 2.5rem;
 }
 
 /* --- Select --- */
@@ -87,6 +103,16 @@
 }
 
 /* --- Toggle --- */
+.toggleDisabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.toggle:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
 .toggle {
     display: flex;
     align-items: center;
@@ -148,16 +174,29 @@
     border-radius: var(--radius-md);
     max-width: 560px;
     width: 100%;
+    /* 100dvh tracks the mobile URL bar; 100vh is the fallback */
     max-height: 85vh;
+    max-height: 85dvh;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    /* The dialog itself is the tab stop, so remove the focus ring on it
+       while keeping focus rings on everything inside. */
+    outline: none;
 }
 
 .modalHeader {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 1rem;
     padding: 1.25rem 1.5rem;
     border-bottom: var(--border);
+    /* Sticky so the close button stays reachable on long dialogs —
+       AgentDrive, MemoryEditor and the skill inspector all scroll. */
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--bg-color);
 }
 
 .modalTitle {
@@ -173,8 +212,19 @@
     transition: opacity var(--transition-fast);
 }
 
-.modalClose:hover {
-    opacity: 0.6;
+.modalClose {
+    width: var(--touch-target);
+    height: var(--touch-target);
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (hover: hover) {
+    .modalClose:hover {
+        opacity: 0.6;
+    }
 }
 
 .modalBody {
@@ -207,6 +257,11 @@
 .statusDotError {
     background: var(--accent-coral);
     animation: statusPulse 1.5s ease-in-out infinite;
+}
+
+.statusDotPaused {
+    background: var(--accent-coral);
+    opacity: 0.7;
 }
 
 .statusDotProvisioning {
@@ -332,4 +387,123 @@
     stroke-width: 1.5;
     stroke-linecap: round;
     stroke-linejoin: round;
+}
+/* ============================================================
+   Mobile
+   ============================================================ */
+
+@media (max-width: 900px) {
+    /* Dialogs become bottom sheets — full width, anchored to the bottom,
+       with the top corners rounded. */
+    .modalOverlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .modalContent {
+        max-width: none;
+        max-height: 92vh;
+        max-height: 92dvh;
+        border-radius: var(--radius-md) var(--radius-md) 0 0;
+        border-bottom: none;
+        padding-bottom: var(--safe-bottom);
+    }
+
+    /* Long dialogs get a grab handle so the sheet reads as draggable. */
+    .modalContent::before {
+        content: '';
+        display: block;
+        width: 2.5rem;
+        height: 4px;
+        border-radius: 999px;
+        background: var(--mid-grey);
+        margin: 0.5rem auto 0;
+        flex-shrink: 0;
+    }
+
+    .modalHeader {
+        padding: 0.75rem 1.25rem;
+    }
+
+    .modalBody {
+        padding: 1.25rem;
+    }
+}
+
+/* Toasts: full-width above the home indicator on phones, capped in height
+   so a stack cannot cover the whole screen. */
+@media (max-width: 900px) {
+    .toastContainer {
+        left: 1rem;
+        right: 1rem;
+        bottom: calc(1rem + var(--safe-bottom));
+        max-height: 40dvh;
+        overflow: hidden;
+    }
+
+    .toastSuccess,
+    .toastError,
+    .toastInfo {
+        max-width: none;
+        width: 100%;
+        min-height: var(--touch-target);
+        display: flex;
+        align-items: center;
+        font-size: var(--font-size-sm);
+        letter-spacing: 0.05em;
+    }
+}
+
+/* Textareas and log panes must clear 16px or iOS zooms on focus. */
+@media (max-width: 900px) {
+    .inputField,
+    .selectField {
+        font-size: 1rem;
+        min-height: var(--touch-target);
+    }
+}
+
+.cardInteractive {
+    cursor: pointer;
+}
+
+.cardInteractive:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+/* Larger status dot reads better on a small screen. */
+@media (max-width: 900px) {
+    .statusDot {
+        width: 10px;
+        height: 10px;
+    }
+}
+
+/* Bigger switch for touch */
+@media (max-width: 900px) {
+    .toggleTrack {
+        width: 48px;
+        height: 28px;
+        border-radius: 14px;
+    }
+
+    .toggleThumb {
+        width: 22px;
+        height: 22px;
+        top: 3px;
+        left: 3px;
+    }
+
+    .toggleThumbActive {
+        transform: translateX(20px);
+    }
+
+    .toggle {
+        min-height: var(--touch-target);
+    }
+
+    .skeletonCard {
+        height: 140px;
+    }
 }

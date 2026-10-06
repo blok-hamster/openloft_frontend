@@ -7,6 +7,7 @@ import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import styles from './Dashboard.module.css';
+import soc from './SocialConnections.module.css';
 import axios from 'axios';
 
 const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
@@ -103,7 +104,7 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
             active: activeChannels.discord,
             fields: (
                 <>
-                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>
+                    <div className={soc.stepLabel}>
                         Step 1: Configure & Save
                     </div>
                     <Input
@@ -114,12 +115,12 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
                         onChange={(e) => setChannels(c => ({ ...c, discord: { token: e.target.value } }))}
                     />
                     
-                    <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>
+                    <div className={soc.stepDivider}>
+                        <div className={soc.stepLabel}>
                             Step 2: Pair (Talk to bot first)
                         </div>
-                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
-                            <div style={{ flex: 1 }}>
+                        <div className={soc.pairRow}>
+                            <div className={soc.pairInput}>
                                 <Input
                                     label="Pairing Code"
                                     placeholder="Enter code from bot"
@@ -138,7 +139,7 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
                             </Button>
                         </div>
                         {!activeChannels.discord && (
-                            <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginTop: '0.4rem', fontStyle: 'italic' }}>
+                            <div className={soc.pairHint}>
                                 Save configuration first to enable pairing
                             </div>
                         )}
@@ -153,7 +154,7 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
             active: activeChannels.telegram,
             fields: (
                 <>
-                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>
+                    <div className={soc.stepLabel}>
                         Step 1: Configure & Save
                     </div>
                     <Input
@@ -164,12 +165,12 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
                         onChange={(e) => setChannels(c => ({ ...c, telegram: { token: e.target.value } }))}
                     />
                     
-                    <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                        <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>
+                    <div className={soc.stepDivider}>
+                        <div className={soc.stepLabel}>
                             Step 2: Pair (Talk to bot first)
                         </div>
-                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
-                            <div style={{ flex: 1 }}>
+                        <div className={soc.pairRow}>
+                            <div className={soc.pairInput}>
                                 <Input
                                     label="Pairing Code"
                                     placeholder="/start NX7..."
@@ -188,7 +189,7 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
                             </Button>
                         </div>
                         {!activeChannels.telegram && (
-                            <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', marginTop: '0.4rem', fontStyle: 'italic' }}>
+                            <div className={soc.pairHint}>
                                 Save configuration first to enable pairing
                             </div>
                         )}
@@ -226,16 +227,16 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
             icon: '📱',
             active: activeChannels.whatsapp,
             fields: (
-                <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                <div className={soc.whatsappNote}>
                     WhatsApp uses QR-based pairing. Enable here and scan the QR code from the agent&apos;s container logs.
-                    <div style={{ marginTop: '0.5rem' }}>
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <div className={soc.checkboxRow}>
+                        <label className={soc.checkboxLabel}>
                             <input
                                 type="checkbox"
                                 checked={channels.whatsapp.enabled}
                                 onChange={(e) => setChannels(c => ({ ...c, whatsapp: { enabled: e.target.checked } }))}
                             />
-                            <span style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                            <span className={soc.checkboxText}>
                                 Enable WhatsApp
                             </span>
                         </label>
@@ -249,29 +250,13 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
         <Modal open={open} onClose={onClose} title="Social Connections">
             <div className={styles.wizardSteps}>
                 {channelCards.map(({ key, label, icon, active, fields }) => (
-                    <div key={key} style={{
-                        border: 'var(--border)',
-                        borderRadius: 'var(--radius-md)',
-                        padding: '1rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.75rem',
-                    }}>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <span style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', fontSize: 'var(--font-size-sm)' }}>
+                    <div key={key} className={soc.channelCard}>
+                        <div className={soc.channelHead}>
+                            <span className={soc.channelName}>
                                 {icon} {label}
                             </span>
                             {active && (
-                                <span style={{
-                                    fontSize: '10px',
-                                    fontWeight: 700,
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.06em',
-                                    color: '#2ea043',
-                                    background: 'rgba(46, 160, 67, 0.08)',
-                                    padding: '0.2rem 0.5rem',
-                                    borderRadius: 'var(--radius-pill)',
-                                }}>
+                                <span className={soc.connectedPill}>
                                     Connected
                                 </span>
                             )}

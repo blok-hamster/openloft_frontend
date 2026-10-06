@@ -1,6 +1,6 @@
 import Header from '@/components/landing/Header';
 import Hero from '@/components/landing/Hero';
-import FrameworkBand from '@/components/landing/FrameworkBand';
+import ProductSections from '@/components/landing/ProductSections';
 import styles from '@/components/landing/Landing.module.css';
 
 export default function LandingPage() {
@@ -8,8 +8,9 @@ export default function LandingPage() {
         <main className={styles.landingPage}>
             <Header />
             <Hero />
-            {/* NMAFC is the product. The agent platform below it is one client. */}
-            <FrameworkBand />
+            {/* Three products the visitor navigates between:
+                the framework, agents we host, and memory we host. */}
+            <ProductSections />
         </main>
     );
 }

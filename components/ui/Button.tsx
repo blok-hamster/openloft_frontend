@@ -25,23 +25,23 @@ export default function Button({
     children,
     disabled,
     style,
+    className,
     ...props
 }: ButtonProps) {
-    const className = `btn-${variant}`;
     const sizeStyle = sizeMap[size];
 
     return (
         <button
-            className={className}
+            className={`btn-${variant}${className ? ` ${className}` : ''}`}
             disabled={disabled || loading}
-            style={{ 
-                ...sizeStyle, 
+            style={{
+                ...sizeStyle,
                 width: fullWidth ? '100%' : 'auto',
                 display: fullWidth ? 'flex' : 'inline-flex',
                 justifyContent: 'center',
                 alignItems: 'center',
                 gap: '0.5rem',
-                ...style 
+                ...style
             }}
             {...props}
         >

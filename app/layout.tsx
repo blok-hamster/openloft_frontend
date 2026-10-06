@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Space_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/AuthContext";
@@ -11,6 +11,14 @@ const spaceMono = Space_Mono({
   weight: ["400", "700"],
   display: "swap",
 });
+
+/* `width=device-width` without a `maximum-scale` — capping zoom breaks
+   accessibility, which is worse than the text inflation it prevents. */
+export const viewport: Viewport = {
+    width: 'device-width',
+    initialScale: 1,
+    viewportFit: 'cover',
+};
 
 export const metadata: Metadata = {
   title: "OpenLoft - Autonomous Agent Orchestration",

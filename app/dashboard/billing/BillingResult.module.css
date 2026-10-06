@@ -1,0 +1,47 @@
+/* ============================================================
+   Billing result screens (success / cancel)
+   Extracted from inline styles.
+   ============================================================ */
+
+.resultCenter {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+    min-height: 60dvh;
+}
+
+.resultCard {
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+    padding: 3rem;
+}
+
+.resultIconSuccess {
+    color: #22c55e;
+    margin-bottom: 1.5rem;
+}
+
+.resultIconCancel {
+    color: #ef4444;
+    margin-bottom: 1.5rem;
+}
+
+.resultTitle {
+    margin-bottom: 1rem;
+}
+
+.resultBody {
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 900px) {
+    .resultCenter {
+        padding: 1rem;
+    }
+
+    .resultCard {
+        padding: 2rem 1.25rem;
+    }
+}

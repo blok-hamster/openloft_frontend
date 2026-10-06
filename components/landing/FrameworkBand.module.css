@@ -2,6 +2,8 @@
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   padding: 4.5rem 0;
+  /* Clear the sticky header on anchor jumps. */
+  scroll-margin-top: 5rem;
 }
 
 .container {

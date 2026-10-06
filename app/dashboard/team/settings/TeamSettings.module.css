@@ -1,0 +1,126 @@
+/* ============================================================
+   Team Settings (app/dashboard/team/settings)
+   This page had no stylesheet — everything was inline style
+   objects, including a module-level inputStyle/buttonStyle pair
+   that duplicated the enterprise steps. Colours retokenised
+   onto the design system (#e5e7eb / #6b7280 / #6366f1 were
+   off-brand).
+   ============================================================ */
+
+.page {
+    padding: 2rem;
+    max-width: 700px;
+}
+
+.pageTitle {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    margin-bottom: 2rem;
+}
+
+.section {
+    margin-bottom: 2rem;
+}
+
+.sectionLast {
+    composes: section;
+    margin-bottom: 0;
+}
+
+.sectionTitle {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.sectionTitleSm {
+    composes: sectionTitle;
+    margin-bottom: 0.5rem;
+}
+
+.fieldStack {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.field {
+    display: block;
+}
+
+.fieldLabel {
+    composes: sectionTitle;
+    font-weight: 500;
+    font-size: var(--font-size-base);
+    margin-bottom: 0;
+    display: block;
+}
+
+.fieldInput {
+    display: block;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: var(--border);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    color: var(--text-primary);
+    background: transparent;
+    margin-top: 0.25rem;
+}
+
+.fieldInput:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+}
+
+.fieldTextarea {
+    composes: fieldInput;
+    resize: vertical;
+}
+
+.saveButton {
+    padding: 0.6rem 1.25rem;
+    background: var(--off-black);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-family);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    margin-top: 1rem;
+}
+
+.saveButton:disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.sectionNote {
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
+}
+
+/* ============================================================
+   Mobile
+   ============================================================ */
+
+@media (max-width: 900px) {
+    .page {
+        padding: 1rem;
+        max-width: 100%;
+    }
+
+    /* Inputs below 16px trigger automatic zoom on iOS Safari */
+    .fieldInput {
+        font-size: 1rem;
+    }
+
+    .saveButton {
+        width: 100%;
+        min-height: var(--touch-target);
+    }
+}

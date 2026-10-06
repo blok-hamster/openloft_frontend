@@ -27,7 +27,7 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: var(--color-primary, #6366f1);
+  background: var(--off-black);
   color: white;
   display: flex;
   align-items: center;
@@ -42,8 +42,45 @@
 }
 
 .content {
-  background: var(--color-surface, #fff);
-  border: 1px solid var(--color-border, #e5e7eb);
+  background: var(--bg-color);
+  border: var(--border);
   border-radius: 12px;
   padding: 2rem;
+}
+
+/* ============================================================
+   Mobile
+   ============================================================ */
+
+@media (max-width: 900px) {
+  .container {
+    padding: 2rem 1rem;
+  }
+
+  /* Four labelled steps do not fit; show the number only and scroll
+     the strip so the active step stays reachable. */
+  .stepper {
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    justify-content: flex-start;
+  }
+
+  .stepper::-webkit-scrollbar {
+    display: none;
+  }
+
+  .stepLabel {
+    display: none;
+  }
+
+  .step {
+    flex-shrink: 0;
+  }
+
+  .content {
+    padding: 1.25rem;
+  }
 }

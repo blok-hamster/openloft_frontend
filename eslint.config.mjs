@@ -14,7 +14,7 @@ import nextTs from "eslint-config-next/typescript";
  * `warn` so that `--max-warnings` can act as a ratchet. CI fails if the total
  * goes UP. It does not fail because these already exist.
  *
- * Baseline: 116 warnings, 0 errors, at commit `639d41a`.
+ * Baseline: 112 warnings, 0 errors, at commit `639d41a`.
  *
  *     no-explicit-any ............ 66   mostly lib/api.ts response casts
  *     no-unused-vars ............. 27

@@ -17,10 +17,17 @@ export default function LogsPanel({ agent, open, onClose }: LogsPanelProps) {
     const [auditLogs, setAuditLogs] = useState<IAuditLog[]>([]);
     const [loading, setLoading] = useState(false);
     const logEndRef = useRef<HTMLDivElement>(null);
+    const logScrollRef = useRef<HTMLDivElement>(null);
+    /* The 5s poll replaces `logs`, and auto-scrolling on every change
+       yanked the view back to the bottom even when the reader had
+       scrolled up to read something. Only follow new output when they
+       were already at the bottom. */
+    const stickToBottom = useRef(true);
 
     useEffect(() => {
         if (!open || !agent) return;
         setLoading(true);
+        stickToBottom.current = true;
 
         if (tab === 'agent') {
             fetchAgentLogs(agent.agentId)
@@ -35,10 +42,18 @@ export default function LogsPanel({ agent, open, onClose }: LogsPanelProps) {
         }
     }, [open, agent, tab]);
 
-    // Auto-scroll when logs change
+    // Auto-scroll only when the reader was already at the bottom
     useEffect(() => {
+        if (!stickToBottom.current) return;
         logEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [logs]);
+
+    const handleScroll = () => {
+        const el = logScrollRef.current;
+        if (!el) return;
+        /* Within 24px of the bottom counts as "following". */
+        stickToBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
+    };
 
     // Auto-refresh agent logs every 5s
     useEffect(() => {
@@ -54,12 +69,18 @@ export default function LogsPanel({ agent, open, onClose }: LogsPanelProps) {
             <div className={styles.memoryEditor}>
                 <div className={styles.memoryTabs}>
                     <button
+                        type="button"
+                        role="tab"
+                        aria-selected={tab === 'agent'}
                         className={`${styles.memoryTab} ${tab === 'agent' ? styles.memoryTabActive : ''}`}
                         onClick={() => setTab('agent')}
                     >
                         Agent Logs
                     </button>
                     <button
+                        type="button"
+                        role="tab"
+                        aria-selected={tab === 'audit'}
                         className={`${styles.memoryTab} ${tab === 'audit' ? styles.memoryTabActive : ''}`}
                         onClick={() => setTab('audit')}
                     >
@@ -68,51 +89,32 @@ export default function LogsPanel({ agent, open, onClose }: LogsPanelProps) {
                 </div>
 
                 {loading ? (
-                    <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 'var(--font-size-xs)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                        Loading…
-                    </div>
+                    <div className={styles.logLoading}>Loading…</div>
                 ) : tab === 'agent' ? (
-                    <div style={{
-                        background: 'rgba(26, 26, 26, 0.04)',
-                        borderRadius: 'var(--radius-sm)',
-                        padding: '1rem',
-                        fontFamily: 'monospace',
-                        fontSize: '11px',
-                        lineHeight: '1.6',
-                        maxHeight: '400px',
-                        overflowY: 'auto',
-                        whiteSpace: 'pre-wrap',
-                        wordBreak: 'break-all',
-                        color: 'var(--text-primary)',
-                    }}>
+                    <div
+                        ref={logScrollRef}
+                        onScroll={handleScroll}
+                        className={styles.logPane}
+                    >
                         {logs || 'No logs available'}
                         <div ref={logEndRef} />
                     </div>
                 ) : (
-                    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                    <div className={styles.auditPane}>
                         {auditLogs.length === 0 ? (
-                            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 'var(--font-size-xs)' }}>
-                                No audit logs
-                            </div>
+                            <div className={styles.auditEmpty}>No audit logs</div>
                         ) : (
                             auditLogs.map((log) => (
-                                <div key={log._id} style={{
-                                    padding: '0.6rem 0.75rem',
-                                    borderBottom: '1px solid rgba(26, 26, 26, 0.06)',
-                                    fontSize: 'var(--font-size-xs)',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                }}>
+                                <div key={log._id} className={styles.auditRow}>
                                     <div>
-                                        <span style={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                                        <span className={styles.auditAction}>
                                             {log.actionType}
                                         </span>
-                                        <span style={{ color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>
+                                        <span className={styles.auditContext}>
                                             {log.commandContext?.substring(0, 80)}
                                         </span>
                                     </div>
-                                    <span style={{ color: 'var(--mid-grey)', fontSize: '10px', flexShrink: 0 }}>
+                                    <span className={styles.auditTime}>
                                         {new Date(log.timestamp).toLocaleTimeString()}
                                     </span>
                                 </div>

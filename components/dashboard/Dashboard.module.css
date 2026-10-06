@@ -6,6 +6,7 @@
 .dashboardLayout {
     display: flex;
     min-height: 100vh;
+    min-height: 100dvh;
 }
 
 .sidebar {
@@ -31,6 +32,13 @@
     margin-bottom: 2rem;
 }
 
+/* Applied to .sidebar when the drawer is open. `composes` is only legal at
+   the top level of a CSS module, so the class is declared here and the
+   transform override lives in the media query below. */
+.sidebarOpen {
+    composes: sidebar;
+}
+
 .sidebarNav {
     display: flex;
     flex-direction: column;
@@ -52,9 +60,11 @@
     text-decoration: none;
 }
 
-.sidebarLink:hover {
-    color: var(--text-primary);
-    background: rgba(26, 26, 26, 0.04);
+@media (hover: hover) {
+    .sidebarLink:hover {
+        color: var(--text-primary);
+        background: rgba(26, 26, 26, 0.04);
+    }
 }
 
 .sidebarLinkActive {
@@ -646,18 +656,162 @@
     line-height: 1.5;
 }
 
-/* Mobile */
+/* Logout button reused the nav-link class for its padding; give it its
+   own rule rather than overriding sidebarLink inline. */
+.logoutButton {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0;
+    margin-top: 0.5rem;
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    transition: color var(--transition-fast);
+    cursor: pointer;
+    min-height: var(--touch-target);
+}
+
+@media (hover: hover) {
+    .logoutButton:hover {
+        color: var(--text-primary);
+    }
+}
+
+/* ============================================================
+   Mobile navigation
+   ============================================================ */
+
+/* Hidden on desktop, pinned top-left under 900px. Kept in the DOM at
+   all widths so aria-controls always resolves. */
+.mobileMenuButton {
+    display: none;
+    position: fixed;
+    top: calc(0.5rem + var(--safe-top));
+    left: 0.75rem;
+    z-index: 45;
+    width: var(--touch-target);
+    height: var(--touch-target);
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-color);
+    border: var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.drawerClose {
+    display: none;
+    position: absolute;
+    top: 0.5rem;
+    right: 0.75rem;
+    width: var(--touch-target);
+    height: var(--touch-target);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.sidebarScrim {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+    background: rgba(26, 26, 26, 0.4);
+}
+
+.bottomBar {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 45;
+    flex-direction: row;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    padding-bottom: calc(0.5rem + var(--safe-bottom));
+    background: rgba(200, 204, 200, 0.92);
+    backdrop-filter: blur(12px);
+    border-top: var(--border);
+}
+
+.bottomBarButton {
+    flex: 1;
+    min-height: var(--touch-target);
+}
+
+/* ============================================================
+   Small viewports
+   ============================================================ */
+
 @media (max-width: 900px) {
+    /* The sidebar becomes an off-canvas drawer instead of vanishing. */
     .sidebar {
-        display: none;
+        transform: translateX(-100%);
+        transition: transform var(--transition-base);
+        will-change: transform;
+        box-shadow: none;
+        width: min(280px, 85vw);
+        padding-left: var(--safe-left);
+    }
+
+    .sidebarOpen {
+        transform: translateX(0);
+    }
+
+    .sidebarScrim {
+        display: block;
+    }
+
+    .mobileMenuButton,
+    .drawerClose {
+        display: inline-flex;
+    }
+
+    .bottomBar {
+        display: flex;
     }
 
     .mainContent {
         margin-left: 0;
+        padding: calc(var(--touch-target) + 1.5rem) 1rem 1rem;
+        /* clear the fixed bottom bar plus the home indicator */
+        padding-bottom: calc(var(--touch-target) + 2rem + var(--safe-bottom));
     }
 
     .agentGrid {
         grid-template-columns: 1fr;
+    }
+
+    .dashboardHeader {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .headerActions {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .headerTitle {
+        font-size: var(--font-size-xl);
+    }
+
+    /* Sticky footers inside modals sit above the bar. */
+    .wizardActions,
+    .wizardActionsEnd,
+    .memoryActions {
+        flex-direction: column-reverse;
+    }
+
+    .wizardActions > *,
+    .wizardActionsEnd > *,
+    .memoryActions > * {
+        width: 100%;
     }
 }
 
@@ -1111,4 +1265,521 @@
 
 .copySuccess {
     color: #22c55e !important;
+}
+
+/* ============================================================
+   Modal overlay consumers — mobile treatment
+   The bottom-sheet behaviour itself lives in ui/UI.module.css;
+   this block handles the per-consumer internals.
+   ============================================================ */
+
+@media (max-width: 900px) {
+    /* --- Memory / Config editor textareas ---
+       0.75rem is far below the 16px threshold that stops iOS zooming
+       and scrolling the page on focus. */
+    .memoryTextarea {
+        font-size: 1rem;
+        min-height: 45dvh;
+    }
+
+    /* Action row becomes a sticky footer so Save is always reachable
+       without scrolling a long textarea back to the bottom. */
+    .memoryActions {
+        position: sticky;
+        bottom: 0;
+        z-index: 1;
+        padding: 0.75rem 0;
+        padding-bottom: calc(0.75rem + var(--safe-bottom));
+        background: var(--bg-color);
+        border-top: 1px solid rgba(26, 26, 26, 0.08);
+        margin: 0 -1.25rem;
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+    }
+
+    .memoryActions > * {
+        flex: 1;
+    }
+
+    /* --- Drive --- */
+    .driveDropZone {
+        min-height: 120px;
+        text-align: center;
+    }
+
+    .driveUploadBtn {
+        min-height: var(--touch-target);
+        padding: 0.5rem 1rem;
+        font-size: var(--font-size-xs);
+    }
+
+    /* 13px icons with 0.375rem padding is a ~24px tap target */
+    .driveIconBtn {
+        width: var(--touch-target);
+        height: var(--touch-target);
+        padding: 0;
+        justify-content: center;
+    }
+
+    .driveFileRow {
+        padding: 0.5rem 0;
+    }
+
+    .driveFileName {
+        word-break: break-all;
+    }
+
+    /* --- Logs pane --- */
+    .terminalOutput {
+        font-size: 12px;
+        max-height: 52dvh;
+    }
+
+    /* --- HTTP details: long tokens and curl must scroll, not wrap
+           into an unreadable wall of text --- */
+    .httpDetailValue code,
+    .httpDetailValue pre {
+        font-size: 12px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        max-width: 100%;
+    }
+
+    /* --- Human approval queue --- */
+    .approvalButtons {
+        flex-direction: column-reverse;
+    }
+
+    .approvalButtons > * {
+        width: 100%;
+    }
+
+    .approvalCard {
+        padding: 0.75rem;
+    }
+
+    /* --- Confirm destructive --- */
+    .confirmInput {
+        margin-top: 0.75rem;
+    }
+
+    /* --- Terminal / chat --- */
+    .chatInput {
+        font-size: 1rem;
+        min-height: var(--touch-target);
+    }
+
+    .chatInputArea {
+        padding: 0.5rem;
+        padding-bottom: calc(0.5rem + var(--safe-bottom));
+    }
+
+    /* --- Creation wizard: full-height sheet --- */
+    .wizardProgress {
+        padding: 0 0.5rem;
+        margin-bottom: 1.25rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .progressStep {
+        width: 8px;
+        height: 8px;
+    }
+
+    .driveUploadButtons {
+        flex-direction: column;
+    }
+}
+
+/* Keyboard-only affordances. Hide hints that are meaningless without one,
+   rather than showing Windows/CJK users a wrong glyph. */
+@media (hover: none) {
+    .memorySaveHint {
+        display: none;
+    }
+}
+
+/* --- LogsPanel (extracted from inline styles) --- */
+
+.logLoading {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.logPane {
+    background: rgba(26, 26, 26, 0.04);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    font-family: var(--font-family-mono);
+    font-size: 11px;
+    line-height: 1.6;
+    max-height: 400px;
+    max-height: 52dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: var(--text-primary);
+}
+
+.auditPane {
+    max-height: 400px;
+    max-height: 52dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.auditEmpty {
+    padding: 2rem;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: var(--font-size-xs);
+}
+
+.auditRow {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid rgba(26, 26, 26, 0.06);
+    font-size: var(--font-size-xs);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.auditAction {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.auditContext {
+    color: var(--text-secondary);
+    margin-left: 0.5rem;
+    word-break: break-word;
+}
+
+.auditTime {
+    color: var(--mid-grey);
+    font-size: 10px;
+    flex-shrink: 0;
+    font-family: var(--font-family-mono);
+}
+
+@media (max-width: 900px) {
+    .logPane,
+    .auditPane {
+        max-height: 52dvh;
+    }
+
+    .auditRow {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .auditContext {
+        margin-left: 0;
+    }
+}
+
+/* --- HttpDetailsModal (extracted from inline styles) --- */
+
+.httpCopyBtn {
+    width: var(--touch-target);
+    height: var(--touch-target);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: pointer;
+    color: var(--text-secondary);
+    background: none;
+    border: none;
+}
+
+.httpCopyBtnFloating {
+    composes: httpCopyBtn;
+    position: absolute;
+    top: 4px;
+    right: 4px;
+}
+
+.httpDetailPre {
+    /* Long curl lines scroll rather than wrapping into a wall of text */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+    white-space: pre;
+    margin: 0;
+    padding-right: 3rem;
+}
+
+.httpCopyBtn:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+/* --- HumanApprovalQueue (extracted from inline styles) --- */
+
+.approvalQueue {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+}
+
+.approvalQueueTitle {
+    font-size: var(--font-size-sm);
+}
+
+/* --- ConfirmDestructiveAction --- */
+
+.confirmActions {
+    margin-top: 1rem;
+}
+
+/* --- ConfigEditor --- */
+
+.configTextarea {
+    font-family: var(--font-family-mono);
+    font-size: 12px;
+    min-height: 400px;
+}
+
+/* --- MemoryEditor --- */
+
+.memoryActionButtons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+@media (max-width: 900px) {
+    /* 12px monospace would zoom the viewport on focus; 16px is the floor */
+    .configTextarea {
+        font-size: 1rem;
+        min-height: 45dvh;
+    }
+
+    .memoryActionButtons {
+        flex: 1;
+    }
+}
+
+.emptyPadded {
+    padding: 2rem;
+}
+
+/* --- app/dashboard/page.tsx --- */
+
+.skeletonGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1rem;
+}
+
+/* Chat + usage metrics block, shown under the agent grid */
+.metricsStack {
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+@media (max-width: 900px) {
+    .skeletonGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- AgentCard: mobile overflow sheet --- */
+
+.lifecycleSheet {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.lifecycleSheet > * {
+    width: 100%;
+    justify-content: flex-start;
+    min-height: var(--touch-target);
+}
+
+@media (max-width: 900px) {
+    /* Six core buttons still wrap, but with a gap that reads as tappable */
+    .agentActions {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .agentActions > * {
+        min-height: var(--touch-target);
+    }
+
+    /* The sparkline is decorative and costs a row on a narrow card */
+    .agentMeta {
+        flex-wrap: wrap;
+    }
+
+    .agentCardHeader {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .agentActions > * {
+        flex: 1 1 calc(50% - 0.25rem);
+    }
+}
+
+.emptyState > * {
+    max-width: 100%;
+}
+
+.emptyState button {
+    margin-top: 1rem;
+    min-height: var(--touch-target);
+}
+
+/* planIcon / planName / currentPlanBtn were referenced by the billing
+   page but defined nowhere, so the plan cards rendered with no icon
+   frame, no heading treatment, and an unstyled CTA. */
+.planIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+}
+
+.planName {
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.currentPlanBtn {
+    cursor: not-allowed;
+}
+
+/* --- AgentChatPanel --- */
+
+.chatHeaderTitle {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: var(--font-size-sm);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.chatHeaderActions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+.chatHeaderBtn {
+    width: var(--touch-target);
+    height: var(--touch-target);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.chatHeaderBtn:hover {
+    color: var(--text-primary);
+}
+
+.chatHeaderBtn:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+.chatLoginHint {
+    padding: 0.5rem 1rem;
+    background: var(--panel-bg);
+    border-bottom: 1px solid var(--border-color);
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.chatLoginHint code {
+    font-family: var(--font-family-mono);
+    font-size: 0.7rem;
+    user-select: all;
+}
+
+.chatLoading {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: 1rem;
+    text-align: center;
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    pointer-events: none;
+}
+
+/* flex: 1 instead of `calc(100% - 82px)` — the old magic numbers did
+   not match the real header heights, so the iframe overflowed or left a
+   gap depending on the agent type. */
+.chatFrame {
+    flex: 1;
+    width: 100%;
+    min-height: 0;
+    border: none;
+    background: var(--bg-color);
+}
+
+.chatNote {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    padding-bottom: calc(0.5rem + var(--safe-bottom));
+    border-top: 1px solid rgba(26, 26, 26, 0.06);
+    font-size: 10px;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+    /* 500px fixed is most of a phone screen, leaving no room for context */
+    .chatPanel {
+        height: 70dvh;
+    }
+}
+
+/* --- UsageMetrics error state --- */
+
+.metricsError {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--accent-coral);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent-coral);
+    margin-bottom: 2rem;
 }

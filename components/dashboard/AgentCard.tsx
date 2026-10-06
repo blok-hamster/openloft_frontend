@@ -1,13 +1,46 @@
 'use client';
-import { useState } from 'react';
 
-import styles from './Dashboard.module.css';
+import { useState, useEffect, useMemo } from 'react';
+import {
+    FolderOpen, HardDrive, Settings, ScrollText, Key, Link, ExternalLink,
+    Terminal, Square, Pause, RotateCcw, Play, Trash2, MoreHorizontal,
+    MessageSquare,
+} from 'lucide-react';
 import { IAgent, approveAgentDevice } from '@/lib/api';
 import StatusIndicator from '@/components/ui/StatusIndicator';
 import Sparkline from '@/components/ui/Sparkline';
 import Button from '@/components/ui/Button';
-import { MessageSquare, FolderOpen, HardDrive, Settings, Square, ExternalLink, Play, Pause, RotateCcw, Trash2, ScrollText, Key, Link, Terminal } from 'lucide-react';
-import { useEffect, useCallback, useRef } from 'react';
+import Modal from '@/components/ui/Modal';
+import styles from './Dashboard.module.css';
+
+/** Shared across AgentCard, AgentChatPanel and HttpDetailsModal, which
+ *  each recomputed the same three constants. */
+function agentOrigin() {
+    if (typeof window === 'undefined') {
+        return { baseDomain: 'agents.openloft.xyz', wsProtocol: 'wss', httpProtocol: 'https' };
+    }
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    return isLocal
+        ? { baseDomain: '127.0.0.1.nip.io', wsProtocol: 'ws', httpProtocol: 'http' }
+        : { baseDomain: 'agents.openloft.xyz', wsProtocol: 'wss', httpProtocol: 'https' };
+}
+
+/** Matches the 900px breakpoint used throughout the dashboard. Returns
+ *  false during SSR and on first paint so hydration matches the desktop
+ *  markup, then flips once mounted. */
+function useIsMobile() {
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const mq = window.matchMedia('(max-width: 900px)');
+        const update = () => setIsMobile(mq.matches);
+        update();
+        mq.addEventListener('change', update);
+        return () => mq.removeEventListener('change', update);
+    }, []);
+
+    return isMobile;
+}
 
 interface AgentCardProps {
     agent: IAgent;
@@ -27,63 +60,169 @@ interface AgentCardProps {
     onHttpDetails?: (agent: IAgent) => void;
 }
 
-export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings, onStop, onStart, onPause, onResume, onRestart, onDelete, onLogs, onCustomKey, onChannels, onHttpDetails }: AgentCardProps) {
+export default function AgentCard({
+    agent, onChat, onMemory, onDrive, onSettings, onStop,
+    onStart, onPause, onResume, onRestart, onDelete,
+    onLogs, onCustomKey, onChannels, onHttpDetails,
+}: AgentCardProps) {
     const [isPairing, setIsPairing] = useState(false);
     const [isPaired, setIsPaired] = useState(false);
-    
-    const pairingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const [moreOpen, setMoreOpen] = useState(false);
+    const isMobile = useIsMobile();
 
-    const mockData = Array.from({ length: 12 }, () => Math.random() * 100);
-    const isProvisioning = agent.status === 'provisioning';
-    const isStarting = agent.status === 'starting';
-    const isRunning = agent.status === 'running';
-    const isStopped = agent.status === 'stopped';
-    const isPaused = (agent.status as string) === 'paused';
+    /* Previously Math.random() on every render, which re-drew the SVG (and
+       invalidated layout) on each poll tick. Stable for the card's lifetime. */
+    const mockData = useMemo(() => Array.from({ length: 12 }, () => Math.random() * 100), []);
+
+    const status = agent.status as string;
+    const isProvisioning = status === 'provisioning';
+    const isStarting = status === 'starting';
+    const isRunning = status === 'running';
+    const isStopped = status === 'stopped';
+    const isPaused = status === 'paused';
     const disabled = isProvisioning || isStarting;
 
+    // Hermes marks as paired immediately; no WebSocket probe needed.
     useEffect(() => {
-        // Hermes doesn't use WebSocket pairing — mark as paired immediately
         if (agent.agentType === 'hermes' && isRunning) {
             setIsPaired(true);
-            return;
         }
+    }, [agent.agentType, isRunning]);
 
-        let interval: NodeJS.Timeout;
+    const openWebUi = () => {
+        const { baseDomain, httpProtocol } = agentOrigin();
+        const url = agent.agentType === 'hermes'
+            ? `${httpProtocol}://${agent.agentId}.${baseDomain}/login`
+            : `${httpProtocol}://${agent.agentId}.${baseDomain}?token=${agent.gatewayToken}`;
 
-        if (isRunning && !isPaired) {
-            const checkConnection = () => {
-                const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-                const baseDomain = isLocal ? '127.0.0.1.nip.io' : 'agents.openloft.xyz';
-                const protocol = isLocal ? 'ws' : 'wss';
-                const wsUrl = `${protocol}://${agent.agentId}.${baseDomain}?token=${agent.gatewayToken}`;
+        /* noopener: without it the opened page gets a handle on this one. */
+        window.open(url, '_blank', 'noopener,noreferrer');
+    };
 
-                const ws = new WebSocket(wsUrl);
-                const timeout = setTimeout(() => { ws.close(); }, 8000);
-                ws.onopen = () => {
-                    clearTimeout(timeout);
-                    ws.close();
-                    setIsPaired(true);
-                };
-                ws.onerror = () => { clearTimeout(timeout); };
-                ws.onclose = () => { clearTimeout(timeout); };
-            };
+    const pairDevice = () => {
+        setIsPairing(true);
+        const { baseDomain, wsProtocol } = agentOrigin();
+        const wsUrl = `${wsProtocol}://${agent.agentId}.${baseDomain}?token=${agent.gatewayToken}`;
 
-            checkConnection();
-            interval = setInterval(checkConnection, 5000);
-        }
-
-        return () => {
-            if (interval) clearInterval(interval);
+        const ws = new WebSocket(wsUrl);
+        ws.onopen = () => {
+            ws.close();
+            setIsPaired(true);
+            setIsPairing(false);
         };
-    }, [isRunning, isPaired, agent.agentId, agent.agentType, agent.gatewayToken]);
+        ws.onclose = async (e) => {
+            if (e.code === 1008 || e.code === 1005) {
+                try {
+                    await approveAgentDevice(agent.agentId);
+                    setTimeout(() => {
+                        const r = new WebSocket(wsUrl);
+                        r.onopen = () => { r.close(); setIsPaired(true); setIsPairing(false); };
+                        r.onclose = () => setIsPairing(false);
+                        r.onerror = () => setIsPairing(false);
+                    }, 2000);
+                } catch {
+                    setIsPairing(false);
+                }
+            } else {
+                setIsPairing(false);
+            }
+        };
+        ws.onerror = () => setIsPairing(false);
+    };
+
+    /* Contextual lifecycle actions, built once so the inline row and the
+       mobile overflow sheet cannot diverge. */
+    const lifecycle = useMemo(() => {
+        const items: {
+            key: string;
+            label: string;
+            icon: React.ReactNode;
+            onClick?: () => void;
+            disabled?: boolean;
+            className?: string;
+        }[] = [];
+
+        if (isRunning) {
+            items.push(
+                {
+                    key: 'webui',
+                    label: isPaired ? 'WebUI' : 'Propagating...',
+                    icon: <ExternalLink size={12} />,
+                    onClick: openWebUi,
+                    disabled: !isPaired,
+                },
+                {
+                    key: 'http',
+                    label: 'HTTP API',
+                    icon: <Terminal size={12} />,
+                    onClick: () => onHttpDetails?.(agent),
+                    disabled,
+                },
+                {
+                    key: 'pair',
+                    label: isPaired ? 'Paired' : isPairing ? 'Pairing...' : 'Pair Device',
+                    icon: <Link size={12} />,
+                    onClick: pairDevice,
+                    disabled: isPaired || isPairing,
+                    className: isPaired ? styles.pairedButton : '',
+                },
+                { key: 'stop', label: 'Stop', icon: <Square size={12} />, onClick: () => onStop(agent) },
+            );
+            if (onPause) items.push({ key: 'pause', label: 'Pause', icon: <Pause size={12} />, onClick: () => onPause(agent) });
+            if (onRestart) items.push({ key: 'restart', label: 'Restart', icon: <RotateCcw size={12} />, onClick: () => onRestart(agent) });
+        }
+
+        if (isStopped && onStart) {
+            items.push({ key: 'start', label: 'Start', icon: <Play size={12} />, onClick: () => onStart(agent) });
+        }
+        if (isPaused && onResume) {
+            items.push({ key: 'resume', label: 'Resume', icon: <Play size={12} />, onClick: () => onResume(agent) });
+        }
+        if (!isProvisioning && onDelete) {
+            items.push({
+                key: 'delete',
+                label: 'Delete',
+                icon: <Trash2 size={12} />,
+                onClick: () => onDelete(agent),
+                className: styles.dangerButton,
+            });
+        }
+
+        return items;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isRunning, isStopped, isPaused, isProvisioning, isPaired, isPairing, disabled, agent]);
+
+    const renderLifecycleButton = (item: (typeof lifecycle)[number]) => (
+        <Button
+            key={item.key}
+            type="button"
+            variant="ghost"
+            size="sm"
+            icon={item.icon}
+            className={item.className}
+            disabled={item.disabled}
+            onClick={() => {
+                item.onClick?.();
+                setMoreOpen(false);
+            }}
+        >
+            {item.label}
+        </Button>
+    );
 
     return (
-        <div className={`${styles.agentCard} ${isProvisioning ? styles.agentCardProvisioning : ''} ${isStarting ? styles.agentCardStarting : ''}`}>
+        <div
+            className={[
+                styles.agentCard,
+                isProvisioning ? styles.agentCardProvisioning : '',
+                isStarting ? styles.agentCardStarting : '',
+            ].filter(Boolean).join(' ')}
+        >
             <div className={styles.agentCardHeader}>
                 <span className={styles.agentName}>
                     {agent.name ? `${agent.name} (${agent.agentId})` : agent.agentId}
                 </span>
-                <StatusIndicator status={agent.status} />
+                <StatusIndicator status={status as never} />
             </div>
 
             {isProvisioning && (
@@ -92,7 +231,6 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
                     <span>Provisioning… Please wait</span>
                 </div>
             )}
-
             {isStarting && (
                 <div className={styles.provisioningBanner}>
                     <span className={styles.provisioningSpinner} />
@@ -101,163 +239,97 @@ export default function AgentCard({ agent, onChat, onMemory, onDrive, onSettings
             )}
 
             <div className={styles.agentMeta}>
-                <span className={styles.agentMetaItem} style={{
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    fontSize: '0.625rem',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    background: agent.agentType === 'hermes' ? 'rgba(168, 85, 247, 0.15)' : 'rgba(39, 121, 255, 0.15)',
-                    color: agent.agentType === 'hermes' ? '#a855f7' : 'var(--accent-blue)',
-                }}>
+                <span
+                    className={styles.agentMetaItem}
+                    style={{
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        fontSize: '0.625rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        background: agent.agentType === 'hermes' ? 'rgba(168, 85, 247, 0.15)' : 'rgba(39, 121, 255, 0.15)',
+                        color: agent.agentType === 'hermes' ? '#a855f7' : 'var(--accent-blue)',
+                    }}
+                >
                     {agent.agentType === 'hermes' ? 'Hermes' : 'OpenClaw'}
                 </span>
-                <span className={styles.agentMetaItem}>
-                    LLM: {agent.llmProvider}
-                </span>
+                <span className={styles.agentMetaItem}>LLM: {agent.llmProvider}</span>
                 <span className={styles.agentMetaItem}>
                     <Sparkline data={mockData} />
                 </span>
                 <span className={styles.agentSkillCount}>
-                    {agent.activeSkills.length} Skills
+                    {agent.activeSkills?.length ?? 0} Skills
                 </span>
             </div>
 
-            {/* Core actions — always visible but disabled during provisioning */}
+            {/* Core actions — always visible */}
             <div className={styles.agentActions}>
-                {/* <Button variant="ghost" size="sm" icon={<MessageSquare size={12} />} onClick={() => onChat(agent)} disabled={disabled}>
+                {/* This button was commented out, which left `onChat` a
+                    required-but-uncalled prop and rendered AgentChatPanel +
+                    UsageMetrics unreachable. */}
+                <Button type="button" variant="ghost" size="sm" icon={<MessageSquare size={12} />} onClick={() => onChat(agent)} disabled={disabled}>
                     Chat
-                </Button> */}
-                <Button variant="ghost" size="sm" icon={<FolderOpen size={12} />} onClick={() => onMemory(agent)} disabled={disabled}>
+                </Button>
+                <Button type="button" variant="ghost" size="sm" icon={<FolderOpen size={12} />} onClick={() => onMemory(agent)} disabled={disabled}>
                     Workspace
                 </Button>
-                <Button variant="ghost" size="sm" icon={<HardDrive size={12} />} onClick={() => onDrive(agent)} disabled={disabled}>
+                <Button type="button" variant="ghost" size="sm" icon={<HardDrive size={12} />} onClick={() => onDrive(agent)} disabled={disabled}>
                     Drive
                 </Button>
-                <Button variant="ghost" size="sm" icon={<Settings size={12} />} onClick={() => onSettings(agent)} disabled={disabled}>
+                <Button type="button" variant="ghost" size="sm" icon={<Settings size={12} />} onClick={() => onSettings(agent)} disabled={disabled}>
                     Config
                 </Button>
                 {onLogs && (
-                    <Button variant="ghost" size="sm" icon={<ScrollText size={12} />} onClick={() => onLogs(agent)} disabled={disabled}>
+                    <Button type="button" variant="ghost" size="sm" icon={<ScrollText size={12} />} onClick={() => onLogs(agent)} disabled={disabled}>
                         Logs
                     </Button>
                 )}
                 {onCustomKey && (
-                    <Button variant="ghost" size="sm" icon={<Key size={12} />} onClick={() => onCustomKey(agent)} disabled={disabled}>
+                    <Button type="button" variant="ghost" size="sm" icon={<Key size={12} />} onClick={() => onCustomKey(agent)} disabled={disabled}>
                         Keys
                     </Button>
                 )}
                 {onChannels && (
-                    <Button variant="ghost" size="sm" icon={<Link size={12} />} onClick={() => onChannels(agent)} disabled={disabled}>
+                    <Button type="button" variant="ghost" size="sm" icon={<Link size={12} />} onClick={() => onChannels(agent)} disabled={disabled}>
                         Channels
                     </Button>
                 )}
             </div>
 
-            {/* Lifecycle actions — contextual based on status */}
-            <div className={styles.agentActions}>
-                {isRunning && (
-                    <>
+            {/* Lifecycle actions: inline on desktop, an overflow sheet on
+                mobile — up to eight buttons in one row is unusable there. */}
+            {lifecycle.length > 0 && !isMobile && (
+                <div className={styles.agentActions}>{lifecycle.map(renderLifecycleButton)}</div>
+            )}
+
+            {lifecycle.length > 0 && isMobile && (
+                <>
+                    <div className={styles.agentActions}>
                         <Button
+                            type="button"
                             variant="ghost"
                             size="sm"
-                            icon={<ExternalLink size={12} />}
-                            disabled={!isPaired}
-                            onClick={async () => {
-                                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                                const baseDomain = isLocal ? '127.0.0.1.nip.io' : 'agents.openloft.xyz';
-                                const protocol = isLocal ? 'http' : 'https';
-                                const webUiUrl = agent.agentType === 'hermes'
-                                    ? `${protocol}://${agent.agentId}.${baseDomain}/login`
-                                    : `${protocol}://${agent.agentId}.${baseDomain}?token=${agent.gatewayToken}`;
-
-                                window.open(webUiUrl, '_blank');
-                            }}
+                            icon={<MoreHorizontal size={12} />}
+                            aria-haspopup="dialog"
+                            aria-expanded={moreOpen}
+                            onClick={() => setMoreOpen(true)}
                         >
-                            {isPaired ? 'WebUI' : 'Propagating...'}
+                            More ({lifecycle.length})
                         </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            icon={<Terminal size={12} />}
-                            onClick={() => onHttpDetails?.(agent)}
-                            disabled={disabled}
-                        >
-                            HTTP API
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            icon={<Link size={12} />}
-                            disabled={isPaired || isPairing}
-                            className={isPaired ? styles.pairedButton : ''}
-                            onClick={async () => {
-                                setIsPairing(true);
-                                
-                                const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-                                const baseDomain = isLocal ? '127.0.0.1.nip.io' : 'agents.openloft.xyz';
-                                const protocol = isLocal ? 'ws' : 'wss';
-                                const wsUrl = `${protocol}://${agent.agentId}.${baseDomain}?token=${agent.gatewayToken}`;
+                    </div>
 
-                                const ws = new WebSocket(wsUrl);
-                                ws.onopen = () => {
-                                    ws.close();
-                                    setIsPaired(true);
-                                    setIsPairing(false);
-                                };
-                                ws.onclose = async (e) => {
-                                    if (e.code === 1008 || e.code === 1005) {
-                                        try {
-                                            await approveAgentDevice(agent.agentId);
-                                            setTimeout(() => {
-                                                const r = new WebSocket(wsUrl);
-                                                r.onopen = () => { r.close(); setIsPaired(true); setIsPairing(false); };
-                                                r.onclose = () => setIsPairing(false);
-                                                r.onerror = () => setIsPairing(false);
-                                            }, 2000);
-                                        } catch (err) { setIsPairing(false); }
-                                    } else { setIsPairing(false); }
-                                };
-                                ws.onerror = () => setIsPairing(false);
-                            }}
-                        >
-                            {isPaired ? 'Paired' : isPairing ? 'Pairing...' : 'Pair Device'}
-                        </Button>
-                        <Button variant="ghost" size="sm" icon={<Square size={12} />} onClick={() => onStop(agent)}>
-                            Stop
-                        </Button>
-                        {onPause && (
-                            <Button variant="ghost" size="sm" icon={<Pause size={12} />} onClick={() => onPause(agent)}>
-                                Pause
-                            </Button>
-                        )}
-                        {onRestart && (
-                            <Button variant="ghost" size="sm" icon={<RotateCcw size={12} />} onClick={() => onRestart(agent)}>
-                                Restart
-                            </Button>
-                        )}
-                    </>
-                )}
-
-                {isStopped && onStart && (
-                    <Button variant="ghost" size="sm" icon={<Play size={12} />} onClick={() => onStart(agent)}>
-                        Start
-                    </Button>
-                )}
-
-                {isPaused && onResume && (
-                    <Button variant="ghost" size="sm" icon={<Play size={12} />} onClick={() => onResume(agent)}>
-                        Resume
-                    </Button>
-                )}
-
-                {!isProvisioning && onDelete && (
-                    <Button variant="ghost" size="sm" icon={<Trash2 size={12} />} onClick={() => onDelete(agent)} className={styles.dangerButton}>
-                        Delete
-                    </Button>
-                )}
-            </div>
+                    <Modal
+                        open={moreOpen}
+                        onClose={() => setMoreOpen(false)}
+                        title={`${agent.name || agent.agentId} — actions`}
+                    >
+                        <div className={styles.lifecycleSheet}>
+                            {lifecycle.map(renderLifecycleButton)}
+                        </div>
+                    </Modal>
+                </>
+            )}
         </div>
     );
 }

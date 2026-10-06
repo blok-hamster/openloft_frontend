@@ -127,8 +127,311 @@
     display: none;
 }
 
+/* ============================================================
+   Extracted from inline styles (app/admin/page.tsx)
+   ============================================================ */
+
+.accessDeniedNote {
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+}
+
+/* Health card accent modifiers */
+.heatmapCardGreen {
+    border-color: var(--accent-green);
+}
+
+.heatmapCardCoral {
+    border-color: var(--accent-coral);
+}
+
+.heatmapValueGreen {
+    color: var(--accent-green);
+}
+
+.heatmapValueCoral {
+    color: var(--accent-coral);
+}
+
+/* Table plumbing */
+.tableScroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.cellMono {
+    font-family: var(--font-family-mono);
+    font-size: 0.75rem;
+    user-select: all;
+}
+
+.cellMonoBold {
+    font-family: var(--font-family-mono);
+    font-weight: 700;
+    user-select: all;
+}
+
+.cellCaps {
+    text-transform: capitalize;
+}
+
+.actionCell {
+    display: flex;
+    gap: 4px;
+}
+
+.emptyCell {
+    text-align: center;
+    padding: 24px;
+    color: var(--mid-grey);
+}
+
+/* Pills */
+.pill {
+    border-radius: 4px;
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 6px;
+}
+
+.typePillHermes {
+    composes: pill;
+    background: rgba(168, 85, 247, 0.15);
+    color: #a855f7;
+}
+
+.typePillOpenClaw {
+    composes: pill;
+    background: rgba(39, 121, 255, 0.15);
+    color: var(--accent-blue);
+}
+
+.statusPill {
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+}
+
+.statusPillRunning {
+    composes: statusPill;
+    background-color: rgba(46, 160, 67, 0.15);
+    color: #3fb950;
+}
+
+.statusPillFailed {
+    composes: statusPill;
+    background-color: rgba(229, 77, 46, 0.15);
+    color: #ff7b72;
+}
+
+.statusPillOther {
+    composes: statusPill;
+    background-color: rgba(139, 148, 158, 0.15);
+    color: #8b949e;
+}
+
+.couponPillActive {
+    composes: statusPill;
+    background-color: rgba(46, 160, 67, 0.15);
+    color: #3fb950;
+}
+
+.couponPillInactive {
+    composes: statusPill;
+    background-color: rgba(229, 77, 46, 0.15);
+    color: #ff7b72;
+}
+
+/* Coupon section layout */
+.couponLayout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 2rem;
+    align-items: start;
+}
+
+.couponPanel {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    background-color: var(--surface-color);
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+
+.couponFormPanel {
+    background-color: var(--surface-color);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.couponFormTitle {
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 8px;
+}
+
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.formSubmitSpacer {
+    margin-top: 8px;
+}
+
+/* ============================================================
+   Mobile
+   ============================================================ */
+
+@media (max-width: 900px) {
+    /* Form moves above the table instead of sitting in a 300px rail */
+    .couponLayout {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 768px) {
     .heatmapGrid {
         grid-template-columns: repeat(2, 1fr);
+    }
+
+    /* Header actions wrap to a 2x2 block */
+    .adminActions {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .heatmapGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .formRow {
+        grid-template-columns: 1fr;
+    }
+
+    .uploadZone {
+        padding: 1.25rem;
+    }
+
+    .adminPage {
+        padding: 1rem;
+    }
+}
+/* ============================================================
+   Table -> card stack (below 768px)
+   The Agents table is 7 columns and the Actions cell holds three
+   buttons; inside a horizontal scroll region those actions sit
+   off-screen. Below the breakpoint each row renders as a labelled
+   card instead. Both views read from the same array.
+   ============================================================ */
+
+.cardStack {
+    display: none;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.tableCard {
+    border: var(--border);
+    border-radius: var(--radius-md);
+    background: var(--bg-color);
+    overflow: hidden;
+}
+
+.tableCardHead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-bottom: var(--border);
+    background: rgba(26, 26, 26, 0.03);
+}
+
+.tableCardTitle {
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    word-break: break-word;
+    min-width: 0;
+}
+
+.tableCardFields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.75rem 1rem;
+}
+
+.tableCardField {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: var(--font-size-xs);
+}
+
+.tableCardLabel {
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    flex-shrink: 0;
+}
+
+.tableCardValue {
+    text-align: right;
+    word-break: break-word;
+    min-width: 0;
+}
+
+.tableCardActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-top: var(--border);
+}
+
+.tableCardActions > * {
+    flex: 1 1 auto;
+    min-height: var(--touch-target);
+}
+
+.tableCardEmpty {
+    padding: 24px;
+    text-align: center;
+    color: var(--mid-grey);
+    border: var(--border);
+    border-radius: var(--radius-md);
+}
+
+@media (max-width: 768px) {
+    .tableScroll {
+        display: none;
+    }
+
+    .cardStack {
+        display: flex;
+    }
+
+    .couponPanel {
+        /* the panel wraps the coupons table; the stack replaces it */
+        padding: 0;
+        border: none;
+        background: none;
     }
 }

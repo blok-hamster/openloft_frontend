@@ -17,7 +17,7 @@
 
 .subtitle {
   font-size: 1.1rem;
-  color: var(--color-text-secondary, #6b7280);
+  color: var(--text-secondary);
   max-width: 600px;
   margin: 0 auto 0.5rem;
 }
@@ -25,7 +25,7 @@
 .delivery {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--color-primary, #6366f1);
+  color: var(--accent-blue);
 }
 
 .tierGrid {
@@ -35,7 +35,7 @@
 }
 
 .tierCard {
-  border: 1px solid var(--color-border, #e5e7eb);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 2rem;
   display: flex;
@@ -51,18 +51,18 @@
 .tierPrice {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--color-primary, #6366f1);
+  color: var(--accent-blue);
 }
 
 .tierAgents {
   font-size: 0.9rem;
-  color: var(--color-text-secondary, #6b7280);
+  color: var(--text-secondary);
 }
 
 .tierBestFor {
   font-size: 0.85rem;
   font-style: italic;
-  color: var(--color-text-secondary, #6b7280);
+  color: var(--text-secondary);
 }
 
 .tierFeatures {
@@ -79,7 +79,7 @@
 
 .tierFeatures li::before {
   content: '✓ ';
-  color: var(--color-primary, #6366f1);
+  color: var(--accent-blue);
   font-weight: 600;
 }
 
@@ -87,7 +87,7 @@
   display: block;
   text-align: center;
   padding: 0.75rem 1.5rem;
-  background: var(--color-primary, #6366f1);
+  background: var(--accent-blue);
   color: white;
   border-radius: 8px;
   text-decoration: none;
@@ -95,6 +95,46 @@
   transition: opacity 0.2s;
 }
 
-.tierCta:hover {
-  opacity: 0.9;
+@media (hover: hover) {
+  .tierCta:hover {
+    opacity: 0.9;
+  }
+}
+
+/* ============================================================
+   Mobile
+   ============================================================ */
+
+@media (max-width: 900px) {
+  .container {
+    padding: 2rem 1rem;
+  }
+
+  .hero {
+    margin-bottom: 2.5rem;
+  }
+
+  .title {
+    font-size: 1.75rem;
+  }
+
+  .tierGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .tierCard {
+    padding: 1.5rem;
+  }
+
+  .tierPrice {
+    font-size: 1.5rem;
+  }
+
+  .tierCta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--touch-target);
+  }
 }

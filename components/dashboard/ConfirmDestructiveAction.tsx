@@ -37,13 +37,17 @@ export default function ConfirmDestructiveAction({
             </div>
             <div className={styles.confirmInput}>
                 <Input
+                    autoFocus
+                    autoComplete="off"
+                    spellCheck={false}
+                    aria-label={`Type ${confirmText} to confirm`}
                     placeholder={confirmText}
                     value={typed}
                     onChange={(e) => setTyped(e.target.value)}
                 />
             </div>
-            <div className={styles.wizardActions} style={{ marginTop: '1rem' }}>
-                <Button variant="ghost" onClick={handleClose}>Cancel</Button>
+            <div className={`${styles.wizardActions} ${styles.confirmActions}`}>
+                <Button type="button" variant="ghost" onClick={handleClose}>Cancel</Button>
                 <Button
                     variant="danger"
                     loading={loading}

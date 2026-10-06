@@ -20,6 +20,7 @@
 
 .page {
   min-height: 100vh;
+    min-height: 100dvh;
   background: var(--bg-color);
   color: var(--text-primary);
   font-family: var(--font-family);
@@ -27,8 +28,13 @@
 
 /* ---------------------------------------------------------------- header */
 
+/* The site header is `position: fixed` at ~80px (globals.css .glass-header), so
+   every page must clear it. The marketing heroes do so incidentally through a
+   larger top padding; this one had 4rem, which put the title 16px underneath.
+   Sized to land first-line content at ~120px, matching /products and
+   /resources. */
 .hero {
-  padding: 4rem 0 2.5rem;
+  padding: 7.5rem 0 3rem;
   border-bottom: var(--border);
 }
 
@@ -177,7 +183,10 @@
 
 .section {
   margin-bottom: 3.5rem;
-  scroll-margin-top: 2rem;
+  /* 6rem clears the 80px fixed header (globals.css .glass-header) plus a little
+     breathing room. At 2rem every deep link tucked its heading behind the
+     header, since the header is fixed and the sections are not. */
+  scroll-margin-top: 6rem;
 }
 
 .section:last-child {
@@ -423,4 +432,119 @@
   font-size: var(--font-size-xs);
   color: var(--text-secondary);
   line-height: 1.7;
+}
+/* ============================================================
+   Collapsible table of contents (mobile)
+   On narrow screens the sticky 13-item sidebar stacks above the
+   content, so it pushes every section below the fold. A native
+   <details> collapses it by default.
+   ============================================================ */
+
+.tocMobile {
+    display: none;
+}
+
+.tocSummary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: var(--touch-target);
+    padding: 0.75rem 1rem;
+    border: var(--border);
+    border-radius: var(--radius-md);
+    background: rgba(26, 26, 26, 0.03);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    list-style: none;
+}
+
+.tocSummary::-webkit-details-marker {
+    display: none;
+}
+
+.tocSummary::after {
+    content: '+';
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.tocMobile[open] > .tocSummary::after {
+    content: '\2212';
+}
+
+.tocMobile > .navGroup:first-of-type {
+    margin-top: 1rem;
+}
+
+/* Nav items become full-width tap targets */
+@media (max-width: 900px) {
+    .body {
+        padding-top: 1.5rem;
+    }
+
+    .sidebar {
+        position: static;
+        top: auto;
+    }
+
+    .tocMobile {
+        display: block;
+    }
+
+    /* The fixed header plus the collapsed TOC both need scroll margin */
+    .section {
+        scroll-margin-top: calc(var(--header-h) + 1rem);
+    }
+
+    .hero {
+        padding-top: calc(var(--header-h) + 2rem);
+        padding-bottom: 2rem;
+    }
+
+    .heroTitle {
+        font-size: var(--font-size-2xl);
+    }
+
+    /* 0.75rem search input would zoom on focus */
+    .search {
+        font-size: 1rem;
+        min-height: var(--touch-target);
+    }
+
+    .searchWrap {
+        max-width: none;
+    }
+
+    .navItem {
+        min-height: var(--touch-target);
+        display: flex;
+        align-items: center;
+    }
+}
+
+/* Wide tables must scroll rather than overflow the viewport */
+@media (max-width: 900px) {
+    .table {
+        font-size: var(--font-size-xs);
+    }
+
+    .table th,
+    .table td {
+        padding: 0.5rem 0.6rem;
+        white-space: normal;
+    }
+}
+
+/* calloutBody was referenced by the callout renderer but defined
+   nowhere, so the body copy rendered unstyled inside the box. */
+.calloutBody p {
+    font-size: var(--font-size-sm);
+    line-height: 1.6;
+}
+
+.calloutBody .calloutTitle {
+    margin-bottom: 0.35rem;
 }

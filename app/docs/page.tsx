@@ -151,6 +151,7 @@ export default function DocsPage() {
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(SECTIONS[0].id);
   const observerRef = useRef<IntersectionObserver | null>(null);
+  const tocRef = useRef<HTMLDetailsElement | null>(null);
 
   // Precompute the index once. sectionText walks the whole tree, so doing this
   // inside the filter would re-parse ~2,000 lines of content per keystroke.
@@ -215,11 +216,11 @@ export default function DocsPage() {
 
       <section className={styles.hero}>
         <div className={styles.container}>
-          <h1 className={styles.heroTitle}>NMAFC — framework docs</h1>
+          <h1 className={styles.heroTitle}>Documentation</h1>
           <p className={styles.heroSubtitle}>
-            The open-source memory layer behind OpenLoft Memory. How it works, how to install it,
-            and four ways to connect it to what you are already running. Apache-2.0 — run it
-            yourself, no OpenLoft account required.
+            Everything about the OpenLoft platform: the NMAFC memory framework, the agents we
+            host for you, and the hosted memory service. Start with the framework — it is
+            open source, so run it yourself with no OpenLoft account required.
           </p>
 
           <a
@@ -254,6 +255,10 @@ export default function DocsPage() {
       <div className={styles.container}>
         <div className={styles.body}>
           <aside className={styles.sidebar}>
+            {/* Uncontrolled so the native <summary> toggle keeps working;
+                closed imperatively when a link is tapped. */}
+            <details className={styles.tocMobile} ref={tocRef}>
+              <summary className={styles.tocSummary}>Contents</summary>
             {GROUPS.map((group) => {
               const items = filtered.filter((s) => s.group === group);
               if (items.length === 0) return null;
@@ -264,7 +269,7 @@ export default function DocsPage() {
                     <button
                       key={s.id}
                       type="button"
-                      onClick={() => jump(s.id)}
+                      onClick={() => { jump(s.id); if (tocRef.current) tocRef.current.open = false; }}
                       className={`${styles.navItem} ${
                         effectiveActive === s.id ? styles.navItemActive : ''
                       }`}
@@ -275,6 +280,7 @@ export default function DocsPage() {
                 </div>
               );
             })}
+            </details>
           </aside>
 
           <div className={styles.content}>
@@ -319,11 +325,12 @@ export default function DocsPage() {
       <footer className={styles.container}>
         <div className={styles.footer}>
           <p>
-            NMAFC is open source under Apache-2.0. If you would rather not operate it yourself,
-            OpenLoft Memory runs the same engine as a managed, multi-tenant service with the
-            tenant bound to a credential —{' '}
-            <a className={styles.link} href="/pricing">
-              see pricing
+            NMAFC is open source under Apache-2.0. If you would rather not operate it
+            yourself, OpenLoft Memory runs the same engine as a managed, multi-tenant
+            service with the tenant bound to a credential, or deployed into your own
+            perimeter — see{' '}
+            <a className={styles.link} href="#hosted-memory">
+              Hosted Memory
             </a>
             .
           </p>

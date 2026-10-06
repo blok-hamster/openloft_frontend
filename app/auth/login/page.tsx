@@ -8,8 +8,10 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import GoogleAuthButton from '@/components/auth/GoogleAuthButton';
 import styles from '@/components/auth/Auth.module.css';
+import FeatureGate from '@/components/FeatureGate';
+import { isAccountAreaEnabled } from '@/lib/features';
 
-export default function LoginPage() {
+function LoginPageContent() {
     const { login, verifyEmail, resendOTP, googleLogin } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -59,17 +61,41 @@ export default function LoginPage() {
         }
     };
 
+    /* Resend was fire-and-forget: a failed request produced an unhandled
+       rejection and zero feedback, and double-tapping hammered the endpoint. */
+    const [resending, setResending] = useState(false);
+
+    const handleResend = async () => {
+        if (resending) return;
+        setResending(true);
+        try {
+            await resendOTP(email);
+            setError('A new code is on its way.');
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Could not send a new code.');
+        } finally {
+            setResending(false);
+        }
+    };
+
+    /* The verify view was a dead end — no way back to the sign-in form. */
+    const handleBackToForm = () => {
+        setIsVerifying(false);
+        setVerificationCode('');
+        setError('');
+    };
+
     if (isVerifying) {
         return (
             <div className={styles.authPage}>
                 <div className={styles.authCard}>
                     <div className={styles.authBrand}>
                         <Link href="/">
-                            <Image src="/black_logo.svg" alt="LOFT Logo" width={100} height={32} />
+                            <Image src="/black_logo.svg" alt="OpenLoft" width={100} height={32} />
                         </Link>
                     </div>
                     <div className={styles.authTitle}>Verify your email</div>
-                    <p className={styles.authSubtitle} style={{ marginBottom: '2rem', textAlign: 'center', opacity: 0.7 }}>
+                    <p className={styles.authSubtitle}>
                         Your email isn't verified yet. We've sent a code to <strong>{email}</strong>
                     </p>
 
@@ -82,27 +108,34 @@ export default function LoginPage() {
                             onChange={(e) => setVerificationCode(e.target.value)}
                             required
                             maxLength={6}
-                            style={{ textAlign: 'center', letterSpacing: '0.5em', fontSize: '1.5rem' }}
+                            inputMode="numeric"
+                            autoComplete="one-time-code"
+                            className={styles.otpInput}
                         />
 
                         {error && <div className={styles.authError}>{error}</div>}
 
                         <div className={styles.authSubmit}>
-                            <Button variant="primary" size="lg" loading={loading} style={{ width: '100%' }}>
+                            <Button type="button" variant="primary" size="lg" loading={loading} className={styles.authSubmitBlock}>
                                 Verify Code
                             </Button>
                         </div>
-                        
-                        <div className={styles.authFooter} style={{ marginTop: '1.5rem' }}>
+
+                        <div className={`${styles.authFooter} ${styles.resendRow}`}>
                             Didn't receive a code?{' '}
-                            <button 
-                                type="button" 
-                                onClick={() => resendOTP(email)} 
-                                style={{ background: 'none', border: 'none', color: 'inherit', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+                            <button
+                                type="button"
+                                className={styles.resendButton}
+                                onClick={handleResend}
+                                disabled={resending}
                             >
                                 Resend
                             </button>
                         </div>
+
+                        <button type="button" className={styles.backToForm} onClick={handleBackToForm}>
+                            Use a different account
+                        </button>
                     </form>
                 </div>
             </div>
@@ -114,7 +147,7 @@ export default function LoginPage() {
             <div className={styles.authCard}>
                     <div className={styles.authBrand}>
                         <Link href="/">
-                            <Image src="/black_logo.svg" alt="LOFT Logo" width={100} height={32} />
+                            <Image src="/black_logo.svg" alt="OpenLoft" width={100} height={32} />
                         </Link>
                     </div>
                 <div className={styles.authTitle}>Sign in to your account</div>
@@ -140,7 +173,7 @@ export default function LoginPage() {
                     {error && <div className={styles.authError}>{error}</div>}
 
                     <div className={styles.authSubmit}>
-                        <Button variant="primary" size="lg" loading={loading} style={{ width: '100%' }}>
+                        <Button type="button" variant="primary" size="lg" loading={loading} className={styles.authSubmitBlock}>
                             Sign In
                         </Button>
                     </div>
@@ -160,5 +193,15 @@ export default function LoginPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+/** Gated at the page boundary so every branch — sign-in form, OTP
+ *  view, and any future one — is covered by a single check. */
+export default function LoginPage() {
+    return (
+        <FeatureGate>
+            <LoginPageContent />
+        </FeatureGate>
     );
 }

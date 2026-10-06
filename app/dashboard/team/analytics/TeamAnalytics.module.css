@@ -1,0 +1,77 @@
+/* ============================================================
+   Team Analytics (app/dashboard/team/analytics)
+   Extracted from inline styles. Colours retokenised onto the
+   design system — this file previously hardcoded #e5e7eb / #6b7280.
+   ============================================================ */
+
+.page {
+    padding: 2rem;
+}
+
+.pageTitle {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    margin-bottom: 2rem;
+}
+
+.metricGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.metricCard {
+    padding: 1.25rem;
+    border: 1px solid rgba(26, 26, 26, 0.08);
+    border-radius: 10px;
+}
+
+.metricLabel {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.metricValue {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+}
+
+.notice {
+    margin-top: 2rem;
+    padding: 2rem;
+    border: 1px solid rgba(26, 26, 26, 0.08);
+    border-radius: 12px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.noticeDetail {
+    font-size: var(--font-size-base);
+}
+
+/* ============================================================
+   Mobile
+   ============================================================ */
+
+@media (max-width: 900px) {
+    .page {
+        padding: 1rem;
+    }
+
+    /* minmax(200px, 1fr) already collapses to one column on its own,
+       but force two-up on tablets so the page does not read as a list */
+    .metricGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .metricGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .notice {
+        padding: 1.25rem;
+    }
+}

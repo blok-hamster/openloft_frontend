@@ -1,0 +1,156 @@
+/* ============================================================
+   Public ClawHub browse (app/skills)
+   Extracted from inline styles.
+
+   resultsSection / trendingSection / skillCard were referenced by
+   the page but defined in no stylesheet, so all three resolved to
+   undefined. Created here.
+   ============================================================ */
+
+.searchWrap {
+    max-width: 600px;
+    margin: 3rem auto 0;
+    position: relative;
+}
+
+.bodySection {
+    padding-bottom: 100px;
+}
+
+.resultsSection,
+.trendingSection {
+    /* the two branches are structurally identical */
+}
+
+.sectionTitle {
+    text-align: left;
+    font-size: var(--font-size-xl);
+    margin-bottom: 1.5rem;
+}
+
+.sectionTitleRow {
+    composes: sectionTitle;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.statusNote {
+    color: var(--text-secondary);
+    padding: 1rem 0;
+}
+
+/* --- Skill card --- */
+
+.skillCard {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.cardHead {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.cardIcon {
+    width: 48px;
+    height: 48px;
+    background: rgba(26, 26, 26, 0.03);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.cardHeadText {
+    flex: 1;
+    min-width: 0;
+}
+
+.cardName {
+    font-size: var(--font-size-md);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+}
+
+.cardStats {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+}
+
+.cardStat {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.cardBlurb {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0 0 1.5rem 0;
+    flex: 1;
+}
+
+/* ============================================================
+   Mobile
+   ============================================================ */
+
+@media (max-width: 900px) {
+    .bodySection {
+        padding-bottom: 3rem;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .searchWrap {
+        margin-top: 2rem;
+    }
+}
+
+/* Stand-in for the install button pre-launch. */
+.docsLink {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--touch-target);
+    padding: 0.65rem 1.5rem;
+    border: var(--border);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.fullWidth {
+    width: 100%;
+}
+
+@media (hover: hover) {
+    .docsLink:hover {
+        background: var(--off-black);
+        color: var(--white);
+    }
+}

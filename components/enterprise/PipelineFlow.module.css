@@ -1,0 +1,91 @@
+/* ============================================================
+   PipelineFlow
+   Nodes are positioned as percentages of the viewBox so they track the
+   scaled SVG at any container width, instead of the previous fixed-pixel
+   offsets that only lined up at exactly 600px. Below 900px the graph is
+   replaced wholesale by an ordered list (see .flowList) because a
+   7-node spatial graph is not usable on a phone anyway.
+   ============================================================ */
+
+.flowRoot {
+    position: relative;
+    width: 100%;
+}
+
+.flowGraph {
+    position: relative;
+    width: 100%;
+    height: 320px;
+    overflow: hidden;
+}
+
+.flowGraph svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.node {
+    position: absolute;
+    /* translate(-50%, -50%) centres the node on its coordinate */
+    transform: translate(-50%, -50%);
+    width: 100px;
+    padding: 0.5rem;
+    background: var(--white);
+    border: 2px solid var(--mid-grey);
+    border-radius: var(--radius-md);
+    text-align: center;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.nodeDot {
+    display: block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin: 0 auto 4px;
+}
+
+/* --- Mobile list fallback --- */
+
+.flowList {
+    display: none;
+    list-style: none;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.flowListItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    min-height: var(--touch-target);
+    border: var(--border);
+    border-radius: var(--radius-md);
+    background: var(--white);
+    font-size: var(--font-size-xs);
+    text-transform: capitalize;
+}
+
+.flowListItem .nodeDot {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.flowListStatus {
+    margin-left: auto;
+    color: var(--text-secondary);
+    font-size: 10px;
+}
+
+@media (max-width: 900px) {
+    .flowGraph {
+        display: none;
+    }
+
+    .flowList {
+        display: flex;
+    }
+}

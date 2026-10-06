@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
+import styles from './TeamAnalytics.module.css';
 
 interface Metrics {
   leadsCapured: number;
@@ -49,10 +50,10 @@ export default function TeamAnalyticsPage() {
   };
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '2rem' }}>Team Analytics</h1>
+    <div className={styles.page}>
+      <h1 className={styles.pageTitle}>Team Analytics</h1>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1rem' }}>
+      <div className={styles.metricGrid}>
         <MetricCard label="Leads Captured" value={metrics.leadsCapured} />
         <MetricCard label="Emails Sent" value={metrics.emailsSent} />
         <MetricCard label="Content Published" value={metrics.contentPublished} />
@@ -60,9 +61,9 @@ export default function TeamAnalyticsPage() {
         <MetricCard label="Pipeline Executions" value={metrics.pipelineExecutions} />
       </div>
 
-      <div style={{ marginTop: '2rem', padding: '2rem', border: '1px solid #e5e7eb', borderRadius: '12px', textAlign: 'center', color: '#6b7280' }}>
+      <div className={styles.notice}>
         <p>Detailed analytics will populate once your team has been active for 24+ hours.</p>
-        <p style={{ fontSize: '0.85rem' }}>The Analytics Agent generates automated weekly reports delivered to your configured channels.</p>
+        <p className={styles.noticeDetail}>The Analytics Agent generates automated weekly reports delivered to your configured channels.</p>
       </div>
     </div>
   );
@@ -70,9 +71,9 @@ export default function TeamAnalyticsPage() {
 
 function MetricCard({ label, value }: { label: string; value: string | number }) {
   return (
-    <div style={{ padding: '1.25rem', border: '1px solid #e5e7eb', borderRadius: '10px' }}>
-      <div style={{ fontSize: '0.8rem', color: '#6b7280', marginBottom: '0.25rem' }}>{label}</div>
-      <div style={{ fontSize: '1.5rem', fontWeight: 700 }}>{value}</div>
+    <div className={styles.metricCard}>
+      <div className={styles.metricLabel}>{label}</div>
+      <div className={styles.metricValue}>{value}</div>
     </div>
   );
 }

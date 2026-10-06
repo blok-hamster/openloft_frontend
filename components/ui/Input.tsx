@@ -1,6 +1,6 @@
 'use client';
 
-import { InputHTMLAttributes, forwardRef } from 'react';
+import { InputHTMLAttributes, forwardRef, useId } from 'react';
 import styles from './UI.module.css';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -10,24 +10,36 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 const Input = forwardRef<HTMLInputElement, InputProps>(
-    ({ label, error, icon, className = '', ...props }, ref) => {
+    ({ label, error, icon, className = '', id, ...props }, ref) => {
+        const generatedId = useId();
+        /* Respect a caller-supplied id so a <label htmlFor> elsewhere
+           (e.g. the billing coupon field) still resolves. */
+        const inputId = id ?? generatedId;
+        const errorId = `${inputId}-error`;
+
         return (
             <div className={styles.inputWrapper}>
-                {label && <label className={styles.inputLabel}>{label}</label>}
-                <div style={{ position: 'relative', width: '100%' }}>
-                    {icon && (
-                        <div style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center' }}>
-                            {icon}
-                        </div>
-                    )}
+                {label && (
+                    <label className={styles.inputLabel} htmlFor={inputId}>
+                        {label}
+                    </label>
+                )}
+                <div className={styles.inputControl}>
+                    {icon && <span className={styles.inputIconLeft} aria-hidden="true">{icon}</span>}
                     <input
                         ref={ref}
-                        className={`${styles.inputField} ${error ? styles.inputFieldError : ''} ${className}`}
-                        style={{ paddingLeft: icon ? '2.5rem' : '0.75rem', ...props.style }}
+                        id={inputId}
+                        className={`${styles.inputField} ${error ? styles.inputFieldError : ''} ${icon ? styles.inputFieldWithIcon : ''} ${className}`}
+                        aria-invalid={error ? true : undefined}
+                        aria-describedby={error ? errorId : undefined}
                         {...props}
                     />
                 </div>
-                {error && <span className={styles.inputError}>{error}</span>}
+                {error && (
+                    <span className={styles.inputError} id={errorId} role="alert">
+                        {error}
+                    </span>
+                )}
             </div>
         );
     }

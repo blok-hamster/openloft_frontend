@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useCallback, useRef, ReactNode } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './UI.module.css';
 
@@ -26,16 +26,26 @@ export function useToast() {
 
 let toastId = 0;
 
+const TOAST_TTL = 4000;
+/* Screen space is scarce on a phone — a stack of nine toasts would cover
+   the content the user was just told about. */
+const MAX_VISIBLE = 3;
+
 export function ToastProvider({ children }: { children: ReactNode }) {
     const [toasts, setToasts] = useState<Toast[]>([]);
+    /* Timers were previously never cleared, so every toast left a pending
+       timeout that fired setState after unmount. */
+    const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
     const toast = useCallback((message: string, variant: ToastVariant = 'info') => {
         const id = ++toastId;
-        setToasts((prev) => [...prev, { id, message, variant }]);
+        setToasts((prev) => [...prev, { id, message, variant }].slice(-MAX_VISIBLE));
 
-        setTimeout(() => {
+        const timer = setTimeout(() => {
             setToasts((prev) => prev.filter((t) => t.id !== id));
-        }, 4000);
+            timers.current = timers.current.filter((t) => t !== timer);
+        }, TOAST_TTL);
+        timers.current.push(timer);
     }, []);
 
     const variantClass: Record<ToastVariant, string> = {
@@ -47,7 +57,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     return (
         <ToastContext.Provider value={{ toast }}>
             {children}
-            <div className={styles.toastContainer}>
+            {/* aria-live so failures are announced rather than only shown.
+                assertive for errors would be better but the variant lives on
+                each child, so the whole stack shares one polite region. */}
+            <div className={styles.toastContainer} role="status" aria-live="polite" aria-atomic="false">
                 <AnimatePresence>
                     {toasts.map((t) => (
                         <motion.div

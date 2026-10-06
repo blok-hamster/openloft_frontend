@@ -31,7 +31,13 @@ export type DocSection = {
   blocks: Block[];
 };
 
-export const GROUPS = ['Getting started', 'Integrations', 'Reference', 'How it works'] as const;
+export const GROUPS = [
+  'Getting started',
+  'Integrations',
+  'Services',
+  'Reference',
+  'How it works',
+] as const;
 
 export const SECTIONS: DocSection[] = [
   // ---------------------------------------------------------------- getting started
@@ -340,6 +346,135 @@ reply = client.chat.completions.create(
           kind: 'warn',
           title: 'This is a decorator, not transparent interception',
           body: 'MemoryOpenAI wraps one method on chat.completions and is not a subclass, so isinstance checks against the OpenAI SDK fail and strictly-typed clients reject the extra keyword arguments. Everything else passes through untouched. If you need real transparency, the explicit SDK is less surprising.',
+        },
+      },
+    ],
+  },
+
+  // ---------------------------------------------------------------- hosted products
+  {
+    id: 'hosted-agents',
+    label: 'Agent hosting',
+    group: 'Services',
+    blocks: [
+      {
+        t: 'lead',
+        text: 'OpenLoft deploys and operates agent harnesses for you. Every one of them reads the same memory — which is the point, not a side effect.',
+      },
+      {
+        t: 'table',
+        headers: ['Harness', 'Status', 'Notes'],
+        rows: [
+          ['OpenClaw', 'Available', 'Plugin ecosystem, agent-to-agent mesh, skills and MCP servers. Web UI on its own subdomain.'],
+          ['Hermes Agent', 'Available', 'Self-improving skills, cron scheduling, browser automation. OpenAI-compatible gateway.'],
+          ['Claude Code', 'Announcing', 'Anthropic\u2019s terminal agent, containerised. Bring your own Anthropic key.'],
+          ['OpenCode', 'Announcing', 'Open-source terminal agent, any LLM provider. Bring your own provider key.'],
+          ['Codex', 'Announcing', 'OpenAI\u2019s coding agent, headless. Bring your own OpenAI key.'],
+          ['Gemini CLI', 'Announcing', 'Google\u2019s terminal agent. Bring your own Google key.'],
+        ],
+      },
+      {
+        t: 'callout',
+        callout: {
+          kind: 'note',
+          title: 'Why only terminal agents',
+          body: 'The harness has to be a program we can run in a container with a key and a health check. Desktop applications cannot be — Cursor, Windsurf and VS Code are applications on your machine, so they connect to the same memory over MCP instead of being hosted. See Harness setup above.',
+        },
+      },
+      { t: 'h3', text: 'What you get' },
+      {
+        t: 'list',
+        items: [
+          'A provisioned container with its own subdomain and TLS.',
+          'Secrets pulled at runtime from a per-tenant vault, never as plain environment variables.',
+          'Health checks and automatic restart if the process dies.',
+          'An agent-to-agent gateway so agents in the same tenant can pair and collaborate.',
+          'WireGuard or overlay networking onto the shared memory service.',
+        ],
+      },
+      {
+        t: 'callout',
+        callout: {
+          kind: 'warn',
+          title: 'Two concurrent turns on one scope are not coordinated',
+          body: 'The turn counter and the decay pass are not locked. One conversation at a time per scope is safe. Parallel writes to a single scope are not.',
+        },
+      },
+    ],
+  },
+
+  {
+    id: 'hosted-memory',
+    label: 'Hosted memory',
+    group: 'Services',
+    blocks: [
+      {
+        t: 'lead',
+        text: 'The same engine, operated by us. Multi-tenant on our infrastructure, or deployed inside yours.',
+      },
+      {
+        t: 'table',
+        headers: ['Format', 'Status', 'What it means'],
+        rows: [
+          ['Managed, multi-tenant', 'Available', 'One key per tenant, isolation by credential, bounded per-tenant resources. No vector database to provision.'],
+          ['Your VPC', 'Committed', 'Managed Helm charts for EKS, GKE and AKS, in your own cloud account.'],
+          ['On-premise', 'Committed', 'A container bundle running beside your own inference — vLLM or Ollama. Air-gap installable.'],
+          ['Air-gapped / classified', 'Committed', 'Zero network egress. Local embeddings, local models, offline image bundle.'],
+        ],
+      },
+      { t: 'h3', text: 'Enterprise controls — current state' },
+      {
+        t: 'table',
+        headers: ['Control', 'State'],
+        rows: [
+          ['Tenant isolation bound to a credential', 'Live'],
+          ['Bounded per-tenant resources', 'Live'],
+          ['SSO / OIDC and role-based access', 'Committed'],
+          ['Access audit log with actor identity', 'Committed'],
+          ['Right-to-erasure with a certificate', 'Committed'],
+          ['Support SLA and named engineer', 'Committed'],
+        ],
+      },
+      {
+        t: 'callout',
+        callout: {
+          kind: 'warn',
+          title: 'Committed is not shipped',
+          body: 'The four committed controls are designed and scheduled but not built. If a procurement questionnaire depends on one of them, say so early — the honest answer is that the design exists and the work has not started.',
+        },
+      },
+      { t: 'h3', text: 'Data residency' },
+      {
+        t: 'p',
+        text: 'Content reaches whichever LLM and embedding providers you configure, even in a sovereign deployment. For a genuinely air-gapped setup, use a local model and a local embedder so nothing crosses the boundary. This is worth raising with a data protection officer early rather than at audit.',
+      },
+    ],
+  },
+
+  {
+    id: 'metered-llm',
+    label: 'Metered LLM access',
+    group: 'Services',
+    blocks: [
+      {
+        t: 'lead',
+        text: 'Use our model keys with per-request metering, or bring your own. Either way the same proxy fronts the provider.',
+      },
+      {
+        t: 'list',
+        items: [
+          'Platform credits: one balance, metered per request, floored at zero rather than allowed to go negative.',
+          'Bring your own key: your provider credentials are stored per agent and used directly.',
+          'Per-agent switching: change an agent between platform and your own key without redeploying.',
+          'One proxy in front of every supported provider, so changing provider is a configuration change.',
+        ],
+      },
+      {
+        t: 'callout',
+        callout: {
+          kind: 'warn',
+          title: 'Memory turns cost tokens too',
+          body: 'Extraction calls a model on every turn, so a memory turn is billable even when you are not paying for the reply. Meter it as you would any other model call.',
         },
       },
     ],

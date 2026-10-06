@@ -1,5 +1,9 @@
 'use client';
 
+import { useId } from 'react';
+import styles from './PipelineFlow.module.css';
+import { roleShortLabel } from './roles';
+
 interface Agent {
   agentId: string;
   teamRole: string;
@@ -22,6 +26,10 @@ const PIPELINE_EDGES: [string, string][] = [
   ['customer_success', 'analytics'],
 ];
 
+/* SVG user units, not pixels. The graph scales with the viewBox; the node
+   labels are absolutely positioned in CSS pixels, so they only line up
+   when the rendered width happens to equal 600. Below that threshold we
+   render an ordered list instead of a graph that would mislead. */
 const ROLE_POSITIONS: Record<string, { x: number; y: number }> = {
   inbound: { x: 50, y: 50 },
   outbound: { x: 200, y: 50 },
@@ -33,69 +41,80 @@ const ROLE_POSITIONS: Record<string, { x: number; y: number }> = {
 };
 
 export default function PipelineFlow({ agents }: Props) {
+  /* Global DOM ids collide when two flows render on one page. */
+  const markerId = useId().replace(/:/g, '');
   const activeRoles = new Set(agents.map((a) => a.teamRole));
 
   const statusColor = (role: string) => {
     const agent = agents.find((a) => a.teamRole === role);
-    if (!agent) return '#d1d5db';
+    if (!agent) return 'var(--mid-grey)';
     if (agent.status === 'running') return '#10b981';
     if (agent.status === 'stopped') return '#f59e0b';
     return '#6b7280';
   };
 
+  const ordered = Object.keys(ROLE_POSITIONS).filter((r) => activeRoles.has(r));
+
   return (
-    <div style={{ position: 'relative', width: '100%', height: '320px', overflow: 'hidden' }}>
-      <svg width="100%" height="100%" viewBox="0 0 600 300" style={{ position: 'absolute', top: 0, left: 0 }}>
-        {PIPELINE_EDGES.map(([from, to]) => {
-          if (!activeRoles.has(from) || !activeRoles.has(to)) return null;
-          const start = ROLE_POSITIONS[from];
-          const end = ROLE_POSITIONS[to];
-          if (!start || !end) return null;
+    <div className={styles.flowRoot}>
+      {/* Desktop: the spatial graph */}
+      <div className={styles.flowGraph} role="img" aria-label={`Pipeline flow across ${ordered.length} agents`}>
+        <svg width="100%" height="100%" viewBox="0 0 600 300" preserveAspectRatio="xMidYMid meet">
+          {PIPELINE_EDGES.map(([from, to]) => {
+            if (!activeRoles.has(from) || !activeRoles.has(to)) return null;
+            const start = ROLE_POSITIONS[from];
+            const end = ROLE_POSITIONS[to];
+            if (!start || !end) return null;
+            return (
+              <line
+                key={`${from}-${to}`}
+                x1={start.x + 50}
+                y1={start.y + 20}
+                x2={end.x + 50}
+                y2={end.y + 20}
+                stroke="var(--border-subtle)"
+                strokeWidth="2"
+                markerEnd={`url(#${markerId})`}
+              />
+            );
+          })}
+          <defs>
+            <marker id={markerId} markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6" fill="var(--mid-grey)" />
+            </marker>
+          </defs>
+        </svg>
+
+        {ordered.map((role) => {
+          const pos = ROLE_POSITIONS[role];
           return (
-            <line
-              key={`${from}-${to}`}
-              x1={start.x + 50}
-              y1={start.y + 20}
-              x2={end.x + 50}
-              y2={end.y + 20}
-              stroke="#e5e7eb"
-              strokeWidth="2"
-              markerEnd="url(#arrow)"
-            />
+            <div
+              key={role}
+              className={styles.node}
+              style={{
+                left: `${(pos.x / 600) * 100}%`,
+                top: `${(pos.y / 300) * 100}%`,
+                borderColor: statusColor(role),
+              }}
+            >
+              <span className={styles.nodeDot} style={{ background: statusColor(role) }} />
+              {roleShortLabel(role)}
+            </div>
           );
         })}
-        <defs>
-          <marker id="arrow" markerWidth="6" markerHeight="6" refX="6" refY="3" orient="auto">
-            <path d="M0,0 L6,3 L0,6" fill="#9ca3af" />
-          </marker>
-        </defs>
-      </svg>
+      </div>
 
-      {Object.entries(ROLE_POSITIONS).map(([role, pos]) => {
-        if (!activeRoles.has(role)) return null;
-        return (
-          <div
-            key={role}
-            style={{
-              position: 'absolute',
-              left: pos.x,
-              top: pos.y,
-              width: 100,
-              padding: '0.5rem',
-              background: 'white',
-              border: `2px solid ${statusColor(role)}`,
-              borderRadius: '8px',
-              textAlign: 'center',
-              fontSize: '0.7rem',
-              fontWeight: 500,
-              textTransform: 'capitalize',
-            }}
-          >
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor(role), margin: '0 auto 4px' }} />
-            {role.replace('_', ' ')}
-          </div>
-        );
-      })}
+      {/* Mobile: percentage-positioned nodes drift out of alignment with the
+          scaled SVG, so below the threshold this becomes a plain list. */}
+      <ul className={styles.flowList}>
+        {ordered.map((role) => (
+          <li key={role} className={styles.flowListItem}>
+            <span className={styles.nodeDot} style={{ background: statusColor(role) }} />
+            <span>{roleShortLabel(role)}</span>
+            <span className={styles.flowListStatus}>{agents.find((a) => a.teamRole === role)?.status}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

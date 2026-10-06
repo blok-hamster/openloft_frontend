@@ -24,6 +24,11 @@ export default function HttpDetailsModal({ agent, open, onClose }: HttpDetailsMo
     const token = agent.gatewayToken;
     const model = agent.agentType === 'hermes' ? 'hermes-agent' : 'openclaw';
 
+    /* Displayed and copied forms were two separate literals, so they
+       would drift. Build both from one source. */
+    const curl = `curl -X POST ${apiUrl} \\\n  -H "Authorization: Bearer ${token}" \\\n  -H "Content-Type: application/json" \\\n  -d '{\n    "model": "${model}",\n    "messages": [{"role": "user", "content": "Hello!"}]\n  }'`;
+    const curlFlat = curl.replace(/\\\n\s*/g, ' ');
+
     const handleCopy = (text: string, id: string) => {
         navigator.clipboard.writeText(text);
         setCopied(id);
@@ -41,7 +46,7 @@ export default function HttpDetailsModal({ agent, open, onClose }: HttpDetailsMo
                     <label>Endpoint URL</label>
                     <div className={styles.httpDetailValue}>
                         <code>{apiUrl}</code>
-                        <button onClick={() => handleCopy(apiUrl, 'url')}>
+                        <button type="button" className={styles.httpCopyBtn} aria-label="Copy endpoint URL" onClick={() => handleCopy(apiUrl, 'url')}>
                             {copied === 'url' ? <Check size={14} className={styles.copySuccess} /> : <Copy size={14} />}
                         </button>
                     </div>
@@ -51,7 +56,7 @@ export default function HttpDetailsModal({ agent, open, onClose }: HttpDetailsMo
                     <label>Bearer Token</label>
                     <div className={styles.httpDetailValue}>
                         <code>{token}</code>
-                        <button onClick={() => handleCopy(token, 'token')}>
+                        <button type="button" className={styles.httpCopyBtn} aria-label="Copy bearer token" onClick={() => handleCopy(token, 'token')}>
                             {copied === 'token' ? <Check size={14} className={styles.copySuccess} /> : <Copy size={14} />}
                         </button>
                     </div>
@@ -61,7 +66,7 @@ export default function HttpDetailsModal({ agent, open, onClose }: HttpDetailsMo
                     <label>Model</label>
                     <div className={styles.httpDetailValue}>
                         <code>{model}</code>
-                        <button onClick={() => handleCopy(model, 'model')}>
+                        <button type="button" className={styles.httpCopyBtn} aria-label="Copy model" onClick={() => handleCopy(model, 'model')}>
                             {copied === 'model' ? <Check size={14} className={styles.copySuccess} /> : <Copy size={14} />}
                         </button>
                     </div>
@@ -70,18 +75,12 @@ export default function HttpDetailsModal({ agent, open, onClose }: HttpDetailsMo
                 <div className={styles.httpDetailItem}>
                     <label>Example Curl</label>
                     <div className={styles.httpDetailValue}>
-                        <pre>
-                            {`curl -X POST ${apiUrl} \\
-  -H "Authorization: Bearer ${token}" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "model": "${model}",
-    "messages": [{"role": "user", "content": "Hello!"}]
-  }'`}
-                        </pre>
+                        <pre className={styles.httpDetailPre}>{curl}</pre>
                         <button
-                            style={{ position: 'absolute', top: '10px', right: '10px' }}
-                            onClick={() => handleCopy(`curl -X POST ${apiUrl} -H "Authorization: Bearer ${token}" -H "Content-Type: application/json" -d '{"model": "${model}","messages": [{"role": "user", "content": "Hello!"}]}'`, 'curl')}
+                            type="button"
+                            className={styles.httpCopyBtnFloating}
+                            aria-label="Copy curl example"
+                            onClick={() => handleCopy(curlFlat, 'curl')}
                         >
                             {copied === 'curl' ? <Check size={14} className={styles.copySuccess} /> : <Copy size={14} />}
                         </button>

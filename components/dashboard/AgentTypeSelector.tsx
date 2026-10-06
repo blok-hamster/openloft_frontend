@@ -2,6 +2,7 @@
 
 import Card from '@/components/ui/Card';
 import styles from './Dashboard.module.css';
+import selector from './AgentTypeSelector.module.css';
 
 interface AgentTypeSelectorProps {
     value: 'openclaw' | 'hermes';
@@ -10,17 +11,16 @@ interface AgentTypeSelectorProps {
 
 export default function AgentTypeSelector({ value, onChange }: AgentTypeSelectorProps) {
     return (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+        <div className={selector.grid}>
             <Card
-                className={value === 'openclaw' ? styles.activePlanCard : ''}
+                className={`${value === 'openclaw' ? styles.activePlanCard : ''} ${selector.optionCard}`}
                 onClick={() => onChange('openclaw')}
-                style={{ cursor: 'pointer', padding: '1.25rem' }}
             >
-                <h4 style={{ fontSize: '0.875rem', marginBottom: '0.5rem', fontWeight: 700 }}>OpenClaw Agent</h4>
-                <p style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: '0.75rem' }}>
+                <h4 className={selector.optionTitle}>OpenClaw Agent</h4>
+                <p className={selector.optionBlurb}>
                     Full-featured AI orchestrator with skills, plugins, and A2A communication.
                 </p>
-                <ul style={{ fontSize: '0.6875rem', opacity: 0.6, listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <ul className={selector.optionList}>
                     <li>+ Plugin ecosystem (Discord, Telegram, Slack)</li>
                     <li>+ Agent-to-Agent protocol (A2A)</li>
                     <li>+ Custom skill files & MCP servers</li>
@@ -28,15 +28,14 @@ export default function AgentTypeSelector({ value, onChange }: AgentTypeSelector
                 </ul>
             </Card>
             <Card
-                className={value === 'hermes' ? styles.activePlanCard : ''}
+                className={`${value === 'hermes' ? styles.activePlanCard : ''} ${selector.optionCard}`}
                 onClick={() => onChange('hermes')}
-                style={{ cursor: 'pointer', padding: '1.25rem' }}
             >
-                <h4 style={{ fontSize: '0.875rem', marginBottom: '0.5rem', fontWeight: 700 }}>Hermes Agent</h4>
-                <p style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: '0.75rem' }}>
+                <h4 className={selector.optionTitle}>Hermes Agent</h4>
+                <p className={selector.optionBlurb}>
                     Self-improving agent with autonomous skill creation and persistent memory.
                 </p>
-                <ul style={{ fontSize: '0.6875rem', opacity: 0.6, listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                <ul className={selector.optionList}>
                     <li>+ Auto-creates & improves skills</li>
                     <li>+ Persistent cross-session memory</li>
                     <li>+ Browser automation (Playwright)</li>

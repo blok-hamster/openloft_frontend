@@ -3,9 +3,12 @@
 import styles from './Dashboard.module.css';
 import { IAgent } from '@/lib/api';
 import AgentCard from './AgentCard';
+import Button from '@/components/ui/Button';
 
 interface AgentListProps {
     agents: IAgent[];
+    /** Shown in the empty state — without it, "no agents" is a dead end. */
+    onDeploy?: () => void;
     onChat: (agent: IAgent) => void;
     onMemory: (agent: IAgent) => void;
     onDrive: (agent: IAgent) => void;
@@ -22,7 +25,7 @@ interface AgentListProps {
     onHttpDetails?: (agent: IAgent) => void;
 }
 
-export default function AgentList({ agents, onChat, onMemory, onDrive, onSettings, onStop, onStart, onPause, onResume, onRestart, onDelete, onLogs, onCustomKey, onChannels, onHttpDetails }: AgentListProps) {
+export default function AgentList({ agents, onDeploy, onChat, onMemory, onDrive, onSettings, onStop, onStart, onPause, onResume, onRestart, onDelete, onLogs, onCustomKey, onChannels, onHttpDetails }: AgentListProps) {
     if (agents.length === 0) {
         return (
             <div className={styles.emptyState}>
@@ -31,6 +34,11 @@ export default function AgentList({ agents, onChat, onMemory, onDrive, onSetting
                 <div className={styles.emptyDescription}>
                     Deploy your first AI agent to get started with LOFT orchestration.
                 </div>
+                {onDeploy && (
+                    <Button type="button" variant="primary" onClick={onDeploy}>
+                        Deploy your first agent
+                    </Button>
+                )}
             </div>
         );
     }

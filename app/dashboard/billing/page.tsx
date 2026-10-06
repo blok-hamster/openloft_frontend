@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/Toast';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import styles from '@/components/dashboard/Dashboard.module.css';
+import bill from './Billing.module.css';
 import { CreditCard, Zap, Shield, Crown, TrendingDown, Clock, AlertCircle } from 'lucide-react';
 
 export default function BillingPage() {
@@ -128,7 +129,7 @@ export default function BillingPage() {
             </header>
 
             {billing?.pauseReason && (
-                <div style={{ backgroundColor: 'var(--accent-orange)', color: '#1A1A1A', padding: '16px', borderRadius: '8px', marginBottom: '24px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div className={bill.pauseBanner}>
                     <AlertCircle size={20} />
                     {billing.pauseReason === 'subscription_expired' && "Your subscription has expired. Please renew to resume all agent services."}
                     {billing.pauseReason === 'payment_failed' && "Your last payment failed. Please update your payment method. Grace period ends soon."}
@@ -145,23 +146,23 @@ export default function BillingPage() {
                         </div>
                         <span className={styles.balanceLabel}>Account Balance</span>
                         {billing?.subscriptionStatus && (
-                            <span style={{ marginLeft: 'auto', textTransform: 'uppercase', fontSize: '10px', padding: '4px 8px', borderRadius: '4px', backgroundColor: billing.subscriptionStatus === 'active' ? 'var(--accent-blue)' : '#444' }}>
+                            <span className={billing.subscriptionStatus === 'active' ? bill.statusPillActive : bill.statusPill}>
                                 {billing.subscriptionStatus}
                             </span>
                         )}
                     </div>
                     <div className={styles.balanceValue}>${billing?.creditBalance?.toFixed(2)}</div>
                     {billing?.creditCap > 0 && (
-                        <div style={{ fontSize: '12px', color: 'var(--mid-grey)', marginTop: '4px' }}>
+                        <div className={bill.balanceMeta}>
                             Monthly Cap: ${billing.creditCap.toFixed(2)}
                         </div>
                     )}
                     {billing?.billingPeriodEnd && (
-                        <div style={{ fontSize: '12px', color: 'var(--mid-grey)', marginTop: '8px', paddingBottom: '8px', borderBottom: '1px solid var(--border-color)' }}>
+                        <div className={bill.balanceMetaSpaced}>
                             Period ends: {new Date(billing.billingPeriodEnd).toLocaleDateString()}
                         </div>
                     )}
-                    <div className={styles.balanceActions} style={{ marginTop: '16px' }}>
+                    <div className={`${styles.balanceActions} ${bill.balanceActionsSpaced}`}>
                         <Button 
                             variant="primary" 
                             fullWidth 
@@ -177,7 +178,7 @@ export default function BillingPage() {
                                 fullWidth 
                                 loading={isManageLoading}
                                 onClick={handleManageBilling}
-                                style={{ marginTop: '0.5rem' }}
+                                className={bill.portalButton}
                             >
                                 Manage Billing Portal
                             </Button>
@@ -207,16 +208,17 @@ export default function BillingPage() {
                 </Card>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '48px', marginBottom: '24px' }}>
-                <h2 className={styles.sectionHeader} style={{ margin: 0 }}>Available Plans</h2>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <label style={{ fontSize: '12px', color: 'var(--mid-grey)' }}>Have a Coupon Code?</label>
-                    <input 
-                        type="text" 
-                        value={couponCode} 
-                        onChange={e => setCouponCode(e.target.value)} 
-                        placeholder="e.g. LOFT-XXXXX" 
-                        style={{ padding: '8px 12px', background: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '6px', color: 'var(--text-color)', fontFamily: 'monospace' }} 
+            <div className={bill.plansHeader}>
+                <h2 className={`${styles.sectionHeader} ${bill.plansTitle}`}>Available Plans</h2>
+                <div className={bill.couponRow}>
+                    <label className={bill.couponLabel} htmlFor="coupon-code">Have a Coupon Code?</label>
+                    <input
+                        id="coupon-code"
+                        type="text"
+                        value={couponCode}
+                        onChange={e => setCouponCode(e.target.value)}
+                        placeholder="e.g. LOFT-XXXXX"
+                        className={bill.couponInput}
                     />
                 </div>
             </div>

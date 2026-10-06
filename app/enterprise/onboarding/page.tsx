@@ -8,10 +8,11 @@ import IntegrationStep from '@/components/enterprise/IntegrationStep';
 import ConfigurationStep from '@/components/enterprise/ConfigurationStep';
 import GoLiveStep from '@/components/enterprise/GoLiveStep';
 import styles from './Onboarding.module.css';
+import FeatureGate from '@/components/FeatureGate';
 
 const STEPS = ['Discovery', 'Integrations', 'Configuration', 'Go Live'];
 
-export default function EnterpriseOnboardingPage() {
+function EnterpriseOnboardingPageContent() {
   return (
     <Suspense fallback={<div />}>
       <EnterpriseOnboardingInner />
@@ -99,4 +100,12 @@ function EnterpriseOnboardingInner() {
       </div>
     </div>
   );
+}
+
+export default function EnterpriseOnboardingPage() {
+    return (
+        <FeatureGate>
+            <EnterpriseOnboardingPageContent />
+        </FeatureGate>
+    );
 }

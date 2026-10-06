@@ -60,17 +60,15 @@ export default function ConfigEditor({ agent, open, onClose }: ConfigEditorProps
         <Modal open={open} onClose={onClose} title={`Config — ${agent?.name || agent?.agentId || ''}`}>
             <div className={styles.memoryEditor}>
                 {loading ? (
-                    <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 'var(--font-size-xs)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                        Loading configuration…
-                    </div>
+                    <div className={styles.logLoading}>Loading configuration…</div>
                 ) : (
                     <>
                         <textarea
-                            className={styles.memoryTextarea}
                             value={configText}
                             onChange={(e) => { setConfigText(e.target.value); setError(''); }}
                             spellCheck={false}
-                            style={{ fontFamily: 'monospace', fontSize: '12px', minHeight: '400px' }}
+                            aria-label="Agent configuration JSON"
+                            className={`${styles.memoryTextarea} ${styles.configTextarea}`}
                         />
                         {error && (
                             <div className={styles.confirmWarning}>{error}</div>

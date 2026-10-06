@@ -1,0 +1,164 @@
+/* ============================================================
+   Lobby room (app/dashboard/lobby/[lobbyId])
+   Extracted from inline styles.
+   ============================================================ */
+
+.page {
+    display: flex;
+    flex-direction: column;
+    /* 100dvh tracks the mobile URL bar; 100vh is the fallback */
+    height: 100vh;
+    height: 100dvh;
+    padding: 2rem;
+}
+
+.loading {
+    padding: 2rem;
+}
+
+.body {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 1.5rem;
+    flex: 1;
+    min-height: 0;
+}
+
+/* --- Agents sidebar --- */
+
+.agentPanel {
+    border: var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    background: var(--bg-color);
+    overflow-y: auto;
+}
+
+.agentPanelTitle {
+    margin-bottom: 1rem;
+}
+
+.agentList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.agentRow {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border: 1px solid rgba(26, 26, 26, 0.06);
+    border-radius: var(--radius-sm);
+}
+
+.agentDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.agentDotRunning {
+    composes: agentDot;
+    background: #2ea043;
+}
+
+.agentDotStopped {
+    composes: agentDot;
+    background: #e54d2e;
+}
+
+.agentName {
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+}
+
+/* --- Conversation --- */
+
+.chat {
+    height: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.chatCount {
+    font-size: 10px;
+}
+
+.chatMessagesPadded {
+    padding: 1.5rem;
+}
+
+.chatEmpty {
+    text-align: center;
+    color: var(--mid-grey);
+    padding: 2rem;
+}
+
+.chatEmptyTitle {
+    font-size: var(--font-size-xs);
+}
+
+.chatEmptyHint {
+    font-size: 10px;
+}
+
+.bubbleSender {
+    font-size: 10px;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    opacity: 0.8;
+}
+
+.bubbleTime {
+    font-size: 10px;
+    text-align: right;
+    margin-top: 0.25rem;
+    opacity: 0.6;
+}
+
+.driveScroll {
+    height: 500px;
+    overflow-y: auto;
+}
+
+/* ============================================================
+   Mobile
+   ============================================================ */
+
+@media (max-width: 900px) {
+    .page {
+        padding: 1rem;
+    }
+
+    /* A fixed 240px rail leaves too little room for the feed, so the
+       agent list becomes a horizontal strip above the conversation. */
+    .body {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        gap: 1rem;
+    }
+
+    .agentPanel {
+        max-height: 140px;
+    }
+
+    .agentList {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .agentRow {
+        flex: 1 1 auto;
+    }
+
+    .chatMessagesPadded {
+        padding: 1rem;
+    }
+
+    .driveScroll {
+        height: 60dvh;
+    }
+}

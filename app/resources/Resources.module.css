@@ -1,0 +1,95 @@
+/* ============================================================
+   /resources — extracted from inline styles
+   ============================================================ */
+
+.bodySection {
+    padding-bottom: 100px;
+}
+
+.resourceCard {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.resourceTag {
+    align-self: flex-start;
+}
+
+.resourceIcon {
+    margin: 1.5rem 0;
+    color: var(--accent-blue);
+}
+
+.resourceTitle {
+    text-align: left;
+    font-size: 1.1rem;
+}
+
+.resourceDesc {
+    margin-bottom: 1.5rem;
+}
+
+.resourceCta {
+    margin-top: auto;
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--touch-target);
+}
+
+/* --- Footer band --- */
+
+.footerBand {
+    border-top: var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 2rem 0;
+}
+
+.footerIcon {
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.footerBand {
+    padding: 3rem 0 4rem;
+}
+
+.footerBody {
+    margin: 0;
+    font-size: var(--font-size-base);
+    line-height: 1.7;
+    color: var(--text-secondary);
+    max-width: 68ch;
+}
+
+.footerLink {
+    color: var(--accent-blue);
+}
+
+@media (max-width: 900px) {
+    .bodySection {
+        padding-bottom: 3rem;
+    }
+
+    .resourceCard {
+        text-align: left;
+    }
+
+    /* 6 cards at minmax(260px,1fr) leaves very narrow cards */
+    .pricingGrid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .resourceIcon {
+        margin: 1rem 0;
+    }
+
+    .footerBand {
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1.5rem 0;
+    }
+}

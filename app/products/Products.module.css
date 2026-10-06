@@ -1,0 +1,103 @@
+/* ============================================================
+   /products — extracted from inline styles
+   featureList / featureItem were referenced by the page but defined
+   nowhere, so the bullet lists rendered as unstyled browser defaults.
+   ============================================================ */
+
+.featureList {
+    list-style: none;
+    padding: 0;
+    margin: 1.25rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.featureItem {
+    position: relative;
+    padding-left: 1.25rem;
+    font-size: var(--font-size-sm);
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.featureItem::before {
+    content: '—';
+    position: absolute;
+    left: 0;
+    opacity: 0.6;
+}
+
+.featureCta {
+    font-weight: 800;
+    margin-top: 1.25rem;
+    display: inline-block;
+    min-height: var(--touch-target);
+}
+
+/* --- Closing CTA band --- */
+
+.ctaBand {
+    text-align: center;
+    padding: 100px 0;
+    background: var(--off-black);
+    color: var(--white);
+}
+
+.ctaTitle {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.ctaBody {
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 2rem;
+    max-width: 52ch;
+    margin-inline: auto;
+}
+
+.ctaActions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.ctaActions > * {
+    min-height: var(--touch-target);
+}
+
+@media (max-width: 900px) {
+    /* 1fr 1fr puts a 120px icon beside body copy in a ~300px column */
+    .productFeatureGrid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        padding: 3rem 0;
+    }
+
+    .featureImage {
+        order: -1;
+        aspect-ratio: 16 / 7;
+    }
+
+    .featureImage svg {
+        width: 64px;
+        height: 64px;
+    }
+
+    .ctaTitle {
+        font-size: 1.75rem;
+    }
+
+    .ctaBand {
+        padding: 3rem 1.25rem;
+    }
+
+    .ctaActions {
+        flex-direction: column;
+    }
+
+    .ctaActions > * {
+        width: 100%;
+    }
+}

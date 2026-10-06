@@ -4,10 +4,15 @@
 # the only CI in either repo, so a frontend regression could not fail a build.
 #
 # Order is deliberate and cheapest-fails-first:
-#   typecheck → lint → test
+#   typecheck → lint → test → build
 #
 # `tsc --noEmit` runs before lint because a type error is a hard failure that
 # lint will not catch, and running it first means the fast check reports first.
+#
+# `npm run build` is last because it is by far the slowest. It was previously
+# absent, which let a CSS-module error ship: `composes` is illegal inside an
+# `@media` block, and neither tsc, eslint nor vitest evaluate CSS — only the
+# Turbopack build does. Typecheck and lint stayed green the whole time.
 
 name: CI
 
@@ -22,9 +27,9 @@ concurrency:
 
 jobs:
   verify:
-    name: typecheck, lint, test
+    name: typecheck, lint, test, build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - uses: actions/checkout@v4
@@ -53,3 +58,10 @@ jobs:
       - name: Test
         working-directory: frontend
         run: npm test
+
+      - name: Build
+        working-directory: frontend
+        # The only step that evaluates CSS Modules, so it is the only thing
+        # that catches `composes` inside a media query, an undefined
+        # `var()` target, or a bad CSS-module import path.
+        run: npm run build

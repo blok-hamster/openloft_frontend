@@ -1,5 +1,6 @@
 .landingPage {
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
 }
@@ -40,9 +41,63 @@
     border-bottom: 1px dotted transparent;
 }
 
-.navLink:hover {
+@media (hover: hover) {
+    .navLink:hover {
+        border-bottom-color: var(--text-primary);
+        opacity: 0.8;
+    }
+}
+
+.navLinkActive {
+    composes: navLink;
     border-bottom-color: var(--text-primary);
-    opacity: 0.8;
+}
+
+/* Hamburger — hidden above the mobile breakpoint */
+.navToggle {
+    display: none;
+    width: var(--touch-target);
+    height: var(--touch-target);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-primary);
+}
+
+/* Drawer panel under the fixed header */
+.mobileNav {
+    display: none;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1rem 2rem 1.5rem;
+    border-top: var(--border);
+    background: rgba(200, 204, 200, 0.98);
+}
+
+.mobileNavLink {
+    display: flex;
+    align-items: center;
+    min-height: var(--touch-target);
+    padding: 0.75rem 0;
+    font-weight: 700;
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-primary);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--mid-grey);
+}
+
+.mobileNavActions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.mobileNavActions > * {
+    width: 100%;
+    min-height: var(--touch-target);
 }
 
 .navActions {
@@ -168,6 +223,24 @@
 
 /* Mobile Responsiveness */
 @media (max-width: 900px) {
+    /* Desktop nav collapses into the hamburger drawer */
+    .navLinks,
+    .navActions {
+        display: none;
+    }
+
+    .navContainer {
+        grid-template-columns: 1fr auto;
+        gap: 1rem;
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+    }
+
+    .navToggle,
+    .mobileNav {
+        display: flex;
+    }
+
     .heroContent {
         flex-direction: column;
         align-items: center;
@@ -480,4 +553,9 @@
 
 .resourceCard:hover {
     transform: translateY(-5px);
+}
+/* Shown when the account area is gated off — the nav collapses to the
+   logo and hamburger rather than advertising a sign-in that cannot work. */
+.navActionsHidden {
+    display: none;
 }

@@ -112,7 +112,7 @@ export default function AgentDrive({ agent, open, onClose }: AgentDriveProps) {
                     <span>{uploading ? 'Uploading...' : 'Drop files or folders here, or click to upload'}</span>
                     <span className={styles.driveDropHint}>Max 10MB per file • Files are stored in S3</span>
                     <div className={styles.driveUploadButtons} onClick={(e) => e.stopPropagation()}>
-                        <button className={styles.driveUploadBtn} onClick={() => fileInputRef.current?.click()}>Files</button>
+                        <button type="button" className={styles.driveUploadBtn} onClick={() => fileInputRef.current?.click()}>Files</button>
                         <button className={styles.driveUploadBtn} onClick={() => folderInputRef.current?.click()}>Folder</button>
                     </div>
                     <input
@@ -153,10 +153,10 @@ export default function AgentDrive({ agent, open, onClose }: AgentDriveProps) {
                                     <span className={styles.driveFileMeta}>{formatBytes(file.size)}</span>
                                 </div>
                                 <div className={styles.driveFileActions}>
-                                    <button className={styles.driveIconBtn} onClick={() => handleDownload(file.name)} title="Download">
+                                    <button type="button" className={styles.driveIconBtn} onClick={() => handleDownload(file.name)} aria-label={`Download ${file.name}`} title="Download">
                                         <Download size={13} />
                                     </button>
-                                    <button className={styles.driveIconBtn} onClick={() => handleDelete(file.name)} title="Delete">
+                                    <button type="button" className={styles.driveIconBtn} onClick={() => handleDelete(file.name)} aria-label={`Delete ${file.name}`} title="Delete">
                                         <Trash2 size={13} />
                                     </button>
                                 </div>

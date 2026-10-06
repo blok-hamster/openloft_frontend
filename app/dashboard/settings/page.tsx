@@ -8,6 +8,7 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import styles from '@/components/dashboard/Dashboard.module.css';
+import set from './Settings.module.css';
 
 export default function SettingsPage() {
     const { user } = useAuth();
@@ -123,16 +124,16 @@ export default function SettingsPage() {
                 </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '560px' }}>
+            <div className={set.stack}>
                 {/* Secret Manager */}
                 <Card>
-                    <div className={styles.headerTitle} style={{ fontSize: 'var(--font-size-sm)', marginBottom: '1.25rem' }}>
+                    <div className={`${styles.headerTitle} ${set.sectionHeading}`}>
                         Secret Manager
                     </div>
                     
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    <div className={set.secretStack}>
                         {/* Main Providers */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <div className={set.fieldStack}>
                             <Input
                                 label="OpenAI API Key"
                                 type="password"
@@ -150,21 +151,19 @@ export default function SettingsPage() {
                         </div>
 
                         {/* Other Providers Group */}
-                        <div style={{ border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden' }}>
-                            <button 
+                        <div className={set.group}>
+                            <button
+                                type="button"
                                 onClick={() => toggleGroup('others')}
-                                style={{ 
-                                    width: '100%', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', 
-                                    alignItems: 'center', background: 'rgba(255,255,255,0.02)', border: 'none', 
-                                    cursor: 'pointer', color: 'var(--text-primary)', fontSize: '12px', fontWeight: 600 
-                                }}
+                                className={set.groupToggle}
+                                aria-expanded={expandedGroups.includes('others')}
                             >
                                 OTHER PROVIDERS (Gemini, Groq, DeepSeek, xAI, Mistral)
                                 <span>{expandedGroups.includes('others') ? '−' : '+'}</span>
                             </button>
                             
                             {expandedGroups.includes('others') && (
-                                <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                                <div className={set.groupPanel}>
                                     <Input
                                         label="Google Gemini API Key"
                                         type="password"
@@ -205,21 +204,19 @@ export default function SettingsPage() {
                         </div>
 
                         {/* Azure Providers Group */}
-                        <div style={{ border: '1px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden' }}>
-                            <button 
+                        <div className={set.group}>
+                            <button
+                                type="button"
                                 onClick={() => toggleGroup('azure')}
-                                style={{ 
-                                    width: '100%', padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', 
-                                    alignItems: 'center', background: 'rgba(255,255,255,0.02)', border: 'none', 
-                                    cursor: 'pointer', color: 'var(--text-primary)', fontSize: '12px', fontWeight: 600 
-                                }}
+                                className={set.groupToggle}
+                                aria-expanded={expandedGroups.includes('azure')}
                             >
                                 AZURE OPENAI (Enterprise)
                                 <span>{expandedGroups.includes('azure') ? '−' : '+'}</span>
                             </button>
                             
                             {expandedGroups.includes('azure') && (
-                                <div style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                                <div className={set.groupPanel}>
                                     <Input
                                         label="Azure API Key"
                                         type="password"
@@ -252,7 +249,7 @@ export default function SettingsPage() {
                             )}
                         </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                        <div className={set.actionsEnd}>
                             <Button variant="primary" size="sm" loading={savingSecrets} onClick={handleSaveSecrets}>
                                 Save to Vault
                             </Button>
@@ -263,10 +260,10 @@ export default function SettingsPage() {
                 {/* Workspace Info */}
                 {tenant && (
                     <Card>
-                        <div className={styles.headerTitle} style={{ fontSize: 'var(--font-size-sm)', marginBottom: '1rem' }}>
+                        <div className={`${styles.headerTitle} ${set.sectionHeadingSm}`}>
                             Workspace Info
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        <div className={set.infoList}>
                             <div className={styles.agentMetaItem}>Tenant ID: {tenant.tenantId}</div>
                             <div className={styles.agentMetaItem}>Vault: {tenant.vaultNamespace}</div>
                             <div className={styles.agentMetaItem}>
@@ -278,10 +275,10 @@ export default function SettingsPage() {
 
                 {/* Account Settings */}
                 <Card>
-                    <div className={styles.headerTitle} style={{ fontSize: 'var(--font-size-sm)', marginBottom: '1rem' }}>
+                    <div className={`${styles.headerTitle} ${set.sectionHeadingSm}`}>
                         Account
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div className={set.fieldStack}>
                         <Input
                             label="Company Name"
                             value={companyName}
@@ -294,7 +291,7 @@ export default function SettingsPage() {
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                         />
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                        <div className={set.actionsEnd}>
                             <Button variant="primary" size="sm" loading={savingAccount} onClick={handleSaveAccount}>
                                 Update Account
                             </Button>

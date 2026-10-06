@@ -11,6 +11,7 @@ import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
 import AgentTypeSelector from './AgentTypeSelector';
 import styles from './Dashboard.module.css';
+import wiz from './AgentCreationWizard.module.css';
 
 interface AgentCreationWizardProps {
     open: boolean;
@@ -236,7 +237,7 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
 
             {step === 0 && (
                 <div className={styles.wizardSteps}>
-                    <div className={styles.headerTitle} style={{ fontSize: 'var(--font-size-sm)', marginBottom: '1rem' }}>
+                    <div className={`${styles.headerTitle} ${wiz.stepHeading}`}>
                         Choose Agent Runtime
                     </div>
                     <AgentTypeSelector value={agentType} onChange={setAgentType} />
@@ -273,25 +274,23 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
 
             {step === 2 && (
                 <div className={styles.wizardSteps}>
-                    <div className={styles.headerTitle} style={{ fontSize: 'var(--font-size-sm)', marginBottom: '1rem' }}>
+                    <div className={`${styles.headerTitle} ${wiz.stepHeading}`}>
                         Choose Billing Strategy
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className={wiz.planGrid}>
                         <Card
-                            className={usePlatformCredits ? styles.activePlanCard : ''}
                             onClick={() => setUsePlatformCredits(true)}
-                            style={{ cursor: 'pointer', padding: '1.25rem' }}
+                            className={usePlatformCredits ? `${styles.activePlanCard} ${wiz.planCard}` : wiz.planCard}
                         >
-                            <h4 style={{ fontSize: '0.8125rem', marginBottom: '0.5rem' }}>Platform Credits</h4>
-                            <p style={{ fontSize: '0.75rem', opacity: 0.7 }}>Use OpenLoft managed keys. Pay per token from your balance.</p>
+                            <h4 className={wiz.planTitle}>Platform Credits</h4>
+                            <p className={wiz.planBlurb}>Use OpenLoft managed keys. Pay per token from your balance.</p>
                         </Card>
                         <Card
-                            className={!usePlatformCredits ? styles.activePlanCard : ''}
                             onClick={() => setUsePlatformCredits(false)}
-                            style={{ cursor: 'pointer', padding: '1.25rem' }}
+                            className={!usePlatformCredits ? `${styles.activePlanCard} ${wiz.planCard}` : wiz.planCard}
                         >
-                            <h4 style={{ fontSize: '0.8125rem', marginBottom: '0.5rem' }}>Bring Your Own Key</h4>
-                            <p style={{ fontSize: '0.75rem', opacity: 0.7 }}>Use your own API keys. Only pay for the orchestration layer.</p>
+                            <h4 className={wiz.planTitle}>Bring Your Own Key</h4>
+                            <p className={wiz.planBlurb}>Use your own API keys. Only pay for the orchestration layer.</p>
                         </Card>
                     </div>
                     <div className={styles.wizardActions}>
@@ -326,8 +325,8 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
                     />
 
                     {!usePlatformCredits && (
-                        <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
-                            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                        <div className={wiz.keyPanel}>
+                            <div className={wiz.keyToggle}>
                                 <Button
                                     variant={useSavedKey ? "secondary" : "ghost"}
                                     onClick={() => setUseSavedKey(true)}
@@ -354,7 +353,7 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
                                     onChange={(e) => setCustomSecret(e.target.value)}
                                 />
                             ) : hasSavedKeyForProvider && (
-                                <div className={styles.agentMetaItem} style={{ fontSize: '11px' }}>
+                                <div className={`${styles.agentMetaItem} ${wiz.keyHint}`}>
                                     Using saved {providerModels[llmProvider]?.label} key from Vault.
                                 </div>
                             )}
@@ -372,27 +371,19 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
 
             {step === 5 && (
                 <div className={styles.wizardSteps}>
-                    <div style={{ textAlign: 'center' }}>
-                        <div className={styles.headerTitle} style={{ fontSize: 'var(--font-size-sm)', marginBottom: '1rem' }}>
+                    <div className={wiz.reviewCenter}>
+                        <div className={`${styles.headerTitle} ${wiz.stepHeading}`}>
                             Final Review
                         </div>
-                        <Card style={{ textAlign: 'left', background: 'rgba(26,26,26,0.02)' }}>
+                        <Card className={wiz.reviewCard}>
                             <div className={styles.agentName}>{name}</div>
-                            <div className={styles.agentMetaItem} style={{ marginBottom: '1rem' }}>{description}</div>
+                            <div className={`${styles.agentMetaItem} ${wiz.reviewDesc}`}>{description}</div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.75rem' }}>
+                            <div className={wiz.reviewList}>
                                 <div><strong>Runtime:</strong> {agentType === 'hermes' ? 'Hermes Agent' : 'OpenClaw Agent'}</div>
                                 <div><strong>Provider:</strong> {providerModels[llmProvider]?.label}</div>
                                 <div><strong>Model:</strong> {currentModels.find(m => m.value === model)?.label}</div>
-                                <div style={{
-                                    marginTop: '0.5rem',
-                                    padding: '0.5rem',
-                                    borderRadius: '6px',
-                                    background: usePlatformCredits ? 'rgba(39, 121, 255, 0.1)' : 'rgba(34, 197, 94, 0.1)',
-                                    color: usePlatformCredits ? 'var(--accent-blue)' : '#22c55e',
-                                    fontWeight: 700,
-                                    textAlign: 'center'
-                                }}>
+                                <div className={usePlatformCredits ? wiz.reviewBadgePlatform : wiz.reviewBadgeByok}>
                                     {usePlatformCredits ? 'Platform Account Billing' : 'Bring Your Own Key'}
                                 </div>
                             </div>

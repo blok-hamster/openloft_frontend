@@ -1,0 +1,216 @@
+/* ============================================================
+   Enterprise onboarding steps
+   Shared by DiscoveryStep / IntegrationStep / ConfigurationStep /
+   GoLiveStep.
+
+   These four files each declared their own module-level
+   `inputStyle` / `buttonStyle` React.CSSProperties objects — four
+   near-identical copies, two of which had drifted (a 0.25rem vs
+   0.5rem marginTop on the same field). Consolidated here.
+
+   Colours are retokenised: the originals hardcoded #e5e7eb (border),
+   #6b7280 (muted text) and #6366f1 (indigo, off-brand).
+   ============================================================ */
+
+/* --- Form shell --- */
+
+.stepForm {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.stepFormTight {
+    composes: stepForm;
+    gap: 1.25rem;
+}
+
+.stepHeading {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+}
+
+.stepIntro {
+    color: var(--text-secondary);
+    font-size: var(--font-size-base);
+}
+
+.stepNote {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* --- Fields --- */
+
+.field {
+    display: block;
+}
+
+.fieldLabel {
+    font-weight: 500;
+    font-size: var(--font-size-base);
+}
+
+.input,
+.select {
+    display: block;
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: var(--border);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-primary);
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    margin-top: 0.25rem;
+}
+
+.input:focus,
+.select:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+}
+
+.textarea {
+    composes: input;
+    resize: vertical;
+}
+
+/* --- Fieldsets (integration step) --- */
+
+.fieldset {
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+}
+
+.legend {
+    font-weight: 700;
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0 0.5rem;
+}
+
+/* --- Agent picker (configuration step) --- */
+
+.agentList {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.agentRow {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(26, 26, 26, 0.08);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    min-height: var(--touch-target);
+}
+
+.agentRowSelected {
+    composes: agentRow;
+    border-color: var(--accent-blue);
+    background: rgba(26, 46, 230, 0.06);
+}
+
+.agentRowDisabled {
+    composes: agentRow;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.agentName {
+    font-weight: 500;
+    font-size: var(--font-size-base);
+}
+
+.agentBlurb {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+/* --- Submit --- */
+
+.submitButton {
+    padding: 0.75rem 1.5rem;
+    background: var(--off-black);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: var(--font-family);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    align-self: flex-end;
+    min-height: var(--touch-target);
+}
+
+.submitButton:disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+/* --- Review (go live step) --- */
+
+.reviewStack {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.reviewSection {
+    border: var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+}
+
+.reviewLine {
+    margin-bottom: 0.5rem;
+}
+
+.reviewSectionTitle {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.reviewCallout {
+    padding: 1rem;
+    background: rgba(26, 46, 230, 0.06);
+    border: 1px solid rgba(26, 46, 230, 0.15);
+    border-radius: var(--radius-md);
+}
+
+.reviewCalloutText {
+    font-weight: 500;
+    font-size: var(--font-size-base);
+    margin: 0;
+}
+
+.deployButton {
+    composes: submitButton;
+    padding: 1rem 2rem;
+    align-self: center;
+}
+
+/* ============================================================
+   Mobile
+   ============================================================ */
+
+@media (max-width: 900px) {
+    /* Below 16px, iOS Safari zooms the viewport on focus */
+    .input,
+    .select {
+        font-size: 1rem;
+    }
+
+    .submitButton {
+        align-self: stretch;
+        width: 100%;
+    }
+}

@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { sendMessageToAgent, IAgent } from '@/lib/api';
-import Button from '@/components/ui/Button';
-import { Send, X } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { IAgent } from '@/lib/api';
+import { X, RefreshCw, AlertTriangle } from 'lucide-react';
 import styles from './Dashboard.module.css';
 
 interface AgentChatPanelProps {
@@ -11,49 +10,90 @@ interface AgentChatPanelProps {
     onClose: () => void;
 }
 
-interface ChatMessage {
-    role: 'user' | 'agent';
-    content: string;
+/** Matches agentOrigin() in AgentCard and HttpDetailsModal. */
+function agentOrigin() {
+    if (typeof window === 'undefined') return { baseDomain: 'agents.openloft.xyz', httpProtocol: 'https' };
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    return isLocal
+        ? { baseDomain: '127.0.0.1.nip.io', httpProtocol: 'http' }
+        : { baseDomain: 'agents.openloft.xyz', httpProtocol: 'https' };
 }
 
 export default function AgentChatPanel({ agent, onClose }: AgentChatPanelProps) {
-    const iframeRef = useRef<HTMLIFrameElement>(null);
-
-    const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-    const baseDomain = isLocal ? '127.0.0.1.nip.io' : 'agents.openloft.xyz';
-    const protocol = isLocal ? 'http' : 'https';
-
+    const { baseDomain, httpProtocol } = agentOrigin();
     const isHermes = agent.agentType === 'hermes';
+
     const webUiUrl = isHermes
-        ? `${protocol}://${agent.agentId}.${baseDomain}/login`
-        : `${protocol}://${agent.agentId}.${baseDomain}/?token=${agent.gatewayToken}`;
+        ? `${httpProtocol}://${agent.agentId}.${baseDomain}/login`
+        : `${httpProtocol}://${agent.agentId}.${baseDomain}/?token=${agent.gatewayToken}`;
+
+    /* A dead gateway used to leave a blank frame with no diagnostic at all. */
+    const [reloadKey, setReloadKey] = useState(0);
+    const [loaded, setLoaded] = useState(false);
+
+    useEffect(() => {
+        setLoaded(false);
+        setReloadKey(0);
+    }, [agent.agentId]);
 
     return (
-        <div className={styles.chatPanel} style={{ padding: 0, overflow: 'hidden' }}>
-            <div className={styles.chatHeader} style={{ padding: '1rem', borderBottom: '1px solid var(--border-color)', background: 'var(--panel-bg)' }}>
-                <span>{agent.name || agent.agentId}</span>
-                <button className={styles.sidebarLink} onClick={onClose} style={{ padding: 0, background: 'none' }}>
-                    <X size={16} color="var(--text-secondary)" />
-                </button>
-            </div>
+        <section className={styles.chatPanel} aria-label={`Chat with ${agent.name || agent.agentId}`}>
+            <header className={styles.chatHeader}>
+                <span className={styles.chatHeaderTitle}>{agent.name || agent.agentId}</span>
+                <div className={styles.chatHeaderActions}>
+                    <button
+                        type="button"
+                        className={styles.chatHeaderBtn}
+                        onClick={() => setReloadKey((k) => k + 1)}
+                        aria-label="Reload chat"
+                        title="Reload chat"
+                    >
+                        <RefreshCw size={16} />
+                    </button>
+                    <button
+                        type="button"
+                        className={styles.chatHeaderBtn}
+                        onClick={onClose}
+                        aria-label="Close chat"
+                        title="Close chat"
+                    >
+                        <X size={16} />
+                    </button>
+                </div>
+            </header>
 
             {isHermes && (
-                <div style={{ padding: '0.5rem 1rem', background: 'var(--panel-bg)', borderBottom: '1px solid var(--border-color)', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                    Login: <strong>admin</strong> / <code style={{ fontSize: '0.7rem', userSelect: 'all' }}>{agent.gatewayToken}</code>
-                </div>
+                <p className={styles.chatLoginHint}>
+                    Login: <strong>admin</strong> /{' '}
+                    <code>{agent.gatewayToken}</code>
+                </p>
+            )}
+
+            {!loaded && (
+                <p className={styles.chatLoading} role="status">Connecting to agent…</p>
             )}
 
             <iframe
-                ref={iframeRef}
+                /* key forces a remount so Reload works without a full
+                   page refresh. */
+                key={reloadKey}
+                className={styles.chatFrame}
                 src={webUiUrl}
-                style={{
-                    width: '100%',
-                    height: isHermes ? 'calc(100% - 82px)' : 'calc(100% - 50px)',
-                    border: 'none',
-                    background: 'var(--bg-color)'
-                }}
                 title={`Chat with ${agent.agentId}`}
+                onLoad={() => setLoaded(true)}
+                /* The framed WebUI is a JS app, so it needs scripts and
+                   same-origin to function. It is still denied top-level
+                   navigation, form submission, pointer lock, and
+                   downloads — none of which the WebUI needs. */
+                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                referrerPolicy="no-referrer"
+                loading="lazy"
             />
-        </div>
+
+            <p className={styles.chatNote}>
+                <AlertTriangle size={12} aria-hidden />
+                The agent gateway receives this session token — do not share the URL.
+            </p>
+        </section>
     );
 }

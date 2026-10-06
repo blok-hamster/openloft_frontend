@@ -3,13 +3,16 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/landing/Header';
 import styles from '@/components/landing/Landing.module.css';
+import { isAccountAreaEnabled } from '@/lib/features';
+import ps from './PublicSkills.module.css';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Search, Download, Star, TrendingUp, Box } from 'lucide-react';
 import { getTrendingSkills, searchClawHub } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
-import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function PublicSkillsPage() {
     const { isAuthenticated } = useAuth();
@@ -52,7 +55,15 @@ export default function PublicSkillsPage() {
         }
     };
 
+    /* Browsing the public catalogue stays open pre-launch — only the
+       install path, which lands in the gated dashboard, is withdrawn. */
+    const accountEnabled = isAccountAreaEnabled();
+
     const handleInstallClick = (slug: string) => {
+        if (!accountEnabled) {
+            router.push('/docs');
+            return;
+        }
         if (!isAuthenticated) {
             router.push(`/auth/login?redirect=/dashboard/skills?install=${slug}`);
         } else {
@@ -69,7 +80,7 @@ export default function PublicSkillsPage() {
                     <h1 className={styles.heroTitle}>Extend Your Swarm</h1>
                     <p className={styles.heroSubtitle}>Discover thousands of community-built skills and plugins on ClawHub.</p>
                     
-                    <div style={{ maxWidth: '600px', margin: '3rem auto 0', position: 'relative' }}>
+                    <div className={ps.searchWrap}>
                         <Input 
                             placeholder="Search skills, plugins, or creators..." 
                             value={searchQuery}
@@ -80,28 +91,28 @@ export default function PublicSkillsPage() {
                 </div>
             </section>
 
-            <section className={styles.container} style={{ paddingBottom: '100px' }}>
+            <section className={`${styles.container} ${ps.bodySection}`}>
                 {searchQuery.length > 2 ? (
-                    <div className={styles.resultsSection}>
-                        <h2 className={styles.sectionTitle} style={{ textAlign: 'left', fontSize: '1.5rem' }}>Search Results</h2>
-                        <div className={styles.pricingGrid} style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+                    <div className={ps.resultsSection}>
+                        <h2 className={ps.sectionTitle}>Search Results</h2>
+                        <div className={ps.grid}>
                             {searching ? (
-                                <div>Searching ClawHub...</div>
+                                <div className={ps.statusNote}>Searching ClawHub...</div>
                             ) : results.map((res) => (
-                                <SkillCard key={res.slug} skill={res} onInstall={handleInstallClick} />
+                                <SkillCard key={res.slug} skill={res} onInstall={handleInstallClick} canInstall={accountEnabled} />
                             ))}
                         </div>
                     </div>
                 ) : (
-                    <div className={styles.trendingSection}>
-                        <h2 className={styles.sectionTitle} style={{ textAlign: 'left', fontSize: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div className={ps.trendingSection}>
+                        <h2 className={ps.sectionTitleRow}>
                             <TrendingUp color="#ff4b4b" /> Trending Skills
                         </h2>
-                        <div className={styles.pricingGrid} style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))' }}>
+                        <div className={ps.grid}>
                             {loading ? (
-                                <div>Loading trending...</div>
+                                <div className={ps.statusNote}>Loading trending...</div>
                             ) : trending.map((res) => (
-                                <SkillCard key={res.slug} skill={res} onInstall={handleInstallClick} />
+                                <SkillCard key={res.slug} skill={res} onInstall={handleInstallClick} canInstall={accountEnabled} />
                             ))}
                         </div>
                     </div>
@@ -111,29 +122,45 @@ export default function PublicSkillsPage() {
     );
 }
 
-function SkillCard({ skill, onInstall }: { skill: any, onInstall: (slug: string) => void }) {
+function SkillCard({
+    skill,
+    onInstall,
+    canInstall,
+}: {
+    skill: any;
+    onInstall: (slug: string) => void;
+    canInstall: boolean;
+}) {
     return (
-        <Card className={styles.skillCard}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.25rem' }}>
-                <div style={{ width: '48px', height: '48px', background: 'rgba(26,26,26,0.03)', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Card className={ps.skillCard}>
+            <div className={ps.cardHead}>
+                <div className={ps.cardIcon}>
                     <Box size={24} color="var(--text-secondary)" strokeWidth={1.5} />
                 </div>
-                <div style={{ flex: 1 }}>
-                    <h3 style={{ fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>{skill.displayName || skill.name}</h3>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                <div className={ps.cardHeadText}>
+                    <h3 className={ps.cardName}>{skill.displayName || skill.name}</h3>
+                    <div className={ps.cardStats}>
+                        <span className={ps.cardStat}>
                             <Star size={12} fill="#FFB800" color="#FFB800" /> {skill.stats?.stars || 0}
                         </span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                        <span className={ps.cardStat}>
                             <Download size={12} /> {skill.stats?.downloads?.toLocaleString() || 0}
                         </span>
                     </div>
                 </div>
             </div>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text-secondary)', lineHeight: '1.5', margin: '0 0 1.5rem 0', flex: 1 }}>
+            <p className={ps.cardBlurb}>
                 {skill.summary || skill.description}
             </p>
-            <Button variant="secondary" fullWidth onClick={() => onInstall(skill.slug)}>Install Skill</Button>
+            {canInstall ? (
+                <Button type="button" variant="secondary" fullWidth onClick={() => onInstall(skill.slug)}>
+                    Install Skill
+                </Button>
+            ) : (
+                <Link href="/docs" className={`${ps.docsLink} ${ps.fullWidth}`}>
+                    Read the docs
+                </Link>
+            )}
         </Card>
     );
 }

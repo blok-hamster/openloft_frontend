@@ -7,6 +7,14 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import styles from './Dashboard.module.css';
 
+/* The UI previously hardcoded "⌘S" on every platform — wrong on Windows
+   and meaningless on a touch device. */
+function saveShortcutHint() {
+    if (typeof navigator === 'undefined') return 'Save';
+    const mac = /Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent);
+    return mac ? '⌘S to save' : 'Ctrl+S to save';
+}
+
 interface MemoryEditorProps {
     agent: IAgent | null;
     open: boolean;
@@ -104,9 +112,9 @@ export default function MemoryEditor({ agent, open, onClose }: MemoryEditorProps
         <Modal open={open} onClose={onClose} title={agent ? `Workspace — ${agent.name || agent.agentId}` : 'Memory Editor'}>
             <div className={styles.memoryEditor}>
                 {loading ? (
-                    <div className={styles.emptyDescription} style={{ padding: '2rem' }}>Loading...</div>
+                    <div className={styles.emptyPadded}>Loading...</div>
                 ) : files.length === 0 ? (
-                    <div className={styles.emptyDescription} style={{ padding: '2rem' }}>
+                    <div className={styles.emptyPadded}>
                         No workspace files found. Chat with the agent to generate its memory.
                     </div>
                 ) : (
@@ -130,20 +138,22 @@ export default function MemoryEditor({ agent, open, onClose }: MemoryEditorProps
                             className={styles.memoryTextarea}
                             value={displayContent}
                             onChange={(e) => handleContentChange(e.target.value)}
+                            aria-label={currentFile?.filename}
+                            spellCheck={false}
                         />
                     </>
                 )}
                 <div className={styles.memoryActions}>
                     <span className={styles.memorySaveHint}>
-                        {dirty.size > 0 ? `${dirty.size} unsaved` : '⌘S to save'}
+                        {dirty.size > 0 ? `${dirty.size} unsaved` : saveShortcutHint()}
                     </span>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div className={styles.memoryActionButtons}>
                         {dirty.size > 1 && (
-                            <Button variant="ghost" size="sm" loading={saving} onClick={handleSaveAll}>
+                            <Button type="button" variant="ghost" size="sm" loading={saving} onClick={handleSaveAll}>
                                 Save All
                             </Button>
                         )}
-                        <Button variant="primary" size="sm" loading={saving} onClick={handleSave} disabled={!currentFile}>
+                        <Button type="button" variant="primary" size="sm" loading={saving} onClick={handleSave} disabled={!currentFile}>
                             Save
                         </Button>
                     </div>

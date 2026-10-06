@@ -1,0 +1,116 @@
+/* ============================================================
+   AgentCreationWizard — extracted from inline styles
+   ============================================================ */
+
+/* Step 0, 2 and 5 reuse the dashboard h1 class at body size */
+.stepHeading {
+    font-size: var(--font-size-sm);
+    margin-bottom: 1rem;
+}
+
+/* Step 2 — billing strategy */
+.planGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.planCard {
+    cursor: pointer;
+    padding: 1.25rem;
+}
+
+.planTitle {
+    font-size: 0.8125rem;
+    margin-bottom: 0.5rem;
+}
+
+.planBlurb {
+    font-size: var(--font-size-xs);
+    opacity: 0.7;
+}
+
+/* Step 4 — key source toggle */
+.keyPanel {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-md);
+}
+
+.keyToggle {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.keyHint {
+    font-size: 11px;
+}
+
+/* Step 5 — review */
+.reviewCenter {
+    text-align: center;
+}
+
+.reviewCard {
+    text-align: left;
+    background: rgba(26, 26, 26, 0.02);
+}
+
+.reviewDesc {
+    margin-bottom: 1rem;
+}
+
+.reviewList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    font-size: var(--font-size-xs);
+}
+
+.reviewBadge {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    text-align: center;
+}
+
+.reviewBadgePlatform {
+    composes: reviewBadge;
+    background: rgba(39, 121, 255, 0.1);
+    color: var(--accent-blue);
+}
+
+.reviewBadgeByok {
+    composes: reviewBadge;
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+}
+
+/* ============================================================
+   Mobile
+   ============================================================ */
+
+@media (max-width: 900px) {
+    /* Step 2's two pricing cards stop fitting side by side */
+    .planGrid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Step 4's Use Saved Key / New Key pair */
+    .keyToggle {
+        flex-direction: column;
+    }
+
+    .keyToggle > * {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .reviewCenter {
+        text-align: left;
+    }
+}

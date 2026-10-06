@@ -10,6 +10,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import AgentDrive from '@/components/dashboard/AgentDrive';
 import styles from '@/components/dashboard/Dashboard.module.css';
+import room from './LobbyRoom.module.css';
 import { Send, Users, HardDrive } from 'lucide-react';
 import io, { Socket } from 'socket.io-client';
 
@@ -69,10 +70,10 @@ export default function LobbyDetailPage() {
     }
   };
 
-  if (!lobby) return <div style={{ padding: '2rem' }}>Loading lobby...</div>;
+  if (!lobby) return <div className={room.loading}>Loading lobby...</div>;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 4rem)', padding: '2rem' }}>
+    <div className={room.page}>
       <div className={styles.dashboardHeader}>
         <div className={styles.headerLeft}>
           <h1 className={styles.headerTitle}>{lobby.name}</h1>
@@ -87,40 +88,40 @@ export default function LobbyDetailPage() {
         </Button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: '1.5rem', flex: 1, minHeight: 0 }}>
+      <div className={room.body}>
         {/* Sidebar: Agents */}
-        <div style={{ border: 'var(--border)', borderRadius: 'var(--radius-md)', padding: '1rem', background: 'var(--bg-color)', overflowY: 'auto' }}>
-          <h3 className={styles.headerSubtitle} style={{ marginBottom: '1rem' }}>Agents present</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div className={room.agentPanel}>
+          <h3 className={`${styles.headerSubtitle} ${room.agentPanelTitle}`}>Agents present</h3>
+          <div className={room.agentList}>
             {(lobby.agentIds as IAgent[]).map(agent => (
-              <div key={agent._id} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.5rem', border: '1px solid rgba(26,26,26,0.06)', borderRadius: 'var(--radius-sm)' }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: agent.status === 'running' ? '#2ea043' : '#e54d2e' }} />
-                <span style={{ fontSize: 'var(--font-size-xs)', fontWeight: 600 }}>{agent.name || agent.agentId}</span>
+              <div key={agent._id} className={room.agentRow}>
+                <div className={agent.status === 'running' ? room.agentDotRunning : room.agentDotStopped} />
+                <span className={room.agentName}>{agent.name || agent.agentId}</span>
               </div>
             ))}
           </div>
         </div>
 
         {/* Center: Conversation */}
-        <div className={styles.chatPanel} style={{ height: 'auto', flex: 1 }}>
+        <div className={`${styles.chatPanel} ${room.chat}`}>
           <div className={styles.chatHeader}>
             <span>REAL-TIME COLLABORATION FEED</span>
-            <span style={{ fontSize: '10px' }}>{messages.length} messages</span>
+            <span className={room.chatCount}>{messages.length} messages</span>
           </div>
-          <div className={styles.chatMessages} style={{ padding: '1.5rem' }}>
+          <div className={`${styles.chatMessages} ${room.chatMessagesPadded}`}>
             {messages.length === 0 && (
-              <div style={{ textAlign: 'center', color: 'var(--mid-grey)', padding: '2rem' }}>
-                <p style={{ fontSize: 'var(--font-size-xs)' }}>NO MESSAGES YET</p>
-                <p style={{ fontSize: '10px' }}>Agents will collaborate here in real-time</p>
+              <div className={room.chatEmpty}>
+                <p className={room.chatEmptyTitle}>NO MESSAGES YET</p>
+                <p className={room.chatEmptyHint}>Agents will collaborate here in real-time</p>
               </div>
             )}
             {messages.map((msg, i) => (
               <div key={i} className={msg.senderName === 'User' ? styles.chatBubbleUser : styles.chatBubbleAgent}>
-                <div style={{ fontSize: '10px', fontWeight: 700, marginBottom: '0.25rem', opacity: 0.8 }}>
+                <div className={room.bubbleSender}>
                   {msg.senderName.toUpperCase()}
                 </div>
                 {msg.content}
-                <div style={{ fontSize: '8px', textAlign: 'right', marginTop: '0.25rem', opacity: 0.6 }}>
+                <div className={room.bubbleTime}>
                   {new Date(msg.timestamp).toLocaleTimeString()}
                 </div>
               </div>
@@ -133,7 +134,7 @@ export default function LobbyDetailPage() {
               placeholder="Send a directive to all agents..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+              onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
             />
             <Button variant="primary" size="sm" onClick={handleSendMessage} disabled={!input.trim()}>
               <Send size={14} />
@@ -143,7 +144,7 @@ export default function LobbyDetailPage() {
       </div>
 
       <Modal open={showDrive} onClose={() => setShowDrive(false)} title="Lobby Shared Drive">
-        <div style={{ height: '500px', overflowY: 'auto' }}>
+        <div className={room.driveScroll}>
           <AgentDrive 
             agent={{ agentId: lobby.lobbyId } as any} 
             open={showDrive} 

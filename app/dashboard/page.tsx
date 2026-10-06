@@ -20,6 +20,7 @@ import SocialConnections from '@/components/dashboard/SocialConnections';
 import HttpDetailsModal from '@/components/dashboard/HttpDetailsModal';
 import SkeletonLoader from '@/components/ui/SkeletonLoader';
 import { io } from 'socket.io-client';
+import styles from '@/components/dashboard/Dashboard.module.css';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -151,7 +152,7 @@ export default function DashboardPage() {
     const actions = { start: startAgent, pause: pauseAgent, resume: resumeAgent, restart: restartAgent };
     try {
       await actions[action](agent.agentId);
-      toast(`Agent ${action}ed successfully`, 'success');
+      toast(`Agent ${action === 'resume' ? 'resumed' : `${action}ed`} successfully`, 'success');
       loadData();
     } catch {
       toast(`Failed to ${action} agent`, 'error');
@@ -168,7 +169,7 @@ export default function DashboardPage() {
       <HumanApprovalQueue logs={auditLogs} onUpdate={loadData} />
 
       {loading ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
+        <div className={styles.skeletonGrid}>
           <SkeletonLoader variant="card" count={3} />
         </div>
       ) : (
@@ -193,7 +194,7 @@ export default function DashboardPage() {
 
       {/* Chat Panel & Metrics */}
       {chatAgent && (
-        <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div className={styles.metricsStack}>
           <UsageMetrics agentId={chatAgent.agentId} />
           <AgentChatPanel agent={chatAgent} onClose={() => setChatAgent(null)} />
         </div>

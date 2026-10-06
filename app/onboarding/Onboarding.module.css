@@ -4,6 +4,7 @@
 
 .onboardingPage {
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -191,4 +192,47 @@
 .stepActionsEnd {
     composes: stepActions;
     justify-content: flex-end;
+}
+/* ============================================================
+   Mobile
+   ============================================================ */
+
+@media (max-width: 900px) {
+  .onboardingCard {
+    padding: 1.5rem 1.25rem;
+  }
+
+  /* Steps advance via the Continue button; on a phone it must stay in
+     reach without scrolling past the tier list. */
+  .stepActions,
+  .stepActionsEnd {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    margin: 0 -1.25rem -1.5rem;
+    padding: 0.75rem 1.25rem;
+    padding-bottom: calc(0.75rem + var(--safe-bottom));
+    background: var(--bg-color);
+    border-top: 1px solid rgba(26, 26, 26, 0.08);
+  }
+
+  .stepActions > *,
+  .stepActionsEnd > * {
+    flex: 1;
+    min-height: var(--touch-target);
+  }
+}
+
+@media (max-width: 480px) {
+  .onboardingPage {
+    padding: 1rem;
+  }
+
+  .stepIndicator {
+    margin-bottom: 1.5rem;
+  }
+
+  .stepTitle {
+    text-align: left;
+  }
 }

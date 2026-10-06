@@ -1,0 +1,216 @@
+.band {
+  border-bottom: 1px solid var(--border);
+  padding: 4.5rem 0;
+  scroll-margin-top: 5rem;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.title {
+  font-size: var(--font-size-2xl);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  line-height: 1.15;
+  margin: 0 0 1rem;
+}
+
+.lede {
+  font-size: var(--font-size-md);
+  line-height: 1.65;
+  color: var(--text-secondary);
+  margin: 0 0 2.5rem;
+  max-width: 68ch;
+}
+
+/* ------------------------------------------------------------------ grid */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2.25rem;
+  align-items: start;
+}
+
+.card,
+.cardLive {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.35rem;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.cardLive {
+  border-color: var(--accent-forest);
+  background: rgba(10, 92, 58, 0.05);
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cardIcon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.cardName {
+  font-size: var(--font-size-base);
+  margin: 0;
+  /* flex-basis 100% lets a long title wrap onto its own line instead of
+     compressing to two or three words beside the badge. */
+  flex: 1 1 100%;
+  letter-spacing: 0.02em;
+}
+
+.cardBlurb {
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+  margin: 0 0 0.8rem;
+}
+
+.points {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: var(--font-size-xs);
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.points li {
+  padding-left: 0.9rem;
+  position: relative;
+}
+
+.points li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  opacity: 0.6;
+}
+
+/* --------------------------------------------------------------- badges */
+
+.badgeLive,
+.badgeCommitted {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 0.2rem 0.6rem;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+.badgeLive {
+  border-color: var(--accent-forest);
+  color: var(--accent-forest);
+}
+
+.dotLive,
+.dotCommitted {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--accent-forest);
+  flex-shrink: 0;
+}
+
+.dotCommitted {
+  color: var(--text-secondary);
+}
+
+.dotLabel {
+  min-width: 5.5rem;
+}
+
+/* -------------------------------------------------------------- controls */
+
+.controls {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem 1.35rem;
+  margin-bottom: 1.75rem;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.controlsTitle {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-secondary);
+  margin: 0 0 0.9rem;
+}
+
+.controlList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 0.6rem 2rem;
+  font-size: var(--font-size-sm);
+}
+
+.controlList li {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* --------------------------------------------------------------- actions */
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.primary,
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.85rem 1.4rem;
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.primary {
+  background: var(--off-black);
+  color: var(--white);
+  border: 1px solid var(--off-black);
+}
+
+.secondary {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.primary:hover,
+.secondary:hover {
+  transform: scale(1.03);
+  opacity: 0.9;
+}

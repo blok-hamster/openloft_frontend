@@ -1,0 +1,81 @@
+/* ============================================================
+   Lobby list (app/dashboard/lobby)
+   Extracted from inline styles.
+   ============================================================ */
+
+.page {
+    padding: 2rem;
+}
+
+.headerActions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+}
+
+.comingSoonNote {
+    font-size: 10px;
+    color: var(--accent-coral);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* --- Create modal: agent picker --- */
+
+.pickerSection {
+    margin-top: 1rem;
+}
+
+.pickerTitle {
+    margin-bottom: 0.5rem;
+}
+
+.pickerList {
+    max-height: 200px;
+    overflow-y: auto;
+    border: var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+}
+
+.pickerRow {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem;
+    /* Checkbox rows need a real tap target, not 0.25rem of padding */
+    min-height: var(--touch-target);
+    cursor: pointer;
+}
+
+.pickerName {
+    font-size: var(--font-size-xs);
+}
+
+.pickerEmpty {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    padding: 0.5rem 0;
+}
+
+/* ============================================================
+   Mobile
+   ============================================================ */
+
+@media (max-width: 900px) {
+    .page {
+        padding: 1rem;
+    }
+
+    /* Header CTA should be thumb-reachable, not right-aligned above it */
+    .headerActions {
+        align-items: stretch;
+    }
+
+    .pickerList {
+        max-height: 45dvh;
+    }
+}

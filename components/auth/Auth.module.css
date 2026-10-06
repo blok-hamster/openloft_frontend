@@ -4,6 +4,7 @@
 
 .authPage {
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -80,8 +81,10 @@
     border-bottom: 1px dotted var(--text-primary);
 }
 
-.authFooter a:hover {
-    opacity: 0.7;
+@media (hover: hover) {
+    .authFooter a:hover {
+        opacity: 0.7;
+    }
 }
 
 .authError {
@@ -116,7 +119,112 @@
     transition: all var(--transition-base);
 }
 
-.googleButton:hover {
-    background: var(--off-black);
-    color: var(--white);
+@media (hover: hover) {
+    .googleButton:hover {
+        background: var(--off-black);
+        color: var(--white);
+    }
+}
+/* authSubtitle was referenced by both auth pages but defined nowhere,
+   so the OTP explanation copy rendered at body size and left-aligned. */
+.authSubtitle {
+    margin-bottom: 2rem;
+    text-align: center;
+    opacity: 0.7;
+    font-size: var(--font-size-xs);
+    line-height: 1.7;
+}
+
+/* ============================================================
+   Extracted from inline styles in the auth pages
+   ============================================================ */
+
+/* OTP entry: centred, tracked out, monospaced numerals */
+.otpInput {
+    text-align: center;
+    letter-spacing: 0.5em;
+    font-size: 1.5rem;
+    font-family: var(--font-family-mono);
+}
+
+.authSubmitBlock {
+    width: 100%;
+}
+
+.resendRow {
+    margin-top: 1.5rem;
+}
+
+/* Inline text button — Resend. A bare <button> with no styling resets to
+   the UA default, which is unusable at 10px of hit area on touch. */
+.resendButton {
+    background: none;
+    border: none;
+    color: inherit;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+    min-height: var(--touch-target);
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Back out of the OTP view. The verify view was previously a dead end:
+   once entered there was no way to return to the password form. */
+.backToForm {
+    display: block;
+    width: 100%;
+    margin-top: 1rem;
+    padding: 0.75rem;
+    background: none;
+    border: var(--border);
+    border-radius: var(--radius-pill);
+    font-family: var(--font-family);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-primary);
+    cursor: pointer;
+    min-height: var(--touch-target);
+}
+
+.authError {
+    text-align: center;
+}
+
+/* ============================================================
+   Mobile
+   ============================================================ */
+
+@media (max-width: 480px) {
+    .authCard {
+        padding: 1.75rem 1.25rem;
+        border: none;
+    }
+
+    .authPage {
+        padding: 1rem;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 900px) {
+    /* 0.75rem inputs zoom the viewport on focus */
+    .authForm input {
+        font-size: 1rem;
+        min-height: var(--touch-target);
+    }
+
+    .otpInput {
+        /* 1.5rem with 0.5em tracking overflows a 320px viewport */
+        font-size: 1.25rem;
+        letter-spacing: 0.35em;
+    }
+}
+
+.resendButton:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }

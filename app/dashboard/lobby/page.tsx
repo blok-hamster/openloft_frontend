@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
 import styles from '@/components/dashboard/Dashboard.module.css';
+import lb from './LobbyList.module.css';
 import Link from 'next/link';
 import { Plus, Trash2, Users } from 'lucide-react';
 
@@ -79,13 +80,13 @@ export default function LobbyListPage() {
   };
 
   return (
-    <div style={{ padding: '2rem' }}>
+    <div className={lb.page}>
       <div className={styles.dashboardHeader}>
         <div className={styles.headerLeft}>
           <h1 className={styles.headerTitle}>A2A Lobby</h1>
           <p className={styles.headerSubtitle}>Multi-agent collaboration sessions</p>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
+        <div className={lb.headerActions}>
           <Button 
             variant="primary" 
             icon={<Plus size={16} />}
@@ -96,7 +97,7 @@ export default function LobbyListPage() {
             Create Lobby
           </Button>
           {process.env.NEXT_PUBLIC_NODE_ENV === 'prod' && (
-            <span style={{ fontSize: '10px', color: 'var(--accent-coral)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <span className={lb.comingSoonNote}>
               COMING SOON: UNDER CONSTRUCTION
             </span>
           )}
@@ -149,18 +150,20 @@ export default function LobbyListPage() {
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
           />
-          <div style={{ marginTop: '1rem' }}>
-            <p className={styles.headerSubtitle} style={{ marginBottom: '0.5rem' }}>Select Agents to Invite</p>
-            <div style={{ maxHeight: '200px', overflowY: 'auto', border: 'var(--border)', borderRadius: 'var(--radius-sm)', padding: '0.5rem' }}>
-              {availableAgents.map(agent => (
-                <div key={agent._id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.25rem' }}>
-                  <input 
-                    type="checkbox" 
+          <div className={lb.pickerSection}>
+            <p className={`${styles.headerSubtitle} ${lb.pickerTitle}`}>Select Agents to Invite</p>
+            <div className={lb.pickerList}>
+              {availableAgents.length === 0 ? (
+                <div className={lb.pickerEmpty}>No agents available to invite.</div>
+              ) : availableAgents.map(agent => (
+                <label key={agent._id} className={lb.pickerRow}>
+                  <input
+                    type="checkbox"
                     checked={selectedAgents.includes(agent.agentId)}
                     onChange={() => toggleAgent(agent.agentId)}
                   />
-                  <span style={{ fontSize: 'var(--font-size-xs)' }}>{agent.name || agent.agentId}</span>
-                </div>
+                  <span className={lb.pickerName}>{agent.name || agent.agentId}</span>
+                </label>
               ))}
             </div>
           </div>

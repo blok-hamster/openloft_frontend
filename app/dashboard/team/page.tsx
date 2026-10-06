@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
 import PipelineFlow from '@/components/enterprise/PipelineFlow';
 import styles from './Team.module.css';
@@ -71,7 +72,7 @@ export default function TeamDashboardPage() {
   };
 
   if (loading) return <div className={styles.loading}>Loading team...</div>;
-  if (!deployment) return <div className={styles.empty}>No enterprise team deployed. <a href="/enterprise">Get started</a></div>;
+  if (!deployment) return <div className={styles.empty}>No enterprise team deployed. <Link href="/enterprise">Get started</Link></div>;
 
   const statusColor = (status: string) => {
     if (status === 'running') return '#10b981';
@@ -91,10 +92,10 @@ export default function TeamDashboardPage() {
         </div>
         <div className={styles.actions}>
           {deployment.status === 'active' && (
-            <button onClick={handlePauseTeam} className={styles.btnSecondary}>Pause Team</button>
+            <button type="button" onClick={handlePauseTeam} className={styles.btnSecondary}>Pause Team</button>
           )}
           {deployment.status === 'paused' && (
-            <button onClick={handleResumeTeam} className={styles.btnPrimary}>Resume Team</button>
+            <button type="button" onClick={handleResumeTeam} className={styles.btnPrimary}>Resume Team</button>
           )}
         </div>
       </div>

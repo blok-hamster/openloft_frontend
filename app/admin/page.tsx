@@ -172,7 +172,7 @@ export default function AdminPage() {
         return (
             <div className={styles.adminPage}>
                 <div className={styles.adminTitle}>Access Denied</div>
-                <p style={{ color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+                <p className={styles.accessDeniedNote}>
                     Admin privileges required.
                 </p>
             </div>
@@ -207,8 +207,8 @@ export default function AdminPage() {
                             <div className={styles.heatmapValue}>{health.totalAgents}</div>
                             <div className={styles.heatmapLabel}>Total</div>
                         </div>
-                        <div className={styles.heatmapCard} style={{ borderColor: 'var(--accent-green)' }}>
-                            <div className={styles.heatmapValue} style={{ color: 'var(--accent-green)' }}>
+                        <div className={`${styles.heatmapCard} ${styles.heatmapCardGreen}`}>
+                            <div className={`${styles.heatmapValue} ${styles.heatmapValueGreen}`}>
                                 {health.statusCounts.running}
                             </div>
                             <div className={styles.heatmapLabel}>Running</div>
@@ -217,8 +217,8 @@ export default function AdminPage() {
                             <div className={styles.heatmapValue}>{health.statusCounts.stopped}</div>
                             <div className={styles.heatmapLabel}>Stopped</div>
                         </div>
-                        <div className={styles.heatmapCard} style={{ borderColor: 'var(--accent-coral)' }}>
-                            <div className={styles.heatmapValue} style={{ color: 'var(--accent-coral)' }}>
+                        <div className={`${styles.heatmapCard} ${styles.heatmapCardCoral}`}>
+                            <div className={`${styles.heatmapValue} ${styles.heatmapValueCoral}`}>
                                 {health.statusCounts.failed}
                             </div>
                             <div className={styles.heatmapLabel}>Failed</div>
@@ -230,7 +230,7 @@ export default function AdminPage() {
             {/* Agent Management */}
             <div className={styles.heatmapSection}>
                 <div className={styles.sectionTitle}>All Agents ({agents.length})</div>
-                <div style={{ overflowX: 'auto' }}>
+                <div className={styles.tableScroll}>
                     <table className={styles.tenantTable}>
                         <thead>
                             <tr>
@@ -247,29 +247,24 @@ export default function AdminPage() {
                             {agents.map((a) => (
                                 <tr key={a.agentId}>
                                     <td>{a.name || '—'}</td>
-                                    <td style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>{a.agentId}</td>
-                                    <td style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>{a.tenantId}</td>
+                                    <td className={styles.cellMono}>{a.agentId}</td>
+                                    <td className={styles.cellMono}>{a.tenantId}</td>
                                     <td>
-                                        <span style={{
-                                            padding: '2px 6px', borderRadius: '4px', fontSize: '0.625rem',
-                                            fontWeight: 700, textTransform: 'uppercase',
-                                            background: a.agentType === 'hermes' ? 'rgba(168,85,247,0.15)' : 'rgba(39,121,255,0.15)',
-                                            color: a.agentType === 'hermes' ? '#a855f7' : 'var(--accent-blue)',
-                                        }}>
+                                        <span className={a.agentType === 'hermes' ? styles.typePillHermes : styles.typePillOpenClaw}>
                                             {a.agentType === 'hermes' ? 'Hermes' : 'OpenClaw'}
                                         </span>
                                     </td>
                                     <td>{a.llmProvider}</td>
                                     <td>
-                                        <span style={{
-                                            padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold',
-                                            backgroundColor: a.status === 'running' ? 'rgba(46,160,67,0.15)' : a.status === 'failed' ? 'rgba(229,77,46,0.15)' : 'rgba(139,148,158,0.15)',
-                                            color: a.status === 'running' ? '#3fb950' : a.status === 'failed' ? '#ff7b72' : '#8b949e',
-                                        }}>
+                                        <span className={a.status === 'running'
+                                            ? styles.statusPillRunning
+                                            : a.status === 'failed'
+                                                ? styles.statusPillFailed
+                                                : styles.statusPillOther}>
                                             {a.status}
                                         </span>
                                     </td>
-                                    <td style={{ display: 'flex', gap: '4px' }}>
+                                    <td className={styles.actionCell}>
                                         {a.status === 'running' && (
                                             <>
                                                 <Button variant="ghost" size="sm" onClick={() => handleAgentRestart(a.agentId)}>Restart</Button>
@@ -281,38 +276,118 @@ export default function AdminPage() {
                                 </tr>
                             ))}
                             {agents.length === 0 && (
-                                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '24px', color: 'var(--mid-grey)' }}>No agents deployed</td></tr>
+                                <tr><td colSpan={7} className={styles.emptyCell}>No agents deployed</td></tr>
                             )}
                         </tbody>
                     </table>
+                </div>
+
+                {/* Same data, card layout — see .cardStack */}
+                <div className={styles.cardStack}>
+                    {agents.length === 0 ? (
+                        <div className={styles.tableCardEmpty}>No agents deployed</div>
+                    ) : agents.map((a) => (
+                        <div key={a.agentId} className={styles.tableCard}>
+                            <div className={styles.tableCardHead}>
+                                <span className={styles.tableCardTitle}>{a.name || a.agentId}</span>
+                                <span className={a.status === 'running'
+                                    ? styles.statusPillRunning
+                                    : a.status === 'failed'
+                                        ? styles.statusPillFailed
+                                        : styles.statusPillOther}>
+                                    {a.status}
+                                </span>
+                            </div>
+                            <div className={styles.tableCardFields}>
+                                <div className={styles.tableCardField}>
+                                    <span className={styles.tableCardLabel}>Agent ID</span>
+                                    <span className={`${styles.cellMono} ${styles.tableCardValue}`}>{a.agentId}</span>
+                                </div>
+                                <div className={styles.tableCardField}>
+                                    <span className={styles.tableCardLabel}>Tenant</span>
+                                    <span className={`${styles.cellMono} ${styles.tableCardValue}`}>{a.tenantId}</span>
+                                </div>
+                                <div className={styles.tableCardField}>
+                                    <span className={styles.tableCardLabel}>Type</span>
+                                    <span className={styles.tableCardValue}>
+                                        <span className={a.agentType === 'hermes' ? styles.typePillHermes : styles.typePillOpenClaw}>
+                                            {a.agentType === 'hermes' ? 'Hermes' : 'OpenClaw'}
+                                        </span>
+                                    </span>
+                                </div>
+                                <div className={styles.tableCardField}>
+                                    <span className={styles.tableCardLabel}>Provider</span>
+                                    <span className={styles.tableCardValue}>{a.llmProvider}</span>
+                                </div>
+                            </div>
+                            <div className={styles.tableCardActions}>
+                                {a.status === 'running' && (
+                                    <>
+                                        <Button type="button" variant="ghost" size="sm" onClick={() => handleAgentRestart(a.agentId)}>Restart</Button>
+                                        <Button type="button" variant="ghost" size="sm" onClick={() => handleAgentStop(a.agentId)}>Stop</Button>
+                                    </>
+                                )}
+                                <Button type="button" variant="danger" size="sm" onClick={() => handleAgentDelete(a.agentId)}>Delete</Button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
 
             {/* Tenant Management */}
             <div className={styles.heatmapSection}>
                 <div className={styles.sectionTitle}>Tenants ({tenants.length})</div>
-                <table className={styles.tenantTable}>
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Tier</th>
-                            <th>Tokens Used</th>
-                            <th>Compute (min)</th>
-                            <th>Created</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {tenants.map((t) => (
-                            <tr key={t._id}>
-                                <td>{t.name}</td>
-                                <td>{t.subscriptionTier}</td>
-                                <td>{t.billing.tokenUsage.toLocaleString()}</td>
-                                <td>{t.billing.computeMinutes}</td>
-                                <td>{new Date(t.createdAt).toLocaleDateString()}</td>
+                <div className={styles.tableScroll}>
+                    <table className={styles.tenantTable}>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Tier</th>
+                                <th>Tokens Used</th>
+                                <th>Compute (min)</th>
+                                <th>Created</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {tenants.map((t) => (
+                                <tr key={t._id}>
+                                    <td>{t.name}</td>
+                                    <td>{t.subscriptionTier}</td>
+                                    <td>{t.billing.tokenUsage.toLocaleString()}</td>
+                                    <td>{t.billing.computeMinutes}</td>
+                                    <td>{new Date(t.createdAt).toLocaleDateString()}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div className={styles.cardStack}>
+                    {tenants.length === 0 ? (
+                        <div className={styles.tableCardEmpty}>No tenants</div>
+                    ) : tenants.map((t) => (
+                        <div key={t._id} className={styles.tableCard}>
+                            <div className={styles.tableCardHead}>
+                                <span className={styles.tableCardTitle}>{t.name}</span>
+                                <span className={`${styles.cellCaps} ${styles.statusPillOther}`}>{t.subscriptionTier}</span>
+                            </div>
+                            <div className={styles.tableCardFields}>
+                                <div className={styles.tableCardField}>
+                                    <span className={styles.tableCardLabel}>Tokens used</span>
+                                    <span className={styles.tableCardValue}>{t.billing.tokenUsage.toLocaleString()}</span>
+                                </div>
+                                <div className={styles.tableCardField}>
+                                    <span className={styles.tableCardLabel}>Compute (min)</span>
+                                    <span className={styles.tableCardValue}>{t.billing.computeMinutes}</span>
+                                </div>
+                                <div className={styles.tableCardField}>
+                                    <span className={styles.tableCardLabel}>Created</span>
+                                    <span className={styles.tableCardValue}>{new Date(t.createdAt).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
 
             {/* Registry Upload */}
@@ -334,9 +409,9 @@ export default function AdminPage() {
             <div className={styles.heatmapSection}>
                 <div className={styles.sectionTitle}>Coupons ({coupons.length})</div>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '2rem', alignItems: 'start' }}>
-                    <div style={{ overflowX: 'auto', backgroundColor: 'var(--surface-color)', padding: '16px', borderRadius: '12px', border: '1px solid var(--border-color)' }}>
-                        <table className={styles.tenantTable} style={{ width: '100%' }}>
+                <div className={styles.couponLayout}>
+                    <div className={styles.couponPanel}>
+                        <table className={styles.tenantTable}>
                             <thead>
                                 <tr>
                                     <th>Code</th>
@@ -350,16 +425,12 @@ export default function AdminPage() {
                             <tbody>
                                 {coupons.map((c) => (
                                     <tr key={c._id}>
-                                        <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{c.code}</td>
-                                        <td style={{ textTransform: 'capitalize' }}>{c.tier}</td>
+                                        <td className={styles.cellMonoBold}>{c.code}</td>
+                                        <td className={styles.cellCaps}>{c.tier}</td>
                                         <td>{c.discountType === 'percent' ? `${c.discountValue}%` : `$${c.discountValue}`}</td>
                                         <td>{c.currentRedemptions} {c.maxRedemptions ? `/ ${c.maxRedemptions}` : ''}</td>
                                         <td>
-                                            <span style={{ 
-                                                padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold',
-                                                backgroundColor: c.isActive ? 'rgba(46, 160, 67, 0.15)' : 'rgba(229, 77, 46, 0.15)',
-                                                color: c.isActive ? '#3fb950' : '#ff7b72'
-                                            }}>
+                                            <span className={c.isActive ? styles.couponPillActive : styles.couponPillInactive}>
                                                 {c.isActive ? 'Active' : 'Inactive'}
                                             </span>
                                         </td>
@@ -374,24 +445,64 @@ export default function AdminPage() {
                                 ))}
                                 {coupons.length === 0 && (
                                     <tr>
-                                        <td colSpan={6} style={{ textAlign: 'center', padding: '24px', color: 'var(--mid-grey)' }}>No coupons created yet</td>
+                                        <td colSpan={6} className={styles.emptyCell}>No coupons created yet</td>
                                     </tr>
                                 )}
                             </tbody>
                         </table>
+
+                        <div className={styles.cardStack}>
+                            {coupons.length === 0 ? (
+                                <div className={styles.tableCardEmpty}>No coupons created yet</div>
+                            ) : coupons.map((c) => (
+                                <div key={c._id} className={styles.tableCard}>
+                                    <div className={styles.tableCardHead}>
+                                        <span className={`${styles.cellMonoBold} ${styles.tableCardTitle}`}>{c.code}</span>
+                                        <span className={c.isActive ? styles.couponPillActive : styles.couponPillInactive}>
+                                            {c.isActive ? 'Active' : 'Inactive'}
+                                        </span>
+                                    </div>
+                                    <div className={styles.tableCardFields}>
+                                        <div className={styles.tableCardField}>
+                                            <span className={styles.tableCardLabel}>Tier</span>
+                                            <span className={`${styles.cellCaps} ${styles.tableCardValue}`}>{c.tier}</span>
+                                        </div>
+                                        <div className={styles.tableCardField}>
+                                            <span className={styles.tableCardLabel}>Discount</span>
+                                            <span className={styles.tableCardValue}>
+                                                {c.discountType === 'percent' ? `${c.discountValue}%` : `$${c.discountValue}`}
+                                            </span>
+                                        </div>
+                                        <div className={styles.tableCardField}>
+                                            <span className={styles.tableCardLabel}>Used</span>
+                                            <span className={styles.tableCardValue}>
+                                                {c.currentRedemptions} {c.maxRedemptions ? `/ ${c.maxRedemptions}` : ''}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    {c.isActive && (
+                                        <div className={styles.tableCardActions}>
+                                            <Button type="button" variant="danger" size="sm" onClick={() => handleDeactivateCoupon(c._id)}>
+                                                Deactivate
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
-                    <div style={{ backgroundColor: 'var(--surface-color)', padding: '20px', borderRadius: '12px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-color)', marginBottom: '8px' }}>Create Coupon</h3>
-                        
+                    <div className={styles.couponFormPanel}>
+                        <h3 className={styles.couponFormTitle}>Create Coupon</h3>
+
                         <Select
                             label="Target Tier"
                             value={couponForm.tier}
                             onChange={(e) => setCouponForm({ ...couponForm, tier: e.target.value })}
                             options={[{ value: 'pro', label: 'Pro' }, { value: 'enterprise', label: 'Enterprise' }]}
                         />
-                        
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+
+                        <div className={styles.formRow}>
                             <Select
                                 label="Type"
                                 value={couponForm.discountType}
@@ -428,8 +539,8 @@ export default function AdminPage() {
                             onChange={(e) => setCouponForm({ ...couponForm, recipients: e.target.value })}
                         />
 
-                        <Button variant="primary" fullWidth loading={creatingCoupon} onClick={handleCreateCoupon} style={{ marginTop: '8px' }}>
-                            Create & Send Coupon
+                        <Button variant="primary" fullWidth loading={creatingCoupon} onClick={handleCreateCoupon} className={styles.formSubmitSpacer}>
+                            Create &amp; Send Coupon
                         </Button>
                     </div>
                 </div>

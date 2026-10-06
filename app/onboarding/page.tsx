@@ -8,6 +8,7 @@ import { useToast } from '@/components/ui/Toast';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import styles from './Onboarding.module.css';
+import FeatureGate from '@/components/FeatureGate';
 
 type Tier = 'hobby' | 'pro' | 'enterprise';
 
@@ -35,7 +36,7 @@ const tiers: { id: Tier; name: string; description: string; badge: string; featu
     },
 ];
 
-export default function OnboardingPage() {
+function OnboardingPageContent() {
     const router = useRouter();
     const { user, updateUser } = useAuth();
     const { toast } = useToast();
@@ -198,5 +199,13 @@ export default function OnboardingPage() {
                 )}
             </div>
         </div>
+    );
+}
+
+export default function OnboardingPage() {
+    return (
+        <FeatureGate>
+            <OnboardingPageContent />
+        </FeatureGate>
     );
 }

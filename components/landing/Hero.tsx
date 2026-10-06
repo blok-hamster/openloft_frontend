@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { Github } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
+import { isAccountAreaEnabled, FRAMEWORK_REPO } from '@/lib/features';
 import styles from './Landing.module.css';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
@@ -25,6 +27,8 @@ function SplineSkeleton() {
 
 export default function Hero() {
     const { isAuthenticated } = useAuth();
+    /* Pre-launch: the docs CTA is the only honest action here. */
+    const accountEnabled = isAccountAreaEnabled();
     const [splineLoaded, setSplineLoaded] = useState(false);
 
     const handleSplineLoad = useCallback((splineApp: Application) => {
@@ -58,12 +62,22 @@ export default function Hero() {
                         Most assistants forget the moment the transcript scrolls away. <span style={{ color: '#F47A4A' }}>NMAFC</span> is an open-source memory layer that keeps a dated, decay-aware, source-attributed record of everything it learns — and hands back a small, precise context hundreds of sessions later.
                     </p>
                     <div className={styles.heroActions}>
-                        {isAuthenticated ? (
-                            <Link href="/dashboard" className="btn-primary">Go to Dashboard</Link>
+                        {accountEnabled ? (
+                            isAuthenticated ? (
+                                <Link href="/dashboard" className="btn-primary">Go to Dashboard</Link>
+                            ) : (
+                                <>
+                                    <Link href="/docs" className="btn-secondary">Read the docs</Link>
+                                    <Link href="/auth/register" className="btn-primary">Get OpenLoft Memory</Link>
+                                </>
+                            )
                         ) : (
                             <>
-                                <Link href="/docs" className="btn-secondary">Read the docs</Link>
-                                <Link href="/auth/register" className="btn-primary">Get OpenLoft Memory</Link>
+                                <Link href="/docs" className="btn-primary">Read the docs</Link>
+                                <Link href={FRAMEWORK_REPO} target="_blank" rel="noreferrer noopener" className="btn-secondary">
+                                    <Github size={15} aria-hidden />
+                                    Get the framework
+                                </Link>
                             </>
                         )}
                     </div>

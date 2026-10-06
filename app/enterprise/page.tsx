@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import Header from '@/components/landing/Header';
 import styles from './Enterprise.module.css';
+import FeatureGate from '@/components/FeatureGate';
 
 const tiers = [
   {
@@ -30,9 +32,11 @@ const tiers = [
   },
 ];
 
-export default function EnterprisePage() {
+function EnterprisePageContent() {
   return (
-    <div className={styles.container}>
+    <>
+      <Header />
+      <div className={styles.container}>
       <div className={styles.hero}>
         <h1 className={styles.title}>AI Sales & Marketing Team</h1>
         <p className={styles.subtitle}>
@@ -59,6 +63,15 @@ export default function EnterprisePage() {
           </div>
         ))}
       </div>
-    </div>
+      </div>
+    </>
   );
+}
+
+export default function EnterprisePage() {
+    return (
+        <FeatureGate>
+            <EnterprisePageContent />
+        </FeatureGate>
+    );
 }
