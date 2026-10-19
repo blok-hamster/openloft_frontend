@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ReactNode } from 'react';
 import { Hammer, Database, Github, BookOpen, ArrowRight } from 'lucide-react';
-import { isAccountAreaEnabled, FEATURES, FRAMEWORK_REPO } from '@/lib/features';
+import { isPreLaunch, FRAMEWORK_REPO } from '@/lib/features';
 import styles from './FeatureGate.module.css';
 
 /**
@@ -22,7 +22,9 @@ import styles from './FeatureGate.module.css';
  * either a server or a client component.
  */
 export default function FeatureGate({ children }: { children: ReactNode }) {
-    if (isAccountAreaEnabled()) return <>{children}</>;
+    // Pre-launch is the inverse of the account area being open, and this
+    // component only cares about the negative case.
+    if (!isPreLaunch()) return <>{children}</>;
 
     return (
         <div className={styles.gate}>
@@ -75,6 +77,3 @@ export default function FeatureGate({ children }: { children: ReactNode }) {
         </div>
     );
 }
-
-/** Flags, exported so callers can render tailored copy without re-reading env. */
-export { FEATURES };

@@ -2,6 +2,22 @@
   border-top: 1px solid var(--border);
 }
 
+/* ------------------------------------------------------- deep-link arrival */
+
+/* A hash deep link cannot be server-rendered: the hash never leaves the
+   browser, so the server always serves the default section and the one the
+   visitor asked for arrives a frame later. The bootstrap script in
+   app/layout.tsx parks that hash on <html> before first paint, and this rule
+   holds the switcher until React has committed the section it names — a frame
+   of nothing beats a flash of the wrong product.
+
+   `visibility`, not `display`: the space stays reserved, so neither the hero
+   above nor anything below shifts. ProductSections.tsx clears the attribute;
+   this rule is only ever the pre-hydration half of it. */
+html[data-product-section] .wrap {
+  visibility: hidden;
+}
+
 /* ------------------------------------------------------------------ tabs */
 
 .tabBar {
@@ -100,11 +116,24 @@
 }
 @media (max-width: 900px) {
   .tabInner {
-    padding: 0 1rem;
+    padding: 0 1.25rem;
     mask-image: none;
   }
 
   .tab {
-    padding: 1rem;
+    padding: 1rem 0.9rem;
+  }
+}
+
+/* The bands step their own containers at 480px as well, so the tabs step
+   theirs: 1.25rem of edge padding no longer buys anything on a 320px screen
+   once the sticky bar has to keep three nowrap tabs side by side. */
+@media (max-width: 480px) {
+  .tabInner {
+    padding: 0 1rem;
+  }
+
+  .tab {
+    padding: 0.9rem 0.7rem;
   }
 }

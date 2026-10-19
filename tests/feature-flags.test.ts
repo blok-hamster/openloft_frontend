@@ -33,6 +33,50 @@ afterEach(() => {
     }
 });
 
+/**
+ * Every test above runs in Node, where `process.env` is a real populated
+ * object, so a module that is broken in the browser still passes all of
+ * them. That is exactly how this bug shipped.
+ *
+ * Next.js inlines a NEXT_PUBLIC_ value by substituting the literal source
+ * text `process.env.NEXT_PUBLIC_X` — it never evaluates anything. A read
+ * built from a variable (`process.env[name]`) is not statically analysable,
+ * so it is never substituted. Consequences, in order: the browser's `process`
+ * shim ships an empty `env`, so the flag silently resolves to its fallback on
+ * the client no matter what you set; on the server it resolves at runtime, so
+ * SSR and hydration disagree on exactly the routes FeatureGate guards.
+ *
+ * Runtime assertions cannot tell a literal read from a computed one — both
+ * look identical inside Node — so this suite reads the source instead.
+ */
+describe('env reads are statically inlinable', () => {
+    /** Prose is not shipped, so a comment that explains the hazard must not
+     *  be able to trip the check. */
+    function stripComments(src: string): string {
+        return src
+            .replace(/\/\*[\s\S]*?\*\//g, '')
+            .replace(/(^|[^:'"`\\])\/\/.*$/gm, '$1');
+    }
+
+    it('has no computed process.env bracket access', () => {
+        const src = stripComments(read('lib/features.ts'));
+        expect(src).not.toMatch(/process\.env\s*\[/);
+    });
+
+    it('reads every flag through a literal process.env.NEXT_PUBLIC_ member expression', () => {
+        const src = stripComments(read('lib/features.ts'));
+
+        const refs = src.match(/process\.env/g) ?? [];
+        const literals = src.match(/process\.env\.NEXT_PUBLIC_[A-Z0-9_]+/g) ?? [];
+
+        // Both flags are read, and nothing reads env through any other shape.
+        expect(refs.length).toBeGreaterThanOrEqual(2);
+        expect(literals).toHaveLength(refs.length);
+        expect(src).toContain(`process.env.${HARNESS}`);
+        expect(src).toContain(`process.env.${MEMORY}`);
+    });
+});
+
 describe('feature flags default to off', () => {
     it('has both hosted flags false when unset', async () => {
         const { FEATURES } = await loadFeatures({});

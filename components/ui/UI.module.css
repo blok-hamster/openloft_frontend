@@ -3,6 +3,37 @@
    BRAND_DESIGN_GUIDE.md compliant
    =========================== */
 
+/* --- Button --- */
+/* Sizing lives in classes rather than inline styles so the type steps come
+   from the token system. `sm` was 0.625rem, which matched no --font-size-*
+   step; it now shares the -xs step with `md` and differs only by padding. */
+.btnBase {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btnSizeSm {
+    padding: 0.45rem 1rem;
+    font-size: var(--font-size-xs);
+}
+
+.btnSizeMd {
+    padding: 0.65rem 1.5rem;
+    font-size: var(--font-size-xs);
+}
+
+.btnSizeLg {
+    padding: 0.8rem 2rem;
+    font-size: var(--font-size-sm);
+}
+
+.btnFullWidth {
+    width: 100%;
+    display: flex;
+}
+
 /* --- Card --- */
 .card {
     background: var(--bg-color);
@@ -207,18 +238,15 @@
 }
 
 .modalClose {
-    cursor: pointer;
-    color: var(--text-primary);
-    transition: opacity var(--transition-fast);
-}
-
-.modalClose {
     width: var(--touch-target);
     height: var(--touch-target);
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+    color: var(--text-primary);
+    transition: opacity var(--transition-fast);
 }
 
 @media (hover: hover) {
@@ -388,6 +416,23 @@
     stroke-linecap: round;
     stroke-linejoin: round;
 }
+/* ============================================================
+   Interactive terminal
+   ============================================================ */
+
+/* The terminal opts out of the dialog's own scrolling and gives the content a
+   real height to lay out against. See Modal's `scrollBody` prop. */
+.modalContentFlush {
+    overflow: hidden;
+}
+
+.modalContentFlush .modalBody {
+    display: flex;
+    min-height: 0;
+    height: 100%;
+    padding: 1.25rem;
+}
+
 /* ============================================================
    Mobile
    ============================================================ */

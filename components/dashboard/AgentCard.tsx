@@ -6,12 +6,25 @@ import {
     Terminal, Square, Pause, RotateCcw, Play, Trash2, MoreHorizontal,
     MessageSquare,
 } from 'lucide-react';
-import { IAgent, approveAgentDevice } from '@/lib/api';
+import { IAgent, approveAgentDevice, getAgentCredentials, IAgentCredentials } from '@/lib/api';
+import { requestAgentUiProxySession } from '@/lib/socketApi';
+import { rewriteBootstrapUrl } from '@/lib/openclawBootstrap';
+import { HARNESS_NAMES } from './AgentTypeSelector';
+import { useToast } from '@/components/ui/Toast';
 import StatusIndicator from '@/components/ui/StatusIndicator';
 import Sparkline from '@/components/ui/Sparkline';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import styles from './Dashboard.module.css';
+
+
+/** Human-readable reason a credentials fetch failed. The backend returns a typed
+ *  envelope ({ error, code }); fall back to something generic so a raw network
+ *  error or a stack trace never reaches the UI. */
+function credentialErrorMessage(err: unknown): string {
+    const e = err as { response?: { data?: { error?: string } }; message?: string };
+    return e?.response?.data?.error || e?.message || 'Could not load agent credentials';
+}
 
 /** Shared across AgentCard, AgentChatPanel and HttpDetailsModal, which
  *  each recomputed the same three constants. */
@@ -55,16 +68,73 @@ interface AgentCardProps {
     onRestart?: (agent: IAgent) => void;
     onDelete?: (agent: IAgent) => void;
     onLogs?: (agent: IAgent) => void;
+    onTerminal?: (agent: IAgent) => void;
     onCustomKey?: (agent: IAgent) => void;
     onChannels?: (agent: IAgent) => void;
     onHttpDetails?: (agent: IAgent) => void;
 }
 
+/**
+ * Pair this browser with an OpenClaw agent and return the token it issued.
+ *
+ * OpenClaw's device-pairing flow: connect to its WebSocket, get closed with
+ * 1008/1005, POST /api/agents/:id/device/approve, then reconnect — the second
+ * handshake returns a token with the `operator` role and the `operator.read`
+ * scope that `/control-ui-config.json` requires.
+ *
+ * Extracted from `pairDevice` below because the Web UI needs the same token and
+ * the previous code only ever produced it for the "Pair Device" button, where it
+ * was used solely to flip a boolean.
+ */
+async function pairOpenClawDevice(agentId: string): Promise<string | null> {
+    const { wsProtocol } = agentOrigin();
+    return new Promise((resolve) => {
+        let settled = false;
+        const finish = (v: string | null) => {
+            if (settled) return;
+            settled = true;
+            resolve(v);
+        };
+
+        const connect = () => {
+            const ws = new WebSocket(`${wsProtocol}://${agentId}.${agentOrigin().baseDomain}`);
+            ws.onmessage = (event) => {
+                try {
+                    const msg = JSON.parse(String(event.data));
+                    if (msg?.token) {
+                        ws.close();
+                        finish(msg.token as string);
+                    }
+                } catch { /* plaintext frame; not the pairing token */ }
+            };
+            ws.onopen = () => {
+                // Already paired from a previous run: the gateway sends the
+                // token immediately. Waiting for the close below would hang.
+                try { ws.send(JSON.stringify({ type: 'hello', client: 'dashboard' })); } catch { /* ignore */ }
+            };
+            ws.onclose = async (e) => {
+                if (e.code === 1008 || e.code === 1005) {
+                    try {
+                        await approveAgentDevice(agentId);
+                        setTimeout(connect, 1500);
+                    } catch { finish(null); }
+                } else {
+                    finish(null);
+                }
+            };
+            ws.onerror = () => finish(null);
+        };
+
+        connect();
+    });
+}
+
 export default function AgentCard({
     agent, onChat, onMemory, onDrive, onSettings, onStop,
     onStart, onPause, onResume, onRestart, onDelete,
-    onLogs, onCustomKey, onChannels, onHttpDetails,
+    onLogs, onTerminal, onCustomKey, onChannels, onHttpDetails,
 }: AgentCardProps) {
+    const { toast } = useToast();
     const [isPairing, setIsPairing] = useState(false);
     const [isPaired, setIsPaired] = useState(false);
     const [moreOpen, setMoreOpen] = useState(false);
@@ -82,53 +152,168 @@ export default function AgentCard({
     const isPaused = status === 'paused';
     const disabled = isProvisioning || isStarting;
 
-    // Hermes marks as paired immediately; no WebSocket probe needed.
-    useEffect(() => {
-        if (agent.agentType === 'hermes' && isRunning) {
-            setIsPaired(true);
-        }
-    }, [agent.agentType, isRunning]);
+     /**
+      * Gate the Web UI button on whether the agent has a browser-reachable UI,
+      * not on a device-pairing probe.
+      *
+      * The pairing probe determined "does this gateway accept my WebSocket",
+      * which was a property of OpenClaw's device-auth flow and had nothing to do
+      * with whether the UI is viewable. OpenClaw never auto-paired, so the card
+      * sat on "Propagating..." forever with no way forward.
+      *
+      * The truth is simpler: every harness we provision serves HTTP on its
+      * subdomain, so the button is live whenever the agent is running. Hermes
+      * and OpenClaw both pass; OpenCode cannot be framed at all, but it still
+      * gets a button that opens a page explaining why.
+      */
+     useEffect(() => {
+         if (isRunning) setIsPaired(true);
+     }, [isRunning]);
 
-    const openWebUi = () => {
-        const { baseDomain, httpProtocol } = agentOrigin();
-        const url = agent.agentType === 'hermes'
-            ? `${httpProtocol}://${agent.agentId}.${baseDomain}/login`
-            : `${httpProtocol}://${agent.agentId}.${baseDomain}?token=${agent.gatewayToken}`;
 
-        /* noopener: without it the opened page gets a handle on this one. */
-        window.open(url, '_blank', 'noopener,noreferrer');
-    };
+     /**
+      * Open the agent's own Web UI.
+      *
+      * OpenClaw: the one-time owner-bootstrap URL the backend mints
+      * (`webUi.bootstrapUrl`, ~20s warm) is the only path that lands in the
+      * chat surface. The pinned OpenClaw build retired
+      * `dangerouslyDisableDeviceAuth`, so an unpaired browser that opens the
+      * `?token=` URL parks on an "Approve this browser" screen — and the
+      * dashboard user cannot approve it (device approval needs
+      * `operator.pairing`, which the gateway token alone does not carry).
+      * A missing bootstrapUrl is therefore a failure: it surfaces a retry in
+      * the tab, never a silent fallback to the approval dead end.
+      *
+      * The credential is fetched rather than read off `agent` because
+      * `gatewayToken` is select:false server-side and stripped from every
+      * response — reading it from the agent object would produce
+      * `?token=undefined`.
+      */
+     const openWebUi = async () => {
+         const { baseDomain, httpProtocol } = agentOrigin();
+         const root = `${httpProtocol}://${agent.agentId}.${baseDomain}`;
 
-    const pairDevice = () => {
-        setIsPairing(true);
-        const { baseDomain, wsProtocol } = agentOrigin();
-        const wsUrl = `${wsProtocol}://${agent.agentId}.${baseDomain}?token=${agent.gatewayToken}`;
+         // Open the tab synchronously, inside the click gesture. Opening it after
+         // the credentials `await` gets it blocked as a popup in some browsers.
+         const tab = window.open('about:blank', '_blank');
+         // The mint can take up to a minute (an OpenClaw gateway runs its CLI
+         // in-container). Write the placeholder with document.write: setting
+         // `body.textContent` on a fresh about:blank can silently no-op, which
+         // is how "Preparing a secure session…" turned into a blank white tab.
+         const placeholder = (title: string, heading: string, detail: string) => {
+             try {
+                 if (!tab) return;
+                 tab.document.open();
+                 tab.document.write(
+                     `<!doctype html><meta charset="utf-8"><title>${title}</title>` +
+                     '<body style="font-family:sans-serif;padding:2rem;color:#445;line-height:1.6">' +
+                     `<h3 style="margin:0 0 .5rem">${heading}</h3><p style="color:#778">${detail}</p>`,
+                 );
+                 tab.document.close();
+             } catch { /* cross-origin or blocked; the tab still navigates below */ }
+         };
+         placeholder(
+             'Opening agent…',
+             'Preparing a secure session…',
+             'If the agent was just started, the first session can take up to a minute.',
+         );
 
-        const ws = new WebSocket(wsUrl);
-        ws.onopen = () => {
-            ws.close();
-            setIsPaired(true);
-            setIsPairing(false);
-        };
-        ws.onclose = async (e) => {
-            if (e.code === 1008 || e.code === 1005) {
-                try {
-                    await approveAgentDevice(agent.agentId);
-                    setTimeout(() => {
-                        const r = new WebSocket(wsUrl);
-                        r.onopen = () => { r.close(); setIsPaired(true); setIsPairing(false); };
-                        r.onclose = () => setIsPairing(false);
-                        r.onerror = () => setIsPairing(false);
-                    }, 2000);
-                } catch {
-                    setIsPairing(false);
-                }
-            } else {
-                setIsPairing(false);
-            }
-        };
-        ws.onerror = () => setIsPairing(false);
-    };
+         try {
+             const creds = await getAgentCredentials(agent.agentId, { bootstrap: true });
+             let url: string;
+             if (creds.dashboard) {
+                 // Hermes: basic-auth login page. The password is the gateway token.
+                 url = `${root}${creds.dashboard.loginPath}`;
+                 try { await navigator.clipboard.writeText(creds.dashboard.password); } catch { /* ignore */ }
+                 toast(`Hermes login: ${creds.dashboard.username} — password copied to clipboard`, 'success');
+             } else if (creds.webUi?.auth === 'basic') {
+                 // OpenCode serves its web UI — and everything else — behind
+                 // HTTP Basic, and the password is a derived token nobody can
+                 // type. The pre-proxy flow landed the tab on the agent's
+                 // origin, where Chrome showed a bare "HTTP ERROR 401": the
+                 // basic-auth prompt asks for a credential the user does not
+                 // know. The tab now lands on the backend's proxied surface
+                 // instead, which injects the credentials itself.
+                 try {
+                     const proxied = await requestAgentUiProxySession(agent.agentId);
+                     url = proxied.url;
+                 } catch {
+                     throw new Error(
+                         'Could not mint the proxied UI session — the agent may still be starting. Try again shortly.',
+                     );
+                 }
+             } else if (creds.webUi?.auth === 'query') {
+                 if (creds.webUi.bootstrapUrl) {
+                     url = rewriteBootstrapUrl(creds.webUi.bootstrapUrl, root);
+                 } else if (agent.agentType === 'openclaw') {
+                     // No token fallback here: see the doc comment above.
+                     throw new Error('The one-time session link could not be prepared — the agent gateway did not answer in time.');
+                 } else {
+                     url = `${root}/?token=${encodeURIComponent(creds.webUi.token)}`;
+                 }
+             } else {
+                 url = root;
+             }
+             if (tab) {
+                 tab.opener = null;
+                 tab.location.href = url;
+             } else {
+                 window.open(url, '_blank', 'noopener,noreferrer');
+             }
+         } catch (err) {
+             // Keep the tab and explain in it. Closing the tab on failure is
+             // what made a failed mint look like "nothing happened", and left
+             // no clue that a just-started agent needs a minute before its
+             // first session can be minted.
+             const msg = credentialErrorMessage(err);
+             placeholder(
+                 'Could not open agent',
+                 'Could not open the agent session.',
+                 `${msg} If the agent was just created, wait until it finishes starting (a couple of minutes for OpenClaw) and try again.`,
+             );
+             toast(msg, 'error');
+         }
+     };
+
+     const pairDevice = async () => {
+         setIsPairing(true);
+         const { baseDomain, wsProtocol } = agentOrigin();
+
+         let wsUrl: string;
+         try {
+             const creds = await getAgentCredentials(agent.agentId);
+             wsUrl = `${wsProtocol}://${agent.agentId}.${baseDomain}?token=${creds.api.auth === 'bearer' ? creds.api.token : creds.api.password}`;
+         } catch (err) {
+             toast(credentialErrorMessage(err), 'error');
+             setIsPairing(false);
+             return;
+         }
+
+         const ws = new WebSocket(wsUrl);
+         ws.onopen = () => {
+             ws.close();
+             setIsPaired(true);
+             setIsPairing(false);
+         };
+         ws.onclose = async (e) => {
+             if (e.code === 1008 || e.code === 1005) {
+                 try {
+                     await approveAgentDevice(agent.agentId);
+                     setTimeout(() => {
+                         const r = new WebSocket(wsUrl);
+                         r.onopen = () => { r.close(); setIsPaired(true); setIsPairing(false); };
+                         r.onclose = () => setIsPairing(false);
+                         r.onerror = () => setIsPairing(false);
+                     }, 2000);
+                 } catch {
+                     setIsPairing(false);
+                 }
+             } else {
+                 setIsPairing(false);
+             }
+         };
+         ws.onerror = () => setIsPairing(false);
+     };
 
     /* Contextual lifecycle actions, built once so the inline row and the
        mobile overflow sheet cannot diverge. */
@@ -148,6 +333,12 @@ export default function AgentCard({
                     key: 'webui',
                     label: isPaired ? 'WebUI' : 'Propagating...',
                     icon: <ExternalLink size={12} />,
+                    // Embedded, not a popup. `window.open` put the agent's UI in
+                    // a detached tab, which reads as "nothing happened" from the
+                    // dashboard and loses the token on any subsequent
+                    // navigation. The chat panel is the same UI in an iframe
+                    // with its own reload control, and it is where the user
+                    // already goes to talk to the agent.
                     onClick: openWebUi,
                     disabled: !isPaired,
                 },
@@ -252,7 +443,7 @@ export default function AgentCard({
                         color: agent.agentType === 'hermes' ? '#a855f7' : 'var(--accent-blue)',
                     }}
                 >
-                    {agent.agentType === 'hermes' ? 'Hermes' : 'OpenClaw'}
+                    {HARNESS_NAMES[agent.agentType] ?? agent.agentType}
                 </span>
                 <span className={styles.agentMetaItem}>LLM: {agent.llmProvider}</span>
                 <span className={styles.agentMetaItem}>
@@ -283,6 +474,22 @@ export default function AgentCard({
                 {onLogs && (
                     <Button type="button" variant="ghost" size="sm" icon={<ScrollText size={12} />} onClick={() => onLogs(agent)} disabled={disabled}>
                         Logs
+                    </Button>
+                )}
+                {onTerminal && (
+                    // A shell in the agent's own container. Only offered for a
+                    // running agent because the relay that spawns /bin/sh lives
+                    // inside one.
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        icon={<Terminal size={12} />}
+                        onClick={() => onTerminal(agent)}
+                        disabled={disabled || agent.status !== 'running'}
+                        title={agent.status === 'running' ? undefined : 'Start the agent to open a terminal'}
+                    >
+                        Terminal
                     </Button>
                 )}
                 {onCustomKey && (

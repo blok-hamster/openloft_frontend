@@ -1,5 +1,3 @@
-'use client';
-
 import styles from './UI.module.css';
 
 /* 'paused' is returned by the agents API and already branched on in
@@ -25,7 +23,10 @@ const statusConfig: Record<Status, { dotClass: string; label: string }> = {
 };
 
 export default function StatusIndicator({ status, showLabel = true }: StatusIndicatorProps) {
-    const config = statusConfig[status] || statusConfig.idle;
+    // An unrecognised status renders as "Unknown", not "Idle". A missing
+    // status is a data fault, and reporting it as a healthy-looking grey dot
+    // hid a serialization bug behind a plausible-looking UI.
+    const config = statusConfig[status] ?? { dotClass: styles.statusDotError, label: `Unknown (${String(status)})` };
 
     return (
         <div className={styles.statusIndicator}>

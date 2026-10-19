@@ -1538,6 +1538,21 @@
 
 /* --- ConfirmDestructiveAction --- */
 
+/* Optional body copy rendered above the warning. Some actions are not what
+   their name suggests — the memory console's forget is temporal invalidation
+   and keeps the archive — and the type-to-confirm line is no place to explain
+   that. */
+.confirmDescription {
+    font-size: var(--font-size-xs);
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.75rem;
+}
+
+.confirmDescription p + p {
+    margin-top: 0.5rem;
+}
+
 .confirmActions {
     margin-top: 1rem;
 }
@@ -1747,6 +1762,60 @@
     min-height: 0;
     border: none;
     background: var(--bg-color);
+}
+
+/* Shown instead of a frame for harnesses whose UI cannot be embedded — e.g. one
+   whose server only accepts HTTP Basic, which a browser frame cannot send. */
+.chatUnframable {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 2rem;
+    max-width: 46ch;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.chatUnframableTitle {
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.chatUnframableBody {
+    font-size: var(--font-size-xs);
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+.chatUnframableBody strong {
+    color: var(--text-primary);
+}
+
+/* Shown inside the panel's error state — the only way to re-mint credentials
+   without closing and reopening the panel. */
+.chatRetryBtn {
+    align-self: center;
+    padding: 0.5rem 1rem;
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: var(--font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+}
+
+.chatRetryBtn:hover {
+    border-color: var(--text-secondary);
+}
+
+.chatRetryBtn:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
 }
 
 .chatNote {

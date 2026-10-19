@@ -2,14 +2,14 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { deployAgent, getAvailableProviders } from '@/lib/api';
+import { deployAgent, getAvailableProviders, getHarnesses, type HarnessType } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import Modal from '@/components/ui/Modal';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
-import AgentTypeSelector from './AgentTypeSelector';
+import AgentTypeSelector, { HARNESS_NAMES } from './AgentTypeSelector';
 import styles from './Dashboard.module.css';
 import wiz from './AgentCreationWizard.module.css';
 
@@ -55,10 +55,14 @@ const providerModels: Record<string, { label: string; models: ModelOption[] }> =
     google: {
         label: 'Google Gemini',
         models: [
+            // `gemini-3-deep-think-preview` was here. It is not on the
+            // platform's key: listing this provider's /models returns 50
+            // entries including the other previews below, and that one is
+            // absent, so selecting it produced an agent that failed on first
+            // request. Removed rather than renamed.
             { value: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro' },
             { value: 'gemini-3-flash-preview', label: 'Gemini 3 Flash' },
             { value: 'gemini-3.1-flash-lite-preview', label: 'Gemini 3.1 Flash Lite' },
-            { value: 'gemini-3-deep-think-preview', label: 'Gemini 3 Deep Think' },
             { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
             { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
         ],
@@ -100,7 +104,10 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
     const { toast } = useToast();
 
     const [step, setStep] = useState(0);
-    const [agentType, setAgentType] = useState<'openclaw' | 'hermes'>('openclaw');
+    // From GET /agents/harnesses. Widened from the two-value union this used to
+    // be; the backend registry decides what is selectable.
+    const [harnesses, setHarnesses] = useState<Array<{ type: string; selectable: boolean; servesHttp: boolean; needsTerminal: boolean }>>([]);
+    const [agentType, setAgentType] = useState<HarnessType>('openclaw');
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [llmProvider, setLlmProvider] = useState('');
@@ -120,10 +127,12 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
         if (open && user?.tenantId) {
             Promise.all([
                 getAvailableProviders(),
-                import('@/lib/api').then(m => m.getTenantSecretsInfo(user.tenantId))
-            ]).then(([providers, secrets]) => {
+                import('@/lib/api').then(m => m.getTenantSecretsInfo(user.tenantId)),
+                import('@/lib/api').then(m => m.getHarnesses())
+            ]).then(([providers, secrets, h]) => {
                 setAvailableProviders(providers);
                 setAvailableTenantSecrets(secrets);
+                setHarnesses(h);
             }).catch(() => {});
         }
     }, [open, user?.tenantId]);
@@ -240,7 +249,11 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
                     <div className={`${styles.headerTitle} ${wiz.stepHeading}`}>
                         Choose Agent Runtime
                     </div>
-                    <AgentTypeSelector value={agentType} onChange={setAgentType} />
+                    <AgentTypeSelector
+                        value={agentType}
+                        onChange={setAgentType}
+                        harnesses={harnesses}
+                    />
                     <div className={styles.wizardActionsEnd}>
                         <Button variant="primary" onClick={() => setStep(1)}>
                             Next: Name Your Agent
@@ -380,7 +393,7 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
                             <div className={`${styles.agentMetaItem} ${wiz.reviewDesc}`}>{description}</div>
 
                             <div className={wiz.reviewList}>
-                                <div><strong>Runtime:</strong> {agentType === 'hermes' ? 'Hermes Agent' : 'OpenClaw Agent'}</div>
+                                <div><strong>Runtime:</strong> {HARNESS_NAMES[agentType] ?? agentType}</div>
                                 <div><strong>Provider:</strong> {providerModels[llmProvider]?.label}</div>
                                 <div><strong>Model:</strong> {currentModels.find(m => m.value === model)?.label}</div>
                                 <div className={usePlatformCredits ? wiz.reviewBadgePlatform : wiz.reviewBadgeByok}>

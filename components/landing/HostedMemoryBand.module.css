@@ -37,14 +37,19 @@
 }
 
 .card,
-.cardLive {
+.cardAccent {
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 1.25rem 1.35rem;
   background: rgba(255, 255, 255, 0.45);
+  display: flex;
+  flex-direction: column;
 }
 
-.cardLive {
+/* `live` and `built` cards get the forest-green edge. Green is the "real code
+   exists" signal; announced and committed cards stay neutral so the difference
+   reads without relying on the badge text alone. */
+.cardAccent {
   border-color: var(--accent-forest);
   background: rgba(10, 92, 58, 0.05);
 }
@@ -98,10 +103,21 @@
   opacity: 0.6;
 }
 
+/* The per-format caveat. It is the longest string in the card, so it is set
+   apart from the short bullets and pinned to the bottom of the flex column —
+   otherwise an unequal number of bullets leaves the notes at different heights. */
+.note {
+  font-size: var(--font-size-xs);
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: auto 0 0;
+  padding-top: 0.9rem;
+}
+
 /* --------------------------------------------------------------- badges */
 
-.badgeLive,
-.badgeCommitted {
+.badgeAccent,
+.badgeMuted {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
@@ -115,13 +131,13 @@
   color: var(--text-secondary);
 }
 
-.badgeLive {
+.badgeAccent {
   border-color: var(--accent-forest);
   color: var(--accent-forest);
 }
 
-.dotLive,
-.dotCommitted {
+.dotAccent,
+.dotMuted {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -133,7 +149,7 @@
   flex-shrink: 0;
 }
 
-.dotCommitted {
+.dotMuted {
   color: var(--text-secondary);
 }
 
@@ -177,40 +193,62 @@
 
 /* --------------------------------------------------------------- actions */
 
+/* The buttons themselves are the global .btn-primary / .btn-secondary from
+   app/globals.css, not a local copy — that is where the 44px touch-target
+   floor at the 900px breakpoint is defined. */
 .actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
 }
 
-.primary,
-.secondary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: var(--font-size-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  padding: 0.85rem 1.4rem;
-  border-radius: var(--radius-pill);
-  text-decoration: none;
-  transition: transform var(--transition-fast), opacity var(--transition-fast);
+/* ------------------------------------------------------------ responsive */
+
+@media (max-width: 900px) {
+  .band {
+    padding: 3rem 0;
+  }
+
+  .container {
+    padding: 0 1.25rem;
+  }
+
+  .title {
+    font-size: var(--font-size-xl);
+  }
+
+  .lede {
+    margin-bottom: 1.75rem;
+  }
+
+  .controlList {
+    grid-template-columns: 1fr;
+  }
 }
 
-.primary {
-  background: var(--off-black);
-  color: var(--white);
-  border: 1px solid var(--off-black);
-}
+@media (max-width: 480px) {
+  .container {
+    padding: 0 1rem;
+  }
 
-.secondary {
-  background: transparent;
-  color: var(--text-primary);
-  border: 1px solid var(--border);
-}
+  .title {
+    font-size: var(--font-size-lg);
+  }
 
-.primary:hover,
-.secondary:hover {
-  transform: scale(1.03);
-  opacity: 0.9;
+  .card,
+  .cardAccent,
+  .controls {
+    padding: 1rem 1.1rem;
+  }
+
+  /* Full-bleed the actions so each pill can take the whole row rather than
+     squeezing to an unreadable width. */
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dotLabel {
+    min-width: 4.75rem;
+  }
 }

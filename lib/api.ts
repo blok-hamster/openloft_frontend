@@ -1,13 +1,20 @@
 import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+// Exported for callers that need the API's ORIGIN (not /api), such as the
+// proxied agent UI, whose iframe points at the backend's /agent-ui mount.
+export { API_BASE_URL };
 
+// The instance is exported so ad-hoc endpoints (the terminal token mint, and
+// any caller issuing a raw request) reuse the JWT interceptor and the 401
+// redirect instead of standing up a second client.
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json'
   }
 });
+export { api };
 
 // Attach JWT from localStorage on every request
 api.interceptors.request.use((config) => {
@@ -46,14 +53,21 @@ export interface IAgent {
   tenantId: string;
   agentId: string;
   name?: string;
-  agentType?: 'openclaw' | 'hermes';
+  // Required, not optional: an optional field let the harness render as
+  // "OpenClaw" whenever the value was missing, which is how a serialization
+  // fault upstream presented as a wrong-harness bug rather than a data bug.
+  agentType: HarnessType;
   status: 'provisioning' | 'starting' | 'running' | 'stopped' | 'failed';
   containerId?: string;
   llmProvider: string;
   activeSkills: string[];
   activePlugins: string[];
   pluginConfigs?: Record<string, any>;
-  gatewayToken: string;
+  // Not returned by the API. `select:false` on the schema and stripped by
+  // agentPublicJson, so this is always undefined here. Anything needing a
+  // credential must call getAgentCredentials(agentId) — reading this field is
+  // what produced `?token=undefined` in the WebUI link and an unusable
+  // Hermes basic-auth password.
   webhookPath: string;
   resourceLimits: { memoryMB: number; vCPU: number; };
   mcpServers?: string[];
@@ -140,11 +154,17 @@ export interface IRegisterResponse { message: string; email: string; }
 export interface ICreateTenantRequest { name: string; }
 
 // Agents
+
+/** Mirrors the Agent.agentType enum in backend/src/models/Agent.ts. */
+export type HarnessType = 'openclaw' | 'hermes' | 'opencode' | 'claude-code' | 'codex';
+
 export interface IDeployAgentRequest {
   tenantId: string;
   name: string;
   description?: string;
-  agentType?: 'openclaw' | 'hermes';
+  // Mirrors Agent.agentType. The registry in the backend is the authority on
+  // which of these can actually be provisioned.
+  agentType?: HarnessType;
   llmProvider: string;
   model?: string;
   secrets?: Record<string, string>;
@@ -218,8 +238,12 @@ export const updateAccount = async (payload: IUpdateAccountRequest): Promise<{me
 
 // --- Tenant Endpoints ---
 
-export const createTenant = async (data: ICreateTenantRequest): Promise<ITenant> => {
-  const { data: res } = await api.post<ITenant>('/tenants', data);
+export const createTenant = async (data: ICreateTenantRequest): Promise<ITenant & { token?: string }> => {
+  // The response carries a re-issued JWT with the new tenantId attached. The
+  // token the caller already holds was minted before this tenant existed and
+  // carries no tenantId, so every tenant-scoped route rejects it with "Your
+  // account is not attached to a tenant" until it is replaced.
+  const { data: res } = await api.post<ITenant & { token?: string }>('/tenants', data);
   return res;
 };
 
@@ -248,6 +272,28 @@ export const fetchAgents = async (tenantId: string): Promise<IAgent[]> => {
 export const deployAgent = async (payload: IDeployAgentRequest): Promise<IAgent> => {
   const { data } = await api.post<IAgent>('/agents/provision', payload);
   return data;
+};
+
+/**
+ * A harness the backend can provision.
+ *
+ * `selectable` reflects `AGENT_HARNESSES`, so the picker can grey out a harness
+ * the operator has not switched on while still rendering it. The capability flags
+ * are what the UI is allowed to branch on — never the `type` string, which is how
+ * the old code ended up with a two-value ternary in ten files.
+ */
+export interface IHarness {
+  type: string;
+  selectable: boolean;
+  /** Serves HTTP on its subdomain, so it gets the WebUI link. */
+  servesHttp: boolean;
+  /** stdio-only, so the terminal is its surface. */
+  needsTerminal: boolean;
+}
+
+export const getHarnesses = async (): Promise<IHarness[]> => {
+  const { data } = await api.get<{ harnesses: IHarness[] }>('/agents/harnesses');
+  return data.harnesses;
 };
 
 export const getAvailableProviders = async (): Promise<string[]> => {
@@ -367,6 +413,45 @@ export const approveAgentDevice = async (agentId: string, requestId?: string): P
 export const fetchAgentConfig = async (agentId: string): Promise<Record<string, unknown>> => {
   const { data } = await api.get<{ config: Record<string, unknown> }>(`/agents/${agentId}/config`);
   return data.config;
+};
+
+/**
+ * Credentials to reach the caller's own agent.
+ *
+ * `IAgent.gatewayToken` does not exist on a list or detail response — it is
+ * `select:false` and stripped by the backend, and must stay that way. Two harness
+ * features need a credential anyway, so they fetch one here on demand.
+ */
+export interface IAgentCredentials {
+  agentType: HarnessType;
+  harness: HarnessType;
+  // Present for hermes only.
+  dashboard?: { auth: 'basic'; username: string; password: string; loginPath: string };
+  // Present for openclaw (a query token, which a frame can carry) and for
+  // opencode (HTTP Basic, which a frame cannot — see AgentChatPanel).
+  // `bootstrapUrl` (openclaw only, requested with `?bootstrap=1`): a one-time
+  // owner-pairing URL, container-local origin; callers must rewrite the origin
+  // before navigation. Null/absent when minting failed — fall back to `token`.
+  webUi?:
+    | { auth: 'query'; token: string; bootstrapUrl?: string | null }
+    | { auth: 'basic'; username: string; password: string };
+  api: { auth: 'bearer'; token: string } | { auth: 'basic'; username: string; password: string };
+}
+
+/**
+ * `opts.bootstrap` asks the backend to mint a one-time owner-bootstrap URL
+ * (`webUi.bootstrapUrl`, openclaw only). It costs ~20s inside the agent
+ * container, so only the Web UI button passes it; the chat panel and details
+ * modal must not.
+ */
+export const getAgentCredentials = async (
+  agentId: string,
+  opts?: { bootstrap?: boolean },
+): Promise<IAgentCredentials> => {
+  const { data } = await api.get<IAgentCredentials>(
+    `/agents/${agentId}/credentials${opts?.bootstrap ? '?bootstrap=1' : ''}`,
+  );
+  return data;
 };
 
 export const updateAgentConfig = async (agentId: string, config: Record<string, unknown>): Promise<void> => {
@@ -645,7 +730,429 @@ export const sendLobbyMessage = async (lobbyId: string, content: string, senderI
   await api.post(`/lobbies/${lobbyId}/message`, { content, senderId, senderName });
 };
 
-export const requestTerminalToken = async (agentId: string): Promise<{ token: string; expiresIn: number }> => {
-  const { data } = await api.post(`/agents/${agentId}/terminal/token`);
+// The terminal token mint lives in lib/socketApi.ts: it is only meaningful
+// alongside a socket connection, and a second definition of the same route
+// here is one place too many to keep in step.
+
+// ─── Memory service ─────────────────────────────────────────────────────────
+//
+// The hosted long-term memory layer (NMAFC), reached through the platform's
+// `/api/memory` proxy. Distinct from `fetchAgentMemory` above: that reads an
+// agent's workspace files off disk, this is the memory the agent has actually
+// accumulated across a conversation.
+//
+// Field names are snake_case, matching the wire. `memoryController.ts`
+// forwards the service response verbatim (`res.json(await operation())`) and
+// the memory service dumps its pydantic models with `model_dump()`, so nothing
+// between the engine and the browser camelises. A camelCase interface here
+// would type-check and still be wrong at runtime.
+//
+// The one exception is `POST /forget`, whose body `memoryController.forget`
+// reads as `recordId` / `entityName` before converting downstream. That is the
+// request side, not the response side, so it is camelCase.
+
+export type MemoryType = 'CoreAnchor' | 'ActiveContext' | 'EphemeralState';
+
+export interface MemoryRecord {
+  id: string;
+  entity_name: string;
+  fact_content: string;
+  memory_type: MemoryType;
+  weight: number;
+  consolidation_index: number;
+  created_at_turn: number;
+  last_reinforced_turn: number;
+  is_active: boolean;
+  related_entities: string[];
+  valid_at: number | null;
+  valid_at_text: string | null;
+  invalid_at: number | null;
+  created_date: string | null;
+}
+
+export interface MemoryRecordPage {
+  results: MemoryRecord[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+/** `has_dates` is false for a store that was never dated: turn numbers are
+ *  then not dates, and the UI must not render them as though they were. */
+export interface MemoryValidity {
+  valid_at: number | null;
+  valid_at_text: string | null;
+  valid_date: string | null;
+  invalid_at: number | null;
+  invalid_date: string | null;
+  has_dates: boolean;
+}
+
+export interface MemorySourceTurn {
+  turn: number;
+  timestamp: string | null;
+  /** Verbatim turn text. null when the backend keeps no turn text, which is a
+   *  real answer ("this store does not retain the words"), not a failure. */
+  text: string | null;
+}
+
+export interface MemoryRecordSource {
+  record: MemoryRecord;
+  validity: MemoryValidity;
+  source_turns: MemorySourceTurn[];
+}
+
+export interface MemorySearchHit {
+  record: MemoryRecord;
+  score: number;
+  /** Edges of the entity graph traversed to reach this record. 0 is a direct
+   *  vector hit; each hop above that is spreading activation. */
+  hops: number;
+}
+
+export type MemoryEventType =
+  | 'weight_update'
+  | 'override'
+  | 'suppression'
+  | 'prune'
+  | 'consolidation'
+  | 'ltp'
+  | 'retrieval';
+
+export interface MemoryEvent {
+  event_type: MemoryEventType | string;
+  turn: number;
+  timestamp: string | null;
+  record_id: string | null;
+  entity_name: string | null;
+  old_weight: number | null;
+  new_weight: number | null;
+  old_memory_type: MemoryType | null;
+  new_memory_type: MemoryType | null;
+  suppressed_by: string | null;
+  old_k: number | null;
+  new_k: number | null;
+  retrieval_score: number | null;
+  hops: number | null;
+  metadata: Record<string, unknown> | null;
+}
+
+export interface MemoryEventPage {
+  results: MemoryEvent[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface MemoryTimelinePoint {
+  turn: number;
+  event_type: string;
+  count: number;
+}
+
+export interface MemoryGraphNode {
+  id: string;
+  record_count: number;
+  types: Record<string, number>;
+  avg_weight: number;
+  clustering_coefficient: number;
+  related_entities: string[];
+}
+
+export interface MemoryGraph {
+  nodes: MemoryGraphNode[];
+  edges: { source: string; target: string }[];
+}
+
+export interface MemoryDecayPoint {
+  turn: number;
+  weight: number;
+}
+
+export interface MemoryDecayCurve {
+  record_id: string;
+  entity_name: string;
+  memory_type: MemoryType;
+  current_weight: number;
+  consolidation_index: number;
+  points: MemoryDecayPoint[];
+}
+
+export interface MemoryDecayProjection {
+  current_turn: number;
+  prune_threshold: number;
+  curves: MemoryDecayCurve[];
+}
+
+export interface MemoryStats {
+  tenant: string;
+  conversation_id: string;
+  turn: number;
+  /** `{ count, avg_weight, types }` — keys are the engine's own. */
+  hot: Record<string, unknown> & { count?: number };
+  cold: Record<string, unknown> & { total_events?: number; active_events?: number };
+  events: { total_events: number; by_type: Record<string, number> };
+}
+
+export interface MemoryHealth {
+  status: string;
+  checks?: Record<string, unknown>;
+}
+
+export const getMemoryRecords = async (
+  params: { limit?: number; offset?: number } = {},
+): Promise<MemoryRecordPage> => {
+  const { data } = await api.get<MemoryRecordPage>('/memory/records', { params });
+  return data;
+};
+
+export const getMemoryRecord = async (recordId: string): Promise<MemoryRecord> => {
+  const { data } = await api.get<MemoryRecord>(`/memory/records/${encodeURIComponent(recordId)}`);
+  return data;
+};
+
+export const getMemoryRecordSource = async (recordId: string): Promise<MemoryRecordSource> => {
+  const { data } = await api.get<MemoryRecordSource>(
+    `/memory/records/${encodeURIComponent(recordId)}/source`,
+  );
+  return data;
+};
+
+/** Vector search over Hot RAM. Deliberately not `recall`: retrieval buffers an
+ *  LTP reinforcement for every record it surfaces, and a search box must not
+ *  change what is remembered. */
+export const searchMemoryRecords = async (
+  query: string,
+  top_k = 10,
+): Promise<{ results: MemorySearchHit[] }> => {
+  // camelCase on the wire: memoryController.searchRecords reads `body.topK`
+  // and converts downstream. Sending top_k here was silently ignored, which
+  // pinned every search to the server's default of 10 no matter what the
+  // panel's selector said.
+  const { data } = await api.post<{ results: MemorySearchHit[] }>('/memory/records/search', {
+    query,
+    topK: top_k,
+  });
+  return data;
+};
+
+export const getMemoryEvents = async (
+  params: {
+    turn_from?: number;
+    turn_to?: number;
+    event_type?: string;
+    entity_name?: string;
+    limit?: number;
+    offset?: number;
+  } = {},
+): Promise<MemoryEventPage> => {
+  const { data } = await api.get<MemoryEventPage>('/memory/events', { params });
+  return data;
+};
+
+export const getMemoryEventTimeline = async (
+  limit = 100,
+): Promise<MemoryTimelinePoint[]> => {
+  const { data } = await api.get<MemoryTimelinePoint[]>('/memory/events/timeline', {
+    params: { limit },
+  });
+  return data;
+};
+
+export const getMemoryEventStats = async (): Promise<{
+  total_events: number;
+  by_type: Record<string, number>;
+}> => {
+  const { data } = await api.get<{ total_events: number; by_type: Record<string, number> }>(
+    '/memory/events/stats',
+  );
+  return data;
+};
+
+export const getMemoryGraph = async (): Promise<MemoryGraph> => {
+  const { data } = await api.get<MemoryGraph>('/memory/graph');
+  return data;
+};
+
+export const getMemoryEntity = async (
+  entityName: string,
+): Promise<{
+  entity_name: string;
+  records: MemoryRecord[];
+  clustering_coefficient: number;
+  neighbors: string[];
+  degree: number;
+}> => {
+  const { data } = await api.get(`/memory/graph/entity/${encodeURIComponent(entityName)}`);
+  return data;
+};
+
+/** Projection of the model's decay configuration from here forward. A read:
+ *  asking for the curve cannot move it. */
+export const getMemoryDecayCurves = async (
+  turns_ahead = 50,
+): Promise<MemoryDecayProjection> => {
+  const { data } = await api.get<MemoryDecayProjection>('/memory/decay/curves', {
+    params: { turns_ahead },
+  });
+  return data;
+};
+
+export const getMemoryStats = async (): Promise<MemoryStats> => {
+  const { data } = await api.get<MemoryStats>('/memory/stats');
+  return data;
+};
+
+export const getMemoryHealth = async (): Promise<MemoryHealth> => {
+  const { data } = await api.get<MemoryHealth>('/memory/health');
+  return data;
+};
+
+/**
+ * Temporal invalidation, not destruction. The write-ahead log keeps the entry,
+ * so the archive history stays auditable — the response carries
+ * `semantics: "temporal_invalidation"` so a caller cannot mistake this for a
+ * right-to-erasure fulfilment.
+ */
+export const forgetMemoryRecord = async (
+  recordId: string,
+): Promise<{ forgotten: number; by: string; semantics: string }> => {
+  const { data } = await api.post<{ forgotten: number; by: string; semantics: string }>(
+    '/memory/forget',
+    { recordId },
+  );
+  return data;
+};
+
+/* ── Memory chat surface ───────────────────────────────────────────────────
+ * The three endpoints an application actually integrates: one turn with
+ * memory interposed, read-only retrieval, and transcript ingest. These are
+ * writes against the live memory — /chat and /remember extract facts, and
+ * /recall reinforces what it surfaces — which is why the console's search
+ * box deliberately does not use them (see searchMemoryRecords above). The
+ * playground page is the one surface that exposes them on purpose.
+ */
+
+/** `POST /memory/chat` — recall, inject, generate and write in one LLM call. */
+export interface MemoryChatResult {
+  reply: string;
+  turn: number;
+  conversation_id: string;
+}
+
+export const chatMemory = async (input: {
+  message: string;
+  history?: { role: string; content: string }[];
+  conversationId?: string;
+}): Promise<MemoryChatResult> => {
+  const { data } = await api.post<MemoryChatResult>('/memory/chat', {
+    message: input.message,
+    history: input.history ?? [],
+    conversationId: input.conversationId,
+  });
+  return data;
+};
+
+/** `POST /memory/recall` — the context the engine would inject for a query. */
+export interface MemoryRecallHit {
+  id: string | null;
+  entity_name: string;
+  fact: string;
+  memory_type: MemoryType | string;
+  score: number;
+  source: string;
+  hop_distance: number;
+}
+
+export interface MemoryRecallResult {
+  context: string;
+  hits: MemoryRecallHit[];
+  token_estimate: number;
+  turn: number;
+}
+
+export const recallMemory = async (input: {
+  query: string;
+  topK?: number;
+  conversationId?: string;
+}): Promise<MemoryRecallResult> => {
+  const { data } = await api.post<MemoryRecallResult>('/memory/recall', {
+    query: input.query,
+    // camelCase on the wire — memoryController.recall reads `body.topK` and
+    // converts to the service's top_k itself.
+    topK: input.topK,
+    conversationId: input.conversationId,
+  });
+  return data;
+};
+
+/** `POST /memory/remember` — ingest a transcript without generating a reply. */
+export interface MemoryRememberResult {
+  updates_ingested: number;
+  overrides_suppressed: number;
+  consolidated: boolean;
+  turn: number;
+}
+
+export const rememberMemory = async (input: {
+  messages: { role: string; content: string }[];
+  conversationId?: string;
+}): Promise<MemoryRememberResult> => {
+  const { data } = await api.post<MemoryRememberResult>('/memory/remember', {
+    messages: input.messages,
+    conversationId: input.conversationId,
+  });
+  return data;
+};
+
+/* ── Memory API connections ────────────────────────────────────────────────
+ * A memory key is how a customer connects their own application to their
+ * memory. The platform mints one per connection; the key value appears in
+ * exactly one HTTP response and is never retrievable afterwards, which is why
+ * only the mint response carries it.
+ */
+
+export type MemoryScope = 'read' | 'write';
+
+export interface IMemoryConnection {
+  keyId: string;
+  label: string;
+  scopes: MemoryScope[];
+  /** Non-secret handle, e.g. `nmafc_org_d2484abb.…`. Never the key itself. */
+  keyPrefix: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+}
+
+/** Mint response. `apiKey` is present here and nowhere else. */
+export interface IMemoryConnectionIssued {
+  keyId: string;
+  label: string;
+  scopes: MemoryScope[];
+  keyPrefix: string;
+  apiKey: string;
+  createdAt: string;
+}
+
+export const listMemoryConnections =
+  async (): Promise<{ results: IMemoryConnection[] }> => {
+    const { data } = await api.get<{ results: IMemoryConnection[] }>('/memory/connections');
+    return data;
+  };
+
+export const mintMemoryConnection = async (input: {
+  label: string;
+  scopes?: MemoryScope[];
+}): Promise<IMemoryConnectionIssued> => {
+  const { data } = await api.post<IMemoryConnectionIssued>('/memory/connections', input);
+  return data;
+};
+
+export const revokeMemoryConnection = async (
+  keyId: string,
+): Promise<{ keyId: string; revokedAt: string }> => {
+  const { data } = await api.delete<{ keyId: string; revokedAt: string }>(
+    `/memory/connections/${encodeURIComponent(keyId)}`,
+  );
   return data;
 };

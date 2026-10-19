@@ -10,7 +10,10 @@ import styles from '@/components/dashboard/Dashboard.module.css';
 import FeatureGate from '@/components/FeatureGate';
 import { isAccountAreaEnabled } from '@/lib/features';
 
-const navItems = [
+/** Agent hosting only. The hosted memory service is an independent product
+    with its own dashboard at /memory — it used to lead this nav, which made
+    one sidebar serve two products that share nothing but a tenant. */
+export const navItems = [
     { href: '/dashboard', label: 'Agents', icon: LayoutGrid },
     { href: '/dashboard/team', label: 'Sales Team', icon: Briefcase },
     { href: '/dashboard/lobby', label: 'Lobby', icon: Users },
@@ -104,7 +107,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         </Link>
                     );
                 })}
-                {(user?.role === 'admin' || user?.role === 'platform_admin') && (
+                {/* Backend roles are 'platform_admin' | 'tenant_admin' | 'tenant_user'.
+                    There is no bare 'admin', so checking for it matched nobody. */}
+                {user?.role === 'platform_admin' && (
                     <Link
                         href="/admin"
                         className={isRouteActive(pathname, '/admin') ? styles.sidebarLinkActive : styles.sidebarLink}

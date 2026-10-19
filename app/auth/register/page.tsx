@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/AuthContext';
@@ -9,7 +9,6 @@ import Button from '@/components/ui/Button';
 import GoogleAuthButton from '@/components/auth/GoogleAuthButton';
 import styles from '@/components/auth/Auth.module.css';
 import FeatureGate from '@/components/FeatureGate';
-import { isAccountAreaEnabled } from '@/lib/features';
 
 function RegisterPageContent() {
     const { register, verifyEmail, resendOTP, googleLogin } = useAuth();
@@ -118,7 +117,10 @@ function RegisterPageContent() {
                         {error && <div className={styles.authError}>{error}</div>}
 
                         <div className={styles.authSubmit}>
-                            <Button type="button" variant="primary" size="lg" loading={loading} className={styles.authSubmitBlock}>
+                            {/* type="submit": this is the form's submit control.
+                                "button" rendered it inert — neither a click nor
+                                Enter in a field ever reached onSubmit. */}
+                            <Button type="submit" variant="primary" size="lg" loading={loading} className={styles.authSubmitBlock}>
                                 Verify Code
                             </Button>
                         </div>
@@ -184,7 +186,12 @@ function RegisterPageContent() {
                     {error && <div className={styles.authError}>{error}</div>}
 
                     <div className={styles.authSubmit}>
-                        <Button type="button" variant="primary" size="lg" loading={loading} className={styles.authSubmitBlock}>
+                        {/* type="submit": this is the form's submit control.
+                            "button" rendered it inert — neither a click nor
+                            Enter in a field ever reached onSubmit. The Google
+                            button below stays type="button" because it drives
+                            its own popup rather than submitting the form. */}
+                        <Button type="submit" variant="primary" size="lg" loading={loading} className={styles.authSubmitBlock}>
                             Create Account
                         </Button>
                     </div>

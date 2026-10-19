@@ -378,7 +378,7 @@ reply = client.chat.completions.create(
         callout: {
           kind: 'note',
           title: 'Why only terminal agents',
-          body: 'The harness has to be a program we can run in a container with a key and a health check. Desktop applications cannot be — Cursor, Windsurf and VS Code are applications on your machine, so they connect to the same memory over MCP instead of being hosted. See Harness setup above.',
+          body: 'The harness has to be a program we can run in a container with a key and a health check. Desktop applications cannot be — Cursor, Windsurf and VS Code are applications on your machine, so they connect to the same memory over MCP instead of being hosted. See MCP — coding agents above.',
         },
       },
       { t: 'h3', text: 'What you get' },

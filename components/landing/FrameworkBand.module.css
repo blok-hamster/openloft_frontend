@@ -124,6 +124,27 @@
   gap: 0.5rem;
 }
 
+/* The caveat sits under the chips rather than inside one, because a tooltip on
+   a chip is invisible to anyone not already looking for it. */
+.integrationsCaveat {
+  margin-top: 0.75rem;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 54ch;
+}
+
+.integrationsCaveat code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+}
+
+.integrationsCaveat a {
+  color: var(--accent-blue);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .chip {
   font-size: var(--font-size-xs);
   letter-spacing: 0.06em;
@@ -156,27 +177,49 @@
   margin: 0 0 1rem;
 }
 
+.statRow {
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.statRow:last-of-type {
+  border-bottom: none;
+}
+
 .stat {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: 1rem;
-  padding: 0.65rem 0;
-  border-bottom: 1px solid var(--border-subtle);
   font-size: var(--font-size-sm);
-}
-
-.stat:last-of-type {
-  border-bottom: none;
 }
 
 .statLabel {
   color: var(--text-secondary);
 }
 
+.statN {
+  margin-left: 0.5rem;
+  font-size: var(--font-size-xs);
+  opacity: 0.8;
+}
+
 .statValue {
   font-size: var(--font-size-lg);
   white-space: nowrap;
+}
+
+/* The category we lose. Marked rather than hidden — publishing it is the
+   cheapest credibility available. */
+.statValueBehind {
+  color: var(--accent-coral);
+}
+
+.statDetail {
+  margin: 0.2rem 0 0;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 
 .footnote {
@@ -189,4 +232,21 @@
 .footnote code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.9em;
+}
+
+.footnote a {
+  color: var(--accent-blue);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Licence identification travels with the benchmark name, so it is rendered as
+   a distinct final line rather than another sentence in the footnote. */
+.licence {
+  margin: 0.75rem 0 0;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-subtle);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  line-height: 1.6;
 }

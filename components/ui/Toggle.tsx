@@ -29,7 +29,9 @@ export default function Toggle({ checked, onChange, label, ariaLabel, disabled }
                 }
             }}
         >
-            <span className={styles.toggleTrack} aria-hidden="true">
+            {/* The track needs the active class too — ae86769 dropped it, so a
+                checked switch only moved its thumb and never changed colour. */}
+            <span className={`${styles.toggleTrack} ${checked ? styles.toggleTrackActive : ''}`} aria-hidden="true">
                 <span className={`${styles.toggleThumb} ${checked ? styles.toggleThumbActive : ''}`} />
             </span>
             {label && <span className={styles.toggleLabel}>{label}</span>}

@@ -143,4 +143,35 @@ describe('CSS module integrity', () => {
             expect(problems).toEqual([]);
         }
     );
+
+    /* The reverse direction — a class defined but referenced by nothing — is
+       what let `ae86769` drop `styles.toggleTrackActive` from Toggle.tsx and
+       leave the rule behind, silently removing the only checked-state cue the
+       switch had. Only the component stylesheet is checked: a repo-wide pass
+       still fails on ~26 orphans in components/landing/Landing.module.css and
+       one in ProductSections.module.css, both left by the deleted pricing
+       page and out of scope here. Widen it once those are dealt with. */
+    it('components/ui/UI.module.css leaves no orphaned classes', () => {
+        const rel = 'components/ui/UI.module.css';
+        const css = readFileSync(path.join(ROOT, rel), 'utf8');
+
+        const referenced = new Set<string>();
+        // `composes: toast;` is a reference to `.toast` too.
+        for (const m of css.matchAll(/composes\s*:\s*([A-Za-z][A-Za-z0-9_-]*)/g)) {
+            referenced.add(m[1]);
+        }
+
+        const uiDir = path.join(ROOT, 'components/ui');
+        for (const entry of readdirSync(uiDir)) {
+            if (!entry.endsWith('.tsx')) continue;
+            const src = readFileSync(path.join(uiDir, entry), 'utf8');
+            if (!src.includes('./UI.module.css')) continue;
+            for (const m of src.matchAll(/(?<![\w$])styles\.([A-Za-z][A-Za-z0-9_]*)/g)) {
+                referenced.add(m[1]);
+            }
+        }
+
+        const orphans = [...definedClasses(css)].filter((cls) => !referenced.has(cls));
+        expect(orphans).toEqual([]);
+    });
 });

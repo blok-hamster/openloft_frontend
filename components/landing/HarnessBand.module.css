@@ -138,3 +138,48 @@
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
+.ideBody code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+}
+
+/* ------------------------------------------------------------ responsive */
+
+@media (max-width: 900px) {
+  .band {
+    padding: 3rem 0;
+  }
+
+  .container {
+    padding: 0 1.25rem;
+  }
+
+  .title {
+    font-size: var(--font-size-xl);
+  }
+
+  .lede {
+    margin-bottom: 1.75rem;
+  }
+
+  .grid {
+    margin-bottom: 1.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 1rem;
+  }
+
+  .title {
+    font-size: var(--font-size-lg);
+  }
+
+  .card,
+  .cardLive,
+  .ide {
+    padding: 1rem 1.1rem;
+  }
+}

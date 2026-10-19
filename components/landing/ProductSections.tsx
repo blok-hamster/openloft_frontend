@@ -17,9 +17,20 @@
  * HTML and would break the in-page deep links from the copy ("setup is one
  * config block" points at /docs, and the bands are the targets of #framework
  * and friends).
+ *
+ * Arriving on a deep link used to flash the wrong product. The server has no URL
+ * hash — it is never sent in the request — so server-rendering could only ever
+ * paint the default section, and the one the visitor asked for landed a frame
+ * later. The bootstrap script in app/layout.tsx therefore parks the hash on
+ * `<html>` before first paint, and `.wrap` stays hidden while it is there. Only
+ * this component can clear it, because only this component knows the section the
+ * hash names is the section now on screen; see the layout effect below.
+ *
+ * The tabs are toggle buttons rather than an ARIA tablist — see the note at the
+ * markup.
  */
 
-import { useCallback, useMemo, useSyncExternalStore } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useSyncExternalStore } from 'react';
 
 import FrameworkBand from './FrameworkBand';
 import HarnessBand from './HarnessBand';
@@ -55,6 +66,17 @@ export default function ProductSections() {
 
     const active = useSyncExternalStore(subscribe, readHash, () => DEFAULT);
 
+    // Release the pre-hydration hold described in the header. A layout effect,
+    // not a passive one: a passive effect runs after the browser has already
+    // painted, which would show a frame of nothing with nothing to gain from it.
+    useLayoutEffect(() => {
+        // Reconciled against the URL rather than against `active` alone. An
+        // unrecognised hash resolves to DEFAULT, so `active` never changes for
+        // one and a hold keyed on `active` would never be released at all.
+        if (readHash() !== active) return;
+        delete document.documentElement.dataset.productSection;
+    }, [active]);
+
     const select = useCallback((id: string) => {
         // Assigning the hash pushes a history entry, so Back returns to the
         // previous section rather than leaving the page.
@@ -74,17 +96,27 @@ export default function ProductSections() {
     return (
         <div className={styles.wrap}>
             <nav className={styles.tabBar} aria-label="Product sections">
-                <div className={styles.tabInner} role="tablist">
+                {/* Toggle buttons, not a tablist.
+
+                    The roles said role="tablist"/role="tab" and meant it, which
+                    is a contract: arrow keys, a roving tabindex, an
+                    aria-orientation and a focusable tabpanel. None of it was
+                    implemented, so a screen reader user was told "tab 1 of 3"
+                    and handed something that answered only to Tab and Enter —
+                    and the whole widget sat inside a <nav>, which already
+                    announces itself as a landmark. aria-pressed states what
+                    these buttons actually do (press one, it becomes the section
+                    on screen), leaves every promise it makes a kept one, and
+                    keeps all three in the tab order, which a roving tabindex
+                    would have taken away. */}
+                <div className={styles.tabInner}>
                     {SECTIONS.map((section, i) => {
                         const selected = section.id === active;
                         return (
                             <button
                                 key={section.id}
                                 type="button"
-                                role="tab"
-                                aria-selected={selected}
-                                aria-controls={`panel-${section.id}`}
-                                id={`tab-${section.id}`}
+                                aria-pressed={selected}
                                 onClick={() => select(section.id)}
                                 className={`${styles.tab} ${selected ? styles.tabActive : ''}`}
                             >
@@ -98,12 +130,7 @@ export default function ProductSections() {
                 </div>
             </nav>
 
-            <div
-                role="tabpanel"
-                id={`panel-${active}`}
-                aria-labelledby={`tab-${active}`}
-                className={styles.panel}
-            >
+            <div className={styles.panel}>
                 <Current />
             </div>
         </div>

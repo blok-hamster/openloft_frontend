@@ -34,7 +34,7 @@ const PRODUCTS = [
         tag: 'Open source · Apache-2.0',
         title: 'NMAFC Memory Framework',
         icon: Brain,
-        desc: 'An open-source memory layer for LLM agents. It compacts each turn into dated atomic facts, lets unused facts fade on a decay curve, and retrieves through a fusion of five ranked channels — so context stays small no matter how long the conversation gets.',
+        desc: 'An open-source memory layer for LLM agents. It compacts each turn into dated atomic facts, ages unused ones on a decay curve set for the long haul, and retrieves through a fusion of five ranked channels — so context stays small no matter how long the conversation gets.',
         items: [
             'Temporal grounding: relative dates resolved at write time',
             'Three memory types with different decay rates',
@@ -64,9 +64,9 @@ const PRODUCTS = [
         icon: Server,
         desc: 'The same engine, operated by us. Multi-tenant and isolated by credential on our infrastructure, or deployed into your own VPC, on-premise, or air-gapped. You bring an API key; we bring the operations.',
         items: [
-            'Managed multi-tenant available today',
-            'Your VPC, on-premise and air-gapped committed',
-            'Local embeddings so content stays in-region',
+            'Managed multi-tenant: built and tested, not yet deployed',
+            'Your VPC, on-premise and air-gapped announced',
+            'Vectors stay in-region, but turns still reach your LLM provider',
             'Enterprise controls published with current state',
         ],
         href: '/docs#overview',

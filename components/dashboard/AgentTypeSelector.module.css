@@ -13,6 +13,26 @@
     padding: 1.25rem;
 }
 
+/* A harness the operator has not switched on. Shown but inert: hiding it would
+   read as a missing feature rather than as a deliberate policy. */
+.optionCardDisabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.soon {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.8;
+}
+
 .optionTitle {
     font-size: var(--font-size-base);
     margin-bottom: 0.5rem;

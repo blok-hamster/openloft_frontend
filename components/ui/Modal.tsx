@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useCallback, useEffect, useRef } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import styles from './UI.module.css';
@@ -10,16 +10,47 @@ interface ModalProps {
     onClose: () => void;
     title?: string;
     children: ReactNode;
+    /**
+     * Overrides the default 560px cap.
+     *
+     * Only the interactive terminal needs this, and it is not cosmetic: a PTY
+     * at 560px wraps at column 80 and an agent's shell output becomes
+     * unreadable. Everything else keeps the default.
+     */
+    width?: number | string;
+    /**
+     * Let the content own its scrolling.
+     *
+     * `.modalContent` is `overflow-y: auto`, which is right for a form and
+     * wrong for xterm: a nested scroll container inside a scroll container
+     * gives two scrollbars and makes the terminal mis-size on every resize.
+     */
+    scrollBody?: boolean;
 }
 
-export default function Modal({ open, onClose, title, children }: ModalProps) {
+export default function Modal({ open, onClose, title, children, width, scrollBody }: ModalProps) {
     const contentRef = useRef<HTMLDivElement>(null);
     const previousFocus = useRef<HTMLElement | null>(null);
 
-    const handleKeyDown = useCallback(
-        (e: KeyboardEvent) => {
+    /* Every call site passes an inline arrow (`onClose={() => setX(null)}`),
+       so `onClose` is a new function on every parent render. Reading it
+       through a ref keeps it current without putting it in the dependency
+       array below: depending on it re-ran the effect — and its cleanup —
+       on every socket event and poll tick, which re-captured the previous
+       focus target and yanked focus back out of the dialog. */
+    const onCloseRef = useRef(onClose);
+    useEffect(() => {
+        onCloseRef.current = onClose;
+    }, [onClose]);
+
+    useEffect(() => {
+        if (!open) return;
+
+        previousFocus.current = document.activeElement as HTMLElement | null;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
-                onClose();
+                onCloseRef.current();
                 return;
             }
             if (e.key !== 'Tab') return;
@@ -39,14 +70,8 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
                 e.preventDefault();
                 first.focus();
             }
-        },
-        [onClose]
-    );
+        };
 
-    useEffect(() => {
-        if (!open) return;
-
-        previousFocus.current = document.activeElement as HTMLElement | null;
         document.addEventListener('keydown', handleKeyDown);
 
         const prevOverflow = document.body.style.overflow;
@@ -63,7 +88,7 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
             cancelAnimationFrame(raf);
             previousFocus.current?.focus();
         };
-    }, [open, handleKeyDown]);
+    }, [open]);
 
     return (
         <AnimatePresence>
@@ -78,11 +103,12 @@ export default function Modal({ open, onClose, title, children }: ModalProps) {
                 >
                     <motion.div
                         ref={contentRef}
-                        className={styles.modalContent}
+                        className={scrollBody ? `${styles.modalContent} ${styles.modalContentFlush}` : styles.modalContent}
                         role="dialog"
                         aria-modal="true"
                         aria-label={title}
                         tabIndex={-1}
+                        style={width !== undefined ? { maxWidth: width } : undefined}
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 12 }}

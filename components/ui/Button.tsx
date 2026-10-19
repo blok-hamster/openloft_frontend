@@ -1,6 +1,5 @@
-'use client';
-
 import { ButtonHTMLAttributes, ReactNode } from 'react';
+import styles from './UI.module.css';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
@@ -10,10 +9,10 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     fullWidth?: boolean;
 }
 
-const sizeMap = {
-    sm: { padding: '0.45rem 1rem', fontSize: '0.625rem' },
-    md: { padding: '0.65rem 1.5rem', fontSize: '0.6875rem' },
-    lg: { padding: '0.8rem 2rem', fontSize: '0.75rem' },
+const sizeClass = {
+    sm: styles.btnSizeSm,
+    md: styles.btnSizeMd,
+    lg: styles.btnSizeLg,
 };
 
 export default function Button({
@@ -28,21 +27,15 @@ export default function Button({
     className,
     ...props
 }: ButtonProps) {
-    const sizeStyle = sizeMap[size];
+    const classes = [`btn-${variant}`, styles.btnBase, sizeClass[size]];
+    if (fullWidth) classes.push(styles.btnFullWidth);
+    if (className) classes.push(className);
 
     return (
         <button
-            className={`btn-${variant}${className ? ` ${className}` : ''}`}
+            className={classes.join(' ')}
             disabled={disabled || loading}
-            style={{
-                ...sizeStyle,
-                width: fullWidth ? '100%' : 'auto',
-                display: fullWidth ? 'flex' : 'inline-flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: '0.5rem',
-                ...style
-            }}
+            style={style}
             {...props}
         >
             {loading ? '...' : icon}

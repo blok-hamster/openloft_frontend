@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
-import { createTenant, updateSecrets, updateSubscription } from '@/lib/api';
+import { createTenant, updateSecrets, updateSubscription, IUserContext } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
@@ -38,7 +38,7 @@ const tiers: { id: Tier; name: string; description: string; badge: string; featu
 
 function OnboardingPageContent() {
     const router = useRouter();
-    const { user, updateUser } = useAuth();
+    const { user, updateUser, persistAuth } = useAuth();
     const { toast } = useToast();
 
     const [step, setStep] = useState(0);
@@ -54,7 +54,16 @@ function OnboardingPageContent() {
         try {
             const tenant = await createTenant({ name: orgName });
             setTenantId(tenant.tenantId);
-            updateUser({ tenantId: tenant.tenantId });
+            // Adopt the re-issued token, not just the tenantId. Patching the
+            // user object alone left the original JWT in place, and that JWT
+            // has no tenantId — so every subsequent call to a tenant-scoped
+            // route (subscription, secrets, agents) failed with "Your account
+            // is not attached to a tenant".
+            if (tenant.token) {
+                persistAuth(tenant.token, { ...user, tenantId: tenant.tenantId } as IUserContext);
+            } else {
+                updateUser({ tenantId: tenant.tenantId });
+            }
             toast('Organization created', 'success');
             setStep(1);
         } catch {

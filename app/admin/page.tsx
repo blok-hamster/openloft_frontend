@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import SkeletonLoader from '@/components/ui/SkeletonLoader';
+import { HARNESS_NAMES } from '@/components/dashboard/AgentTypeSelector';
 import styles from '@/components/admin/Admin.module.css';
 
 export default function AdminPage() {
@@ -251,7 +252,7 @@ export default function AdminPage() {
                                     <td className={styles.cellMono}>{a.tenantId}</td>
                                     <td>
                                         <span className={a.agentType === 'hermes' ? styles.typePillHermes : styles.typePillOpenClaw}>
-                                            {a.agentType === 'hermes' ? 'Hermes' : 'OpenClaw'}
+                                            {HARNESS_NAMES[a.agentType] ?? a.agentType}
                                         </span>
                                     </td>
                                     <td>{a.llmProvider}</td>
@@ -311,7 +312,7 @@ export default function AdminPage() {
                                     <span className={styles.tableCardLabel}>Type</span>
                                     <span className={styles.tableCardValue}>
                                         <span className={a.agentType === 'hermes' ? styles.typePillHermes : styles.typePillOpenClaw}>
-                                            {a.agentType === 'hermes' ? 'Hermes' : 'OpenClaw'}
+                                            {HARNESS_NAMES[a.agentType] ?? a.agentType}
                                         </span>
                                     </span>
                                 </div>

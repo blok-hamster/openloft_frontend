@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
@@ -13,6 +13,10 @@ interface ConfirmDestructiveActionProps {
     title: string;
     confirmText: string;
     loading?: boolean;
+    /** Optional explanation of what the action actually does, shown above the
+     *  warning. Use it when the action's name understates or overstates its
+     *  effect. */
+    description?: ReactNode;
 }
 
 export default function ConfirmDestructiveAction({
@@ -22,6 +26,7 @@ export default function ConfirmDestructiveAction({
     title,
     confirmText,
     loading,
+    description,
 }: ConfirmDestructiveActionProps) {
     const [typed, setTyped] = useState('');
 
@@ -32,6 +37,7 @@ export default function ConfirmDestructiveAction({
 
     return (
         <Modal open={open} onClose={handleClose} title={title}>
+            {description && <div className={styles.confirmDescription}>{description}</div>}
             <div className={styles.confirmWarning}>
                 This action cannot be undone. Type &ldquo;{confirmText}&rdquo; to confirm.
             </div>

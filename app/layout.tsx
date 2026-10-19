@@ -20,9 +20,14 @@ export const viewport: Viewport = {
     viewportFit: 'cover',
 };
 
+/* The landing page now argues that memory is the product — "Memory is what
+   makes an agent an agent" — so the snippet that reaches the browser tab and
+   the search result says that too, rather than selling the orchestration
+   platform this stopped being. Everything here is stated on the landing page
+   already: no benchmark, no audit trail, no compliance badge, no price. */
 export const metadata: Metadata = {
-  title: "OpenLoft - Autonomous Agent Orchestration",
-  description: "Enterprise grade AI orchestration platform spinning up OpenClaw instances with just a couple clicks.",
+  title: "OpenLoft — agent memory that outlives the context window",
+  description: "NMAFC is an open-source memory layer for agents: dated, decay-aware, source-attributed facts, and a small precise context hundreds of sessions later. OpenLoft hosts the agents that use it.",
   icons: {
     icon: "/loft_favicon.png",
   },
@@ -36,6 +41,22 @@ export default function RootLayout({
   return (
     <html lang="en" className={spaceMono.variable} suppressHydrationWarning>
       <body>
+        {/* Bootstrap, before first paint.
+
+            The hash never leaves the browser — the server has no way to know
+            the visitor asked for #hosted-memory — so ProductSections can only
+            ever serve the default section in its HTML. Inline at the top of
+            the body, so it runs before the rest of the document is parsed,
+            this parks the hash on <html> and lets the stylesheet hold the
+            switcher until React has committed the section it names. Without
+            JS nothing is marked and the default section simply stands. */}
+        <script
+          id="product-section-bootstrap"
+          dangerouslySetInnerHTML={{
+            __html:
+              "if(window.location.hash)document.documentElement.dataset.productSection=window.location.hash.slice(1)",
+          }}
+        />
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
           <AuthProvider>
             <ToastProvider>
