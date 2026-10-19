@@ -1,0 +1,25 @@
+/* ===========================
+   Memory dashboard shell
+   =========================== */
+
+/* The hosted memory service is its own product, so its console carries its
+   own identity rather than borrowing the agent dashboard's chrome. */
+
+.brandRow {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.serviceLabel {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-secondary, #6b6b6b);
+    border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.12));
+    border-radius: var(--radius-sm, 4px);
+    padding: 0.15rem 0.45rem;
+    white-space: nowrap;
+}

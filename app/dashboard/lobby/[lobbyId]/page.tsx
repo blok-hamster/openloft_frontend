@@ -12,7 +12,7 @@ import AgentDrive from '@/components/dashboard/AgentDrive';
 import styles from '@/components/dashboard/Dashboard.module.css';
 import room from './LobbyRoom.module.css';
 import { Send, Users, HardDrive } from 'lucide-react';
-import io, { Socket } from 'socket.io-client';
+import { createSocket } from '@/lib/socket';
 
 export default function LobbyDetailPage() {
   const { lobbyId } = useParams();
@@ -22,7 +22,7 @@ export default function LobbyDetailPage() {
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
   const [showDrive, setShowDrive] = useState(false);
-  const socketRef = useRef<Socket | null>(null);
+  const socketRef = useRef<ReturnType<typeof createSocket> | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -50,9 +50,15 @@ export default function LobbyDetailPage() {
   };
 
   const setupSocket = () => {
-    socketRef.current = io(process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') || 'http://localhost:3001');
+    // createSocket() carries the JWT; the backend rejects an anonymous
+    // handshake, so the raw io() this replaces never connected at all.
+    socketRef.current = createSocket();
     socketRef.current.on('connect', () => {
       socketRef.current?.emit('lobby:join', lobbyId);
+    });
+
+    socketRef.current.on('connect_error', (err: Error) => {
+      console.warn('[Socket] Connection rejected:', err.message);
     });
 
     socketRef.current.on('lobby:message', (msg: any) => {

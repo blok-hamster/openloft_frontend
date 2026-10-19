@@ -1,0 +1,787 @@
+/* ===========================
+   Memory console — shared parts
+   ===========================
+
+   Deliberately denser than the rest of the product. Panels keep the 1px
+   black border and the radius from the design guide; the density comes from
+   a smaller type step (--memory-font-size-cell), hairline row separators
+   instead of full borders, and tabular figures so a column of weights reads
+   down rather than across.
+   */
+
+/* --- Memory type badge --- */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.15rem 0.45rem;
+    border: var(--border);
+    border-radius: var(--radius-pill);
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    line-height: 1.5;
+    white-space: nowrap;
+}
+
+/* Leading dot carries the type even where the label is squeezed. */
+.badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+}
+
+.badgeCore {
+    color: var(--memory-core);
+}
+
+.badgeActive {
+    color: var(--memory-active);
+}
+
+.badgeEphemeral {
+    color: var(--memory-ephemeral);
+}
+
+.badgeUnknown {
+    color: var(--text-secondary);
+}
+
+/* --- Weight readout --- */
+.weight {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.weightTrack {
+    position: relative;
+    width: 3rem;
+    height: 6px;
+    background: var(--memory-weight-track);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.weightFill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    background: var(--memory-weight-fill);
+    border-radius: inherit;
+}
+
+.weightValue {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* --- Stat tiles --- */
+.statGrid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.stat {
+    border: var(--border);
+    border-radius: var(--radius-md);
+    background: var(--memory-surface);
+    padding: 0.75rem 0.875rem;
+    min-width: 0;
+}
+
+.statLabel {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.statValue {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-top: 0.2rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.statHint {
+    font-size: var(--memory-font-size-cell);
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+    margin-top: 0.15rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.healthRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    margin-top: 0.75rem;
+}
+
+/* --- Event-type chips --- */
+.chipRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    align-items: center;
+}
+
+.chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    border: var(--border-subtle);
+    border-radius: var(--radius-pill);
+    padding: 0.1rem 0.5rem;
+    font-size: var(--memory-font-size-cell);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+.chipCount {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* --- Panel internals --- */
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.toolbarGroup {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem;
+}
+
+/* A nested surface so a card can hold several self-contained blocks without
+   stacking full borders three deep. */
+.subPanel {
+    border: var(--border-subtle);
+    border-radius: var(--radius-sm);
+    background: var(--memory-surface);
+    padding: 0.875rem 1rem;
+}
+
+.subPanelTitle {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* Badges and chips share a wrapping row. */
+.badgeRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.6rem;
+    margin-top: 0.625rem;
+}
+
+/* Stacked detail blocks — the dialog is a single scroll, so vertical rhythm
+   comes from one gap rather than a margin on every block. */
+.detailBlocks {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    margin-top: 0.875rem;
+}
+
+.caption {
+    font-size: var(--memory-font-size-cell);
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+    line-height: 1.5;
+}
+
+.caption + .caption {
+    margin-top: 0.4rem;
+}
+
+.kicker {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+}
+
+.stateErrorText {
+    font-size: var(--font-size-xs);
+    color: var(--accent-coral);
+    line-height: 1.6;
+    margin-top: 0.5rem;
+}
+
+/* One gap instead of a margin on every block that follows another. */
+.spacedBlock {
+    margin-top: 0.75rem;
+}
+
+/* --- Records table --- */
+.tableScroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--memory-font-size-cell);
+}
+
+/* The caption carries the ordering caveat, which is easier to read once than
+   to reproduce on every sort control. */
+.tableCaption {
+    caption-side: top;
+    text-align: left;
+    font-size: var(--memory-font-size-cell);
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+    line-height: 1.5;
+    padding-bottom: 0.5rem;
+}
+
+.table th {
+    text-align: left;
+    padding: 0.4rem 0.6rem;
+    border-bottom: var(--border);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    vertical-align: bottom;
+}
+
+.table td {
+    padding: 0.45rem 0.6rem;
+    border-bottom: var(--memory-hairline);
+    vertical-align: top;
+    line-height: 1.45;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table tbody tr:hover {
+    background: var(--memory-row-hover);
+}
+
+/* A superseded fact is still real — it is just no longer current. Dimmed
+   rather than struck through, because the row is a historical record. */
+.rowSuperseded td {
+    color: var(--text-secondary);
+}
+
+.sortButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    text-transform: inherit;
+    letter-spacing: inherit;
+    cursor: pointer;
+}
+
+.sortArrow {
+    font-size: var(--memory-font-size-cell);
+    line-height: 1;
+}
+
+.cellMono {
+    font-family: var(--font-family-mono);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.cellNum {
+    text-align: right;
+}
+
+.entityButton {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-weight: 700;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+    word-break: break-word;
+}
+
+.factCell {
+    min-width: 14rem;
+    max-width: 34rem;
+}
+
+.factText {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+}
+
+.validText {
+    display: block;
+    color: var(--text-secondary);
+}
+
+/* --- Pager --- */
+.pager {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: var(--memory-hairline);
+}
+
+.pagerInfo {
+    font-size: var(--memory-font-size-cell);
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+/* --- Empty / error states --- */
+.emptyCell {
+    text-align: left;
+    padding: 1rem 0.6rem;
+    color: var(--text-secondary);
+    font-family: var(--font-family-mono);
+}
+
+.statePanel {
+    border: var(--border);
+    border-radius: var(--radius-md);
+    background: var(--memory-surface);
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.stateTitle {
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.stateBody {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    line-height: 1.6;
+}
+
+.stateError {
+    border-color: var(--accent-coral);
+}
+
+.stateError .stateTitle {
+    color: var(--accent-coral);
+}
+
+/* --- Semantic search --- */
+.searchForm {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem;
+    margin-top: 0.875rem;
+}
+
+.searchForm > * {
+    flex: 0 1 auto;
+}
+
+.searchResults {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.searchHit {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: var(--border-subtle);
+    border-radius: var(--radius-sm);
+    background: var(--memory-surface);
+    padding: 0.625rem 0.75rem;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.searchHit:hover {
+    background: var(--memory-row-hover);
+}
+
+.searchHitHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.6rem;
+}
+
+.searchHitEntity {
+    font-weight: 700;
+    word-break: break-word;
+}
+
+/* Score and hops are the two numbers search alone can tell you, so they get
+   their own readouts rather than being buried in the row text. */
+.readout {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.25rem;
+    font-family: var(--font-family-mono);
+    font-size: var(--memory-font-size-cell);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    border: var(--border-subtle);
+    border-radius: var(--radius-pill);
+    padding: 0.05rem 0.4rem;
+}
+
+.readoutKey {
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-family: var(--font-family);
+}
+
+.searchHitFact {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: var(--font-size-xs);
+    line-height: 1.5;
+}
+
+/* --- Record detail --- */
+.detailFact {
+    border: var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--memory-surface);
+    padding: 0.875rem 1rem;
+    font-size: var(--font-size-base);
+    line-height: 1.6;
+}
+
+.metaGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 0.5rem 1rem;
+    margin-top: 0.875rem;
+}
+
+.metaLabel {
+    font-size: var(--memory-font-size-cell);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+}
+
+.metaValue {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-xs);
+    font-variant-numeric: tabular-nums;
+    word-break: break-word;
+}
+
+.relatedList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.3rem;
+}
+
+.relatedTag {
+    border: var(--border-subtle);
+    border-radius: var(--radius-pill);
+    padding: 0.05rem 0.45rem;
+    font-size: var(--memory-font-size-cell);
+    word-break: break-all;
+}
+
+.detailActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 0.875rem;
+    border-top: var(--border);
+}
+
+/* --- Source turns: the differentiator --- */
+.sourceList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 0.6rem;
+}
+
+.sourceTurn {
+    border-left: 3px solid var(--off-black);
+    background: var(--memory-surface);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 0.625rem 0.875rem;
+}
+
+.sourceTurnHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem 0.6rem;
+    font-size: var(--memory-font-size-cell);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+}
+
+.sourceTurnText {
+    margin-top: 0.35rem;
+    font-size: var(--font-size-xs);
+    line-height: 1.6;
+    /* Verbatim words keep their own whitespace; the wording matters. */
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.sourceTurnMissing {
+    margin-top: 0.35rem;
+    font-size: var(--font-size-xs);
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+/* --- Validity block --- */
+.validityGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+    gap: 0.5rem 1rem;
+    margin-top: 0.5rem;
+}
+
+/* --- Mobile: the table becomes a stack of cards --- */
+.cardStack {
+    display: none;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.tableCard {
+    border: var(--border);
+    border-radius: var(--radius-md);
+    background: var(--memory-surface);
+    overflow: hidden;
+}
+
+.tableCardHead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-bottom: var(--memory-hairline);
+    background: rgba(26, 26, 26, 0.03);
+}
+
+.tableCardBody {
+    padding: 0.5rem 0.75rem 0.75rem;
+}
+
+.tableCardFact {
+    font-size: var(--font-size-xs);
+    line-height: 1.5;
+    margin: 0.4rem 0 0.6rem;
+    word-break: break-word;
+}
+
+.tableCardRow {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border-bottom: var(--memory-hairline);
+    padding: 0.2rem 0;
+    font-size: var(--memory-font-size-cell);
+}
+
+.tableCardRow:last-child {
+    border-bottom: none;
+}
+
+.tableCardRow dt {
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+.tableCardRow dd {
+    margin: 0;
+    font-family: var(--font-family-mono);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    word-break: break-word;
+}
+
+/* ============================================================
+   Page shell
+   ============================================================
+
+   The console's page-level layout. It lives beside the panels rather than
+   beside the route so every page of the memory dashboard — console, records,
+   events, graph, decay, playground — shares one vocabulary instead of each
+   importing a second stylesheet for the same four classes. */
+
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.pageHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+}
+
+.pageTitle {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: 1;
+}
+
+.pageSub {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+    margin-top: 0.4rem;
+    max-width: 60ch;
+    line-height: 1.6;
+}
+
+/* Records panel header: the section name and the one view control. */
+.recordsHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+}
+
+.sectionTitle {
+    font-size: var(--font-size-sm);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.recordsHint {
+    font-size: var(--memory-font-size-cell);
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+    line-height: 1.5;
+    margin: 0.4rem 0 1rem;
+    max-width: 90ch;
+}
+
+.footNote {
+    font-size: var(--memory-font-size-cell);
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+    line-height: 1.6;
+    max-width: 90ch;
+}
+
+@media (max-width: 900px) {
+    .pageHead {
+        align-items: stretch;
+    }
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+
+@media (max-width: 900px) {
+    .statGrid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    /* Touch viewports need a 44px hit area even in a dense header. */
+    .sortButton {
+        min-height: var(--touch-target);
+    }
+
+    .factCell {
+        max-width: 22rem;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Eight columns of fact cannot be laid out in 480px, so the same data is
+       presented as a card per record instead of a horizontally scrolling
+       table. */
+    .tableScroll {
+        display: none;
+    }
+
+    .cardStack {
+        display: flex;
+    }
+
+    .statGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .detailActions > * {
+        flex: 1 1 100%;
+    }
+}

@@ -28,6 +28,16 @@ interface AuthContextType {
     googleLogin: (data: IGoogleLoginRequest) => Promise<void>;
     logout: () => Promise<void>;
     updateUser: (updates: Partial<IUserContext>) => void;
+    /**
+     * Replace the stored session outright.
+     *
+     * `updateUser` only patches local state, so it cannot attach a field the
+     * token does not carry. Creating a tenant mints a new tenantId that the
+     * existing JWT predates — patching the user alone leaves the old token in
+     * place and every tenant-scoped request fails. Anything that changes what
+     * the token should contain must go through here.
+     */
+    persistAuth: (token: string, user: IUserContext) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -153,6 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 googleLogin,
                 logout,
                 updateUser,
+                persistAuth,
             }}
         >
             {children}

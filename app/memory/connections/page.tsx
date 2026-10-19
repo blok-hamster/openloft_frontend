@@ -1,0 +1,354 @@
+'use client';
+
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { KeyRound, Plus, Trash2, Copy, Check, AlertTriangle } from 'lucide-react';
+import {
+  IMemoryConnection,
+  IMemoryConnectionIssued,
+  MemoryScope,
+  listMemoryConnections,
+  mintMemoryConnection,
+  revokeMemoryConnection,
+} from '@/lib/api';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
+import Modal from '@/components/ui/Modal';
+import Input from '@/components/ui/Input';
+import Toggle from '@/components/ui/Toggle';
+import ConfirmDestructiveAction from '@/components/dashboard/ConfirmDestructiveAction';
+import { useToast } from '@/components/ui/Toast';
+import { memoryErrorMessage } from '@/components/memory/memoryFormat';
+import IntegrationGuide from '@/components/memory/IntegrationGuide';
+import styles from './Connections.module.css';
+
+const BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') ?? 'http://localhost:3001/api';
+
+/**
+ * The harnesses a user can point at their memory, and the exact config each one
+ * needs. Order matters for scanning: the two most common clients first.
+ *
+ * This list is deliberately data rather than a switch, because it will grow and
+ * every entry is the same shape.
+ */
+const HARNESSES = [
+  {
+    id: 'mcp',
+    label: 'MCP (Claude Code, Cursor, Codex)',
+    note: 'One config block. Recommended — works in any MCP host.',
+    transport: 'HTTP / MCP',
+    available: true,
+  },
+  {
+    id: 'rest',
+    label: 'REST (any language)',
+    note: 'Mem0-compatible, so a client already speaking to Mem0 changes base URL and key.',
+    transport: 'HTTP',
+    available: true,
+  },
+  {
+    id: 'openai',
+    label: 'OpenAI-compatible (SDK swap-in)',
+    note: 'Chat-completions shape. Does not pass tools/tool_choice, so agentic clients break on it.',
+    transport: 'HTTP',
+    available: true,
+  },
+] as const;
+
+export default function ConnectionsPage() {
+  const { toast } = useToast();
+  const [connections, setConnections] = useState<IMemoryConnection[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const [mintOpen, setMintOpen] = useState(false);
+  const [label, setLabel] = useState('');
+  const [read, setRead] = useState(true);
+  const [write, setWrite] = useState(true);
+  const [minting, setMinting] = useState(false);
+
+  const [issued, setIssued] = useState<IMemoryConnectionIssued | null>(null);
+  const [revoking, setRevoking] = useState<IMemoryConnection | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const data = await listMemoryConnections();
+      setConnections(data.results);
+    } catch (err) {
+      setLoadError(memoryErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  // Memoised because it is a dependency of the mint callback: an inline array
+  // literal there would be a new reference every render and re-run the effect.
+  const scopes = useMemo<MemoryScope[]>(() => {
+    const out: MemoryScope[] = [];
+    if (read) out.push('read');
+    if (write) out.push('write');
+    return out;
+  }, [read, write]);
+
+  const handleMint = useCallback(async () => {
+    setMinting(true);
+    try {
+      const result = await mintMemoryConnection({ label: label.trim(), scopes });
+      setIssued(result);
+      setMintOpen(false);
+      setLabel('');
+      setRead(true);
+      setWrite(true);
+      await load();
+      toast('Connection created', 'success');
+    } catch (err) {
+      toast(memoryErrorMessage(err), 'error');
+    } finally {
+      setMinting(false);
+    }
+  }, [label, scopes, load, toast]);
+
+  const handleRevoke = useCallback(async () => {
+    if (!revoking) return;
+    setBusy(true);
+    try {
+      await revokeMemoryConnection(revoking.keyId);
+      toast(`${revoking.label} revoked`, 'success');
+      setRevoking(null);
+      await load();
+    } catch (err) {
+      toast(memoryErrorMessage(err), 'error');
+    } finally {
+      setBusy(false);
+    }
+  }, [revoking, load, toast]);
+
+  const copyKey = useCallback(async () => {
+    if (!issued) return;
+    try {
+      await navigator.clipboard.writeText(issued.apiKey);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast('Could not copy to the clipboard', 'error');
+    }
+  }, [issued, toast]);
+
+  return (
+    <div className={styles.wrap}>
+      <header className={styles.header}>
+        <div>
+          <h1 className={styles.title}>Connections</h1>
+          <p className={styles.subtitle}>
+            A connection is how an application reaches this workspace&rsquo;s memory. Mint a key,
+            point a harness or a client at the endpoint below, and it reads and writes the same
+            memory you see in the console.
+          </p>
+        </div>
+        <Button variant="primary" size="md" icon={<Plus size={15} />} onClick={() => setMintOpen(true)}>
+          New connection
+        </Button>
+      </header>
+
+      {/* The endpoint is the same for every connection, so it is shown once
+          rather than repeated per row. */}
+      <Card className={styles.endpointCard}>
+        <div className={styles.endpointRow}>
+          <label className={styles.endpointLabel}>Memory endpoint</label>
+          <code className={styles.endpointValue}>{`${BASE_URL}/memory`}</code>
+        </div>
+        <p className={styles.endpointHint}>
+          Calls go through the platform, which attaches the credential for you. Your application
+          never holds a service key — it authenticates as <em>you</em>.
+        </p>
+      </Card>
+
+      <Card className={styles.listCard}>
+        <h2 className={styles.sectionTitle}>Active connections</h2>
+        {loading ? (
+          <div className={styles.empty}>Loading…</div>
+        ) : loadError ? (
+          <div className={styles.errorBox}>
+            <AlertTriangle size={16} aria-hidden />
+            <span>{loadError}</span>
+            <Button variant="ghost" size="sm" onClick={load}>
+              Retry
+            </Button>
+          </div>
+        ) : connections.length === 0 ? (
+          <div className={styles.empty}>
+            No connections yet. Create one to connect Claude Code, a REST client, or your own
+            service.
+          </div>
+        ) : (
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th scope="col">Label</th>
+                <th scope="col">Key</th>
+                <th scope="col">Scopes</th>
+                <th scope="col">Created</th>
+                <th scope="col" aria-label="Actions" />
+              </tr>
+            </thead>
+            <tbody>
+              {connections.map((c) => (
+                <tr key={c.keyId}>
+                  <td className={styles.labelCell}>{c.label}</td>
+                  <td>
+                    <code className={styles.keyCell}>{c.keyPrefix}</code>
+                  </td>
+                  <td>
+                    <span className={styles.scopeList}>{c.scopes.join(', ')}</span>
+                  </td>
+                  <td className={styles.dateCell}>{new Date(c.createdAt).toLocaleString()}</td>
+                  <td className={styles.actionsCell}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      icon={<Trash2 size={14} />}
+                      onClick={() => setRevoking(c)}
+                      aria-label={`Revoke ${c.label}`}
+                    >
+                      Revoke
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Card>
+
+      <section className={styles.guideSection}>
+        <h2 className={styles.sectionTitle}>Connect a harness</h2>
+        <p className={styles.guideIntro}>
+          Each harness below is a client of the same memory. Pick one to see the exact config.
+        </p>
+        <div className={styles.harnessGrid}>
+          {HARNESSES.map((h) => (
+            <Card key={h.id} className={styles.harnessCard}>
+              <div className={styles.harnessHead}>
+                <h3 className={styles.harnessLabel}>{h.label}</h3>
+                <span className={styles.transport}>{h.transport}</span>
+              </div>
+              <p className={styles.harnessNote}>{h.note}</p>
+              <p className={styles.harnessNote}>
+                {issued
+                  ? 'Paste the key from the panel above into the config below.'
+                  : 'Create a connection to get a key, then use the key in place of the placeholder.'}
+              </p>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {issued && (
+        <Card className={styles.issuedCard}>
+          <div className={styles.issuedHead}>
+            <KeyRound size={16} aria-hidden />
+            <h2 className={styles.sectionTitle}>Your new key</h2>
+          </div>
+          {/* Shown once. The platform keeps only a prefix, so a closed or
+              reloaded page is an unrecoverable loss — hence the warning. */}
+          <p className={styles.issuedWarning}>
+            This is the only time this key is shown. Store it now; it cannot be retrieved again.
+          </p>
+          <div className={styles.keyRow}>
+            <code className={styles.keyValue}>{issued.apiKey}</code>
+            <Button
+              variant={copied ? 'secondary' : 'primary'}
+              size="sm"
+              icon={copied ? <Check size={14} /> : <Copy size={14} />}
+              onClick={copyKey}
+            >
+              {copied ? 'Copied' : 'Copy'}
+            </Button>
+          </div>
+          <IntegrationGuide apiKey={issued.apiKey} label={issued.label} scopes={issued.scopes} />
+        </Card>
+      )}
+
+      {/* Mint dialog */}
+      <Modal
+        open={mintOpen}
+        onClose={() => setMintOpen(false)}
+        title="New memory connection"
+      >
+        <div className={styles.mintForm}>
+          <Input
+            label="Label"
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="Claude Code — laptop"
+            maxLength={80}
+          />
+          <p className={styles.fieldHint}>
+            Names the connection in this list. It is not stored by the memory service.
+          </p>
+          <fieldset className={styles.scopeField}>
+            <legend className={styles.scopeLegend}>Scopes</legend>
+            <Toggle
+              checked={read}
+              onChange={setRead}
+              label="Read — recall and search"
+              ariaLabel="Allow read scope"
+            />
+            <Toggle
+              checked={write}
+              onChange={setWrite}
+              label="Write — remember and forget"
+              ariaLabel="Allow write scope"
+            />
+            <p className={styles.scopeHint}>
+              A read-only key can search your memory but cannot add to or forget from it.
+            </p>
+          </fieldset>
+          <div className={styles.mintActions}>
+            <Button variant="ghost" size="sm" type="button" onClick={() => setMintOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              type="submit"
+              loading={minting}
+              disabled={!label.trim() || (!read && !write)}
+              onClick={handleMint}
+            >
+              Create key
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      <ConfirmDestructiveAction
+        open={!!revoking}
+        onClose={() => setRevoking(null)}
+        onConfirm={handleRevoke}
+        title={`Revoke ${revoking?.label ?? ''}`}
+        confirmText="REVOKE"
+        loading={busy}
+        description={
+          <>
+            <p>
+              Revoking stops this key immediately. Anything using it starts failing on its next
+              call, and the key cannot be restored — you would create a new connection.
+            </p>
+            <p>
+              Your memory is not affected. Revocation changes who can reach it, not what is in it.
+            </p>
+          </>
+        }
+      />
+    </div>
+  );
+}

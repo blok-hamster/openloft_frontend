@@ -1,0 +1,261 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg, 1.5rem);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-lg, 1.5rem);
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: var(--font-size-2xl, 1.75rem);
+  margin: 0 0 0.35rem;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.subtitle {
+  font-size: var(--font-size-sm, 0.8125rem);
+  color: var(--text-secondary, #6b6b6b);
+  line-height: 1.55;
+  max-width: 62ch;
+  margin: 0;
+}
+
+.sectionTitle {
+  font-size: var(--font-size-md, 0.9375rem);
+  margin: 0 0 var(--space-md, 1rem);
+  color: var(--text-primary, #1a1a1a);
+}
+
+.endpointCard { padding: var(--space-md, 1rem) var(--space-lg, 1.5rem); }
+
+.endpointRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 0.5rem);
+  flex-wrap: wrap;
+}
+
+.endpointLabel {
+  font-size: var(--font-size-xs, 0.6875rem);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary, #6b6b6b);
+}
+
+.endpointValue {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--font-size-sm, 0.8125rem);
+  color: var(--text-primary, #1a1a1a);
+  background: var(--surface-2, rgba(0, 0, 0, 0.04));
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm, 4px);
+}
+
+.endpointHint {
+  font-size: var(--font-size-xs, 0.6875rem);
+  color: var(--text-secondary, #6b6b6b);
+  line-height: 1.55;
+  margin: 0.5rem 0 0;
+}
+
+.listCard { padding: var(--space-lg, 1.5rem); }
+
+.empty {
+  font-size: var(--font-size-sm, 0.8125rem);
+  color: var(--text-secondary, #6b6b6b);
+  padding: var(--space-lg, 1.5rem) 0;
+  text-align: center;
+}
+
+.errorBox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 0.5rem);
+  flex-wrap: wrap;
+  font-size: var(--font-size-sm, 0.8125rem);
+  color: var(--error, #b4271f);
+  padding: var(--space-sm, 0.5rem) 0;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm, 0.8125rem);
+}
+
+.table th {
+  text-align: left;
+  font-weight: 600;
+  font-size: var(--font-size-xs, 0.6875rem);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary, #6b6b6b);
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.12));
+}
+
+.table td {
+  padding: 0.55rem 0.6rem;
+  border-bottom: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
+  vertical-align: middle;
+}
+
+.labelCell { font-weight: 500; color: var(--text-primary, #1a1a1a); }
+
+.keyCell {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--font-size-xs, 0.6875rem);
+  color: var(--text-secondary, #6b6b6b);
+  background: var(--surface-2, rgba(0, 0, 0, 0.04));
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-sm, 4px);
+  white-space: nowrap;
+}
+
+.scopeList {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--font-size-xs, 0.6875rem);
+  color: var(--text-primary, #1a1a1a);
+}
+
+.dateCell, .actionsCell { color: var(--text-secondary, #6b6b6b); white-space: nowrap; }
+.actionsCell { text-align: right; }
+
+.guideSection { display: flex; flex-direction: column; gap: var(--space-sm, 0.5rem); }
+
+.guideIntro {
+  font-size: var(--font-size-sm, 0.8125rem);
+  color: var(--text-secondary, #6b6b6b);
+  margin: 0 0 var(--space-sm, 0.5rem);
+}
+
+.harnessGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-md, 1rem);
+}
+
+.harnessCard { display: flex; flex-direction: column; gap: var(--space-sm, 0.5rem); }
+
+.harnessHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-sm, 0.5rem);
+}
+
+.harnessLabel {
+  font-size: var(--font-size-sm, 0.8125rem);
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+  margin: 0;
+}
+
+.transport {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--font-size-xs, 0.6875rem);
+  color: var(--text-secondary, #6b6b6b);
+  white-space: nowrap;
+}
+
+.harnessNote {
+  font-size: var(--font-size-xs, 0.6875rem);
+  color: var(--text-secondary, #6b6b6b);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.issuedCard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm, 0.5rem);
+  border: 1px solid var(--accent, #3b6bf5);
+}
+
+.issuedHead {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 0.5rem);
+  color: var(--accent, #3b6bf5);
+}
+
+.issuedWarning {
+  font-size: var(--font-size-xs, 0.6875rem);
+  font-weight: 600;
+  color: var(--warning-ink, #8a5a00);
+  background: var(--warning-bg, rgba(214, 158, 46, 0.12));
+  border-radius: var(--radius-sm, 4px);
+  padding: 0.5rem 0.65rem;
+  margin: 0;
+}
+
+.keyRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm, 0.5rem);
+  flex-wrap: wrap;
+}
+
+.keyValue {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: var(--font-size-xs, 0.6875rem);
+  color: var(--text-primary, #1a1a1a);
+  background: var(--surface-2, rgba(0, 0, 0, 0.04));
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--radius-sm, 4px);
+  overflow-wrap: anywhere;
+}
+
+.mintForm { display: flex; flex-direction: column; gap: var(--space-lg, 1.5rem); }
+
+.scopeField {
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.12));
+  border-radius: var(--radius-md, 8px);
+  padding: var(--space-md, 1rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm, 0.5rem);
+}
+
+.scopeLegend {
+  font-size: var(--font-size-xs, 0.6875rem);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary, #6b6b6b);
+  padding: 0 0.4rem;
+}
+
+.scopeHint {
+  font-size: var(--font-size-xs, 0.6875rem);
+  color: var(--text-secondary, #6b6b6b);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.mintActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm, 0.5rem);
+}
+
+@media (max-width: 900px) {
+  .header { flex-direction: column; }
+  .table { font-size: var(--font-size-xs, 0.6875rem); }
+  .actionsCell { white-space: normal; }
+  .harnessGrid { grid-template-columns: 1fr; }
+}
+
+.fieldHint {
+  font-size: var(--font-size-xs, 0.6875rem);
+  color: var(--text-secondary, #6b6b6b);
+  line-height: 1.5;
+  margin: -0.5rem 0 0;
+}

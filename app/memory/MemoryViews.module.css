@@ -1,0 +1,277 @@
+/* ===========================
+   Memory dashboard — views
+   ===========================
+
+   The pieces the console's shared stylesheet does not already have: the
+   event timeline bars, the decay projection sparkline, and the playground
+   transcript. Same density rules as components/memory/Memory.module.css —
+   hairline borders, tabular figures, no decorative colour.
+   */
+
+/* --- Console home: the section grid --- */
+.sectionGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+    gap: 0.6rem;
+    margin-top: 0.875rem;
+}
+
+.sectionLink {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    border: var(--border-subtle);
+    border-radius: var(--radius-sm);
+    background: var(--memory-surface);
+    padding: 0.75rem 0.875rem;
+    text-decoration: none;
+    color: inherit;
+    transition: background var(--transition-fast);
+}
+
+@media (hover: hover) {
+    .sectionLink:hover {
+        background: var(--memory-row-hover);
+    }
+}
+
+.sectionLinkTitle {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.sectionLinkHint {
+    font-size: var(--memory-font-size-cell);
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* --- Event timeline ---
+   One row per (turn, event_type) bucket. The bar is the count relative to the
+   busiest bucket in the window, which the caption states outright: an
+   unlabelled bar in a small multiple is a chart that cannot be read. */
+.timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-top: 0.875rem;
+}
+
+.timelineRow {
+    display: grid;
+    grid-template-columns: 3.5rem 7.5rem 1fr 2.5rem;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.timelineTurn,
+.timelineCount {
+    font-family: var(--font-family-mono);
+    font-size: var(--memory-font-size-cell);
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+}
+
+.timelineCount {
+    text-align: right;
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+/* Turn bounds are short integers; a full-width input here wastes the row. */
+.turnInput {
+    width: 7rem;
+}
+
+.timelineType {
+    font-size: var(--memory-font-size-cell);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.timelineBar {
+    position: relative;
+    height: 8px;
+    background: var(--memory-weight-track);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+}
+
+.timelineBarFill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    background: var(--memory-weight-fill);
+    border-radius: inherit;
+}
+
+/* --- Decay projection ---
+   The engine's own law, `w0 * e^{-λΔt}`, projected forward from now. The
+   dashed line is the prune threshold: a curve crossing it is a fact the model
+   will forget on its own, which is the whole point of looking. */
+.curveGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+    gap: 0.6rem;
+    margin-top: 0.875rem;
+}
+
+.curveCard {
+    border: var(--border-subtle);
+    border-radius: var(--radius-sm);
+    background: var(--memory-surface);
+    padding: 0.625rem 0.75rem;
+    min-width: 0;
+}
+
+.curveHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.3rem 0.5rem;
+}
+
+.curveEntity {
+    font-weight: 700;
+    word-break: break-word;
+}
+
+.curveMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.2rem 0.9rem;
+    margin-top: 0.4rem;
+    font-family: var(--font-family-mono);
+    font-size: var(--memory-font-size-cell);
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.curveSvg {
+    display: block;
+    width: 100%;
+    height: 56px;
+    margin-top: 0.5rem;
+}
+
+.curveLine {
+    fill: none;
+    stroke: var(--off-black);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+}
+
+.curveThreshold {
+    stroke: var(--accent-coral);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+}
+
+/* --- Playground --- */
+.fieldRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem;
+    margin-top: 0.875rem;
+}
+
+.grow {
+    flex: 1 1 18rem;
+    min-width: 0;
+}
+
+/* The transcript reads down: each turn is the prompt and the reply, with the
+   engine's own turn counter beside it. */
+.transcript {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: 0.75rem;
+}
+
+.turnBox {
+    border: var(--border-subtle);
+    border-radius: var(--radius-sm);
+    background: var(--memory-surface);
+    padding: 0.625rem 0.75rem;
+}
+
+.turnBoxHead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.3rem 0.6rem;
+    font-size: var(--memory-font-size-cell);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+}
+
+.turnBoxRole {
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.turnBoxBody {
+    margin-top: 0.3rem;
+    font-size: var(--font-size-xs);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* The injected context is the payload of a recall: shown verbatim, because
+   paraphrasing it would hide what the model actually receives. */
+.contextBlock {
+    margin-top: 0.5rem;
+    border: var(--border-subtle);
+    border-radius: var(--radius-sm);
+    background: var(--memory-surface);
+    padding: 0.625rem 0.75rem;
+    font-family: var(--font-family-mono);
+    font-size: var(--memory-font-size-cell);
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 18rem;
+    overflow: auto;
+}
+
+.hitList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+}
+
+.messageRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.messageRow + .messageRow {
+    margin-top: 0.5rem;
+}
+
+.messageContent {
+    flex: 1 1 20rem;
+    min-width: 0;
+}
+
+/* --- Warning callout for the write-capable page --- */
+.callout {
+    border: var(--border);
+    border-left: 3px solid var(--accent-coral);
+    border-radius: var(--radius-sm);
+    background: var(--memory-surface);
+    padding: 0.75rem 1rem;
+}
