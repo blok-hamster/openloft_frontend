@@ -8,11 +8,13 @@ import { useAuth } from '@/lib/AuthContext';
 import { LayoutGrid, Puzzle, Settings, Shield, LogOut, Users, CreditCard, Briefcase, Menu, X, Plus } from 'lucide-react';
 import styles from '@/components/dashboard/Dashboard.module.css';
 import FeatureGate from '@/components/FeatureGate';
+import ProductSwitcher from '@/components/dashboard/ProductSwitcher';
 import { isAccountAreaEnabled } from '@/lib/features';
 
-/** Agent hosting only. The hosted memory service is an independent product
-    with its own dashboard at /memory — it used to lead this nav, which made
-    one sidebar serve two products that share nothing but a tenant. */
+/** Agent hosting sections only. The hosted memory service is an independent
+    product with its own dashboard at /memory and its own section list; the
+    ProductSwitcher above the two nav lists is the one control that bridges
+    the products, so a user never has to type a URL to reach Memory. */
 export const navItems = [
     { href: '/dashboard', label: 'Agents', icon: LayoutGrid },
     { href: '/dashboard/team', label: 'Sales Team', icon: Briefcase },
@@ -90,6 +92,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     <Image src="/black_logo.svg" alt="OpenLoft" width={100} height={32} priority />
                 </Link>
             </div>
+            <ProductSwitcher active="agents" onNavigate={() => setNavOpen(false)} />
             <nav className={styles.sidebarNav} id="dashboard-nav" aria-label="Dashboard">
                 {navItems.map((item) => {
                     const isActive = isRouteActive(pathname, item.href);

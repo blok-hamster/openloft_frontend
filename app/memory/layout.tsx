@@ -9,15 +9,17 @@ import { Brain, KeyRound, LogOut, Menu, ScrollText, X, Plus, Activity, Share2, T
 import styles from '@/components/dashboard/Dashboard.module.css';
 import shell from './MemoryShell.module.css';
 import FeatureGate from '@/components/FeatureGate';
+import ProductSwitcher from '@/components/dashboard/ProductSwitcher';
 import { isAccountAreaEnabled } from '@/lib/features';
 
 /**
  * The hosted memory service is a product of its own, not a section of the
  * agent console, so it gets a shell of its own: /memory is the service's
- * dashboard and /dashboard stays the agent's. The two share nothing here —
- * no nav entries cross over, and the auth and drawer mechanics are the only
- * parts that are deliberately identical, because a user with both products
- * should not have to relearn how the sidebar behaves.
+ * dashboard and /dashboard stays the agent's. The two shells share nothing in
+ * their section lists — the ProductSwitcher above them is the single bridge
+ * between the products, so a user never types a URL to hop services. The
+ * auth and drawer mechanics are deliberately identical so a user with both
+ * products does not have to relearn how the sidebar behaves.
  *
  * The sections are the service's own surface: the chat endpoints are behind
  * Playground, and the rest is the read-only observability over records,
@@ -104,9 +106,9 @@ export default function MemoryLayout({ children }: { children: ReactNode }) {
                     <span className={shell.serviceLabel}>Memory</span>
                 </div>
             </div>
+            <ProductSwitcher active="memory" onNavigate={() => setNavOpen(false)} />
             <nav className={styles.sidebarNav} id="memory-nav" aria-label="Memory dashboard">
-                {memoryNavItems.map((item) => {
-                    const isActive = isRouteActive(pathname, item.href);
+                {memoryNavItems.map((item) => {                    const isActive = isRouteActive(pathname, item.href);
                     const Icon = item.icon;
                     return (
                         <Link

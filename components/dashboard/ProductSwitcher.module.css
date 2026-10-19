@@ -1,0 +1,47 @@
+/* The two-product identity switch. Matches the sidebar's typographic voice
+   (small caps, tight tracking) so it reads as part of the shell, but its
+   filled active half makes the current product unmistakable. */
+
+.wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    margin: 0 1.25rem 1.25rem;
+    padding: 4px;
+    border: var(--border);
+    border-radius: var(--radius-pill);
+    background: rgba(26, 26, 26, 0.04);
+}
+
+.item,
+.itemActive {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.5rem 0.25rem;
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    border-radius: var(--radius-pill);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all var(--transition-fast);
+}
+
+.item:hover {
+    color: var(--text-primary);
+    background: rgba(26, 26, 26, 0.06);
+}
+
+.itemActive {
+    composes: item;
+
+    /* The active product gets the ink block, inverting to the shell's type
+       colour — the same visual weight the logo carries above it. */
+    background: var(--off-black);
+    color: #fff;
+    pointer-events: none;
+}

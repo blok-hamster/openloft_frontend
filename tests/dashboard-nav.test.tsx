@@ -105,13 +105,35 @@ describe('dashboard nav order', () => {
         expect(new Set(hrefs).size).toBe(hrefs.length);
     });
 
-    /* The split this pins: memory used to lead this nav, which made one
-       sidebar serve two services that share nothing but a tenant. */
+    /* The split this pins: a product's own sidebar carries only its own
+       sections. Memory is reachable one click away via the ProductSwitcher
+       above the two nav lists — the switch is identity, not section bleed. */
     it('does not carry the hosted memory service', async () => {
         const { navItems } = await loadLayout();
 
         expect(navItems.some((i: { href: string }) => i.href.startsWith('/memory'))).toBe(false);
         expect(navItems.some((i: { href: string }) => i.href.startsWith('/dashboard/memory'))).toBe(false);
+    });
+
+    it('offers the service switcher outside the section nav', async () => {
+        const { default: DashboardLayout } = await loadLayout();
+
+        render(
+            <DashboardLayout>
+                <p>child</p>
+            </DashboardLayout>
+        );
+
+        const switcher = screen.getByRole('group', { name: 'Switch service' });
+        const memory = within(switcher).getByRole('link', { name: 'Memory' });
+        expect(memory).toHaveAttribute('href', '/memory');
+        // Agents is the product being served, so the switch agrees with the
+        // page: the current side is marked, the other side is clickable.
+        expect(within(switcher).getByRole('link', { name: 'Agents' })).toHaveAttribute(
+            'aria-current',
+            'page'
+        );
+        expect(memory).not.toHaveAttribute('aria-current');
     });
 
     it('renders Agents as the first link in the sidebar', async () => {

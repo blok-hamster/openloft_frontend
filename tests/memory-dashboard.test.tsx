@@ -119,10 +119,10 @@ describe('memory dashboard nav', () => {
         expect(links[6]).toHaveAccessibleName('Connections');
     });
 
-    /* The two services are independent, so the memory shell carries no route
-       back into the agent dashboard — one product's nav does not advertise
-       the other's. */
-    it('does not link back to the agent dashboard', async () => {
+    /* The two services keep independent section lists — the memory nav never
+       embeds agent sections. Hopping between them is the ProductSwitcher's
+       job, not the sidebar's: identity moves, content does not. */
+    it('links back to the agent dashboard only through the service switcher', async () => {
         const { default: MemoryLayout } = await loadLayout();
 
         render(
@@ -137,7 +137,16 @@ describe('memory dashboard nav', () => {
             .map((l) => l.getAttribute('href'));
 
         expect(hrefs.some((href) => href?.startsWith('/dashboard'))).toBe(false);
-        expect(within(nav).queryByRole('link', { name: /agent dashboard/i })).not.toBeInTheDocument();
+        const switcher = screen.getByRole('group', { name: 'Switch service' });
+        expect(within(switcher).getByRole('link', { name: 'Agents' })).toHaveAttribute(
+            'href',
+            '/dashboard'
+        );
+        // The user is inside Memory: the switch marks the product served.
+        expect(within(switcher).getByRole('link', { name: 'Memory' })).toHaveAttribute(
+            'aria-current',
+            'page'
+        );
     });
 });
 
