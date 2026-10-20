@@ -35,6 +35,10 @@ export default function Button({
         <button
             className={classes.join(' ')}
             disabled={disabled || loading}
+            /* The lazy "..." text swap announced nothing: a screen reader
+               watching the button heard silence while the action ran.
+               aria-busy states it. */
+            aria-busy={loading || undefined}
             style={style}
             {...props}
         >

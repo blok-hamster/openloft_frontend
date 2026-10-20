@@ -19,46 +19,11 @@ import MemoryStatePanel from '@/components/memory/MemoryStatePanel';
 import MemoryTypeBadge from '@/components/memory/MemoryTypeBadge';
 import { formatTurn, formatWeight, memoryErrorMessage } from '@/components/memory/memoryFormat';
 import styles from '@/components/memory/Memory.module.css';
-import views from './MemoryViews.module.css';
 
 interface EventStats {
   total_events: number;
   by_type: Record<string, number>;
 }
-
-/** The service's surface, as a home page for the dashboard. */
-const SECTIONS = [
-  {
-    href: '/memory/records',
-    title: 'Records',
-    hint: 'Every stored fact, its weight, and where it came from.',
-  },
-  {
-    href: '/memory/events',
-    title: 'Events',
-    hint: 'The cognitive event log: weights, overrides, prunes, consolidations.',
-  },
-  {
-    href: '/memory/graph',
-    title: 'Graph',
-    hint: 'The entity graph recall walks to reach facts by association.',
-  },
-  {
-    href: '/memory/decay',
-    title: 'Decay',
-    hint: 'Where each fact is heading if nothing reinforces it.',
-  },
-  {
-    href: '/memory/playground',
-    title: 'Playground',
-    hint: 'Call chat, recall and remember against the live memory.',
-  },
-  {
-    href: '/memory/connections',
-    title: 'Connections',
-    hint: 'Keys and config for the clients that use this memory.',
-  },
-];
 
 type Settled<T> = { ok: true; value: T } | { ok: false; reason: unknown };
 
@@ -121,10 +86,6 @@ export default function MemoryPage() {
       <header className={styles.pageHead}>
         <div>
           <h1 className={styles.pageTitle}>Console</h1>
-          <p className={styles.pageSub}>
-            The hosted memory service at a glance: what it is holding, what it has been doing, and
-            whether it is answering. Everything here is a read.
-          </p>
         </div>
         <Button
           variant="secondary"
@@ -153,27 +114,17 @@ export default function MemoryPage() {
       />
 
       <Card>
-        <h2 className={styles.sectionTitle}>Sections</h2>
-        <p className={styles.recordsHint}>
-          The memory service is more than a store: it is browsable, auditable, and callable.
-        </p>
-        <div className={views.sectionGrid}>
-          {SECTIONS.map((section) => (
-            <Link key={section.href} className={views.sectionLink} href={section.href}>
-              <span className={views.sectionLinkTitle}>{section.title}</span>
-              <span className={views.sectionLinkHint}>{section.hint}</span>
-            </Link>
-          ))}
-        </div>
-      </Card>
-
-      <Card>
         <div className={styles.recordsHead}>
-          <h2 className={styles.sectionTitle}>Recently stored</h2>
+          <h2 className={styles.sectionTitle}>Browsing the log</h2>
           <Link className={styles.entityButton} href="/memory/records">
             All records →
           </Link>
         </div>
+        <p className={styles.recordsHint}>
+          Records, the event log behind them, and how every fact decays all live under
+          Records. The graph is what recall walks, and Playground calls the same
+          endpoints a client would.
+        </p>
         {recent.length === 0 ? (
           <MemoryStatePanel
             title="Nothing stored yet"

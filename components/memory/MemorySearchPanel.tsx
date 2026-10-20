@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Search } from 'lucide-react';
-import type { MemoryRecord, MemorySearchHit } from '@/lib/api';
+import type { MemoryRecord, MemoryScopeParams, MemorySearchHit } from '@/lib/api';
 import { searchMemoryRecords } from '@/lib/api';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -14,6 +14,8 @@ const TOP_K = [5, 10, 20];
 
 interface MemorySearchPanelProps {
   onSelect: (record: MemoryRecord) => void;
+  /** Sub-scope to search within; absent means the tenant's default store. */
+  scope?: MemoryScopeParams;
 }
 
 /**
@@ -24,7 +26,7 @@ interface MemorySearchPanelProps {
  * wired to it would change what the agent remembers just by being used. This
  * embeds the query and searches the store directly, which is a read.
  */
-export default function MemorySearchPanel({ onSelect }: MemorySearchPanelProps) {
+export default function MemorySearchPanel({ onSelect, scope }: MemorySearchPanelProps) {
   const [query, setQuery] = useState('');
   const [topK, setTopK] = useState(10);
   const [hits, setHits] = useState<MemorySearchHit[] | null>(null);
@@ -40,7 +42,7 @@ export default function MemorySearchPanel({ onSelect }: MemorySearchPanelProps) 
       setLoading(true);
       setError(null);
       try {
-        const { results } = await searchMemoryRecords(trimmed, topK);
+        const { results } = await searchMemoryRecords(trimmed, topK, scope);
         setHits(results);
       } catch (err) {
         setHits(null);
@@ -49,7 +51,7 @@ export default function MemorySearchPanel({ onSelect }: MemorySearchPanelProps) 
         setLoading(false);
       }
     },
-    [query, topK],
+    [query, topK, scope],
   );
 
   return (

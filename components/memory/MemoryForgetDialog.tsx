@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import type { MemoryRecord } from '@/lib/api';
+import type { MemoryRecord, MemoryScopeParams } from '@/lib/api';
 import { forgetMemoryRecord } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import ConfirmDestructiveAction from '@/components/dashboard/ConfirmDestructiveAction';
@@ -12,6 +12,9 @@ interface MemoryForgetDialogProps {
   /** Fired after the engine has accepted the invalidation, so callers can
    *  reload the window that held the record. */
   onForgotten: () => void;
+  /** Sub-scope the record was read from — the invalidation has to land in the
+   *  same store or it misses. */
+  scope?: MemoryScopeParams;
 }
 
 /**
@@ -29,6 +32,7 @@ export default function MemoryForgetDialog({
   open,
   onClose,
   onForgotten,
+  scope,
 }: MemoryForgetDialogProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -41,7 +45,7 @@ export default function MemoryForgetDialog({
     if (!record) return;
     setLoading(true);
     try {
-      const result = await forgetMemoryRecord(record.id);
+      const result = await forgetMemoryRecord(record.id, scope);
       const count = typeof result?.forgotten === 'number' ? result.forgotten : 1;
       toast(
         count === 1
@@ -56,7 +60,7 @@ export default function MemoryForgetDialog({
     } finally {
       setLoading(false);
     }
-  }, [record, toast, onForgotten, close]);
+  }, [record, scope, toast, onForgotten, close]);
 
   if (!record) return null;
 

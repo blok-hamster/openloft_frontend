@@ -57,7 +57,12 @@ describe('Memory connections', () => {
 
   it('renders the list without ever showing a key value', async () => {
     render(<ConnectionsPage />);
-    await waitFor(() => expect(screen.getByText('Claude Code — laptop')).toBeTruthy());
+    // The connection renders twice — a sideways-scrolling table and the
+    // phone card stack. Real browsers switch them with CSS media queries;
+    // jsdom applies neither, so assertions on the list take the first.
+    await waitFor(() =>
+      expect(screen.getAllByText('Claude Code — laptop').length).toBeGreaterThan(0),
+    );
 
     const body = document.body.textContent ?? '';
     expect(body).toContain('nmafc_org_abc…');
@@ -140,9 +145,12 @@ describe('Memory connections', () => {
 
     const user = userEvent.setup();
     render(<ConnectionsPage />);
-    await waitFor(() => expect(screen.getByText('Claude Code — laptop')).toBeTruthy());
+    await waitFor(() =>
+      expect(screen.getAllByText('Claude Code — laptop').length).toBeGreaterThan(0),
+    );
 
-    await user.click(screen.getByRole('button', { name: /revoke claude code/i }));
+    // Both renderings carry the same revoke action for this connection.
+    await user.click(screen.getAllByRole('button', { name: /revoke claude code/i })[0]);
 
     // Nothing is revoked until the confirmation is acknowledged, and the
     // button is disabled until the word is typed.

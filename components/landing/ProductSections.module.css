@@ -137,3 +137,11 @@ html[data-product-section] .wrap {
     padding: 0.9rem 0.7rem;
   }
 }
+
+/* Tab strip is the primary section switch at every width; it takes the
+   touch floor too, so a thumb lands the first time. */
+@media (max-width: 900px) {
+  .tab {
+    min-height: var(--touch-target);
+  }
+}

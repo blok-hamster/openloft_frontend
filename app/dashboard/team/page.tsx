@@ -21,33 +21,46 @@ interface Deployment {
 }
 
 export default function TeamDashboardPage() {
-  const { user } = useAuth();
+  const { token } = useAuth();
   const [deployment, setDeployment] = useState<Deployment | null>(null);
   const [agents, setAgents] = useState<AgentStatus[]>([]);
   const [loading, setLoading] = useState(true);
+  /* Failures render as errors, not as the empty state: "No enterprise team
+     deployed" told a broken backend to go create a new deployment. */
+  const [error, setError] = useState<string | null>(null);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+  /* `(user as any)?.token` was always undefined — the token lives beside
+     the user in the auth context, not on the user object; every team
+     request went out as `Bearer undefined`. */
+  const authHeaders = (): HeadersInit =>
+    token ? { Authorization: `Bearer ${token}` } : {};
+
   useEffect(() => {
     fetchTeamData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchTeamData = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const res = await fetch(`${API_URL}/api/teams`, {
-        headers: { Authorization: `Bearer ${(user as any)?.token}` },
-      });
+      const res = await fetch(`${API_URL}/api/teams`, { headers: authHeaders() });
+      if (!res.ok) throw new Error(`team lookup failed (${res.status})`);
       const deployments = await res.json();
       if (deployments.length > 0) {
         setDeployment(deployments[0]);
         const detailRes = await fetch(`${API_URL}/api/teams/${deployments[0].deploymentId}`, {
-          headers: { Authorization: `Bearer ${(user as any)?.token}` },
+          headers: authHeaders(),
         });
+        if (!detailRes.ok) throw new Error(`team detail failed (${detailRes.status})`);
         const detail = await detailRes.json();
         setAgents(detail.agents || []);
       }
     } catch (error) {
       console.error('Failed to fetch team data:', error);
+      setError('Failed to load your team. Check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -55,30 +68,57 @@ export default function TeamDashboardPage() {
 
   const handlePauseTeam = async () => {
     if (!deployment) return;
-    await fetch(`${API_URL}/api/teams/${deployment.deploymentId}/pause`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${(user as any)?.token}` },
-    });
+    try {
+      const res = await fetch(`${API_URL}/api/teams/${deployment.deploymentId}/pause`, {
+        method: 'POST',
+        headers: authHeaders(),
+      });
+      if (!res.ok) throw new Error(`pause failed (${res.status})`);
+    } catch (error) {
+      console.error('Failed to pause team:', error);
+      setError('Failed to pause the team.');
+    }
     fetchTeamData();
   };
 
   const handleResumeTeam = async () => {
     if (!deployment) return;
-    await fetch(`${API_URL}/api/teams/${deployment.deploymentId}/resume`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${(user as any)?.token}` },
-    });
+    try {
+      const res = await fetch(`${API_URL}/api/teams/${deployment.deploymentId}/resume`, {
+        method: 'POST',
+        headers: authHeaders(),
+      });
+      if (!res.ok) throw new Error(`resume failed (${res.status})`);
+    } catch (error) {
+      console.error('Failed to resume team:', error);
+      setError('Failed to resume the team.');
+    }
     fetchTeamData();
   };
 
   if (loading) return <div className={styles.loading}>Loading team...</div>;
+  if (error) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.empty} role="alert">
+          {error}
+          <div style={{ marginTop: '1rem' }}>
+            <button type="button" className={styles.btnPrimary} onClick={fetchTeamData}>Retry</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (!deployment) return <div className={styles.empty}>No enterprise team deployed. <Link href="/enterprise">Get started</Link></div>;
 
+  /* Kit palette, not the ad-hoc hexes these used before: the team page
+     spoke a different colour language than StatusIndicator, and "paused"
+     was amber here but coral in the agents console. */
   const statusColor = (status: string) => {
-    if (status === 'running') return '#10b981';
-    if (status === 'stopped') return '#f59e0b';
-    if (status === 'failed') return '#ef4444';
-    return '#6b7280';
+    if (status === 'running') return 'var(--accent-green)';
+    if (status === 'paused') return 'var(--accent-amber)';
+    if (status === 'failed') return 'var(--accent-coral)';
+    return 'var(--mid-grey)';
   };
 
   return (

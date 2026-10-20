@@ -58,14 +58,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         <ToastContext.Provider value={{ toast }}>
             {children}
             {/* aria-live so failures are announced rather than only shown.
-                assertive for errors would be better but the variant lives on
-                each child, so the whole stack shares one polite region. */}
+                The polite container stays for success/info; errors carry
+                role="alert" individually, which is assertive — failures are
+                the reason the user is looking elsewhere and can wait for
+                the queue to be read. */}
             <div className={styles.toastContainer} role="status" aria-live="polite" aria-atomic="false">
                 <AnimatePresence>
                     {toasts.map((t) => (
                         <motion.div
                             key={t.id}
                             className={variantClass[t.variant]}
+                            role={t.variant === 'error' ? 'alert' : undefined}
                             initial={{ opacity: 0, y: 20, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}

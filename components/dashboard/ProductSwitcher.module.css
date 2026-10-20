@@ -31,17 +31,36 @@
     transition: all var(--transition-fast);
 }
 
-.item:hover {
-    color: var(--text-primary);
-    background: rgba(26, 26, 26, 0.06);
+/* The tint is pointer feedback; on touch it would stick to the last
+   tapped half of the switch. */
+@media (hover: hover) {
+    .item:hover {
+        color: var(--text-primary);
+        background: rgba(26, 26, 26, 0.06);
+    }
 }
 
+/* The active product gets the ink block, inverting to the shell's type
+   colour — the same visual weight the logo carries above it. */
 .itemActive {
     composes: item;
-
-    /* The active product gets the ink block, inverting to the shell's type
-       colour — the same visual weight the logo carries above it. */
     background: var(--off-black);
     color: #fff;
     pointer-events: none;
+}
+
+/* Keyboard parity with the sidebar links: the switch is the bridge between
+   the two products, so it must show focus the same way. */
+.item:focus-visible {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+/* Touch floor: this switch sits inside both mobile drawers, and 0.5rem of
+   padding left its rows under 30px — well below the 44px floor. */
+@media (max-width: 900px) {
+    .item,
+    .itemActive {
+        min-height: var(--touch-target);
+    }
 }

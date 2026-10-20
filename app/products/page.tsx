@@ -28,6 +28,26 @@ import Button from '@/components/ui/Button';
 import styles from '@/components/landing/Landing.module.css';
 import pr from './Products.module.css';
 import { isAccountAreaEnabled, FRAMEWORK_REPO } from '@/lib/features';
+import { HARNESS_STATUS, DEPLOYMENT_STATUS, statusPhrase } from '@/lib/productStatus';
+
+const HARNESS_NAMES: Record<keyof typeof HARNESS_STATUS, string> = {
+    openclaw: 'OpenClaw',
+    hermes: 'Hermes Agent',
+    opencode: 'OpenCode',
+    'claude-code': 'Claude Code',
+    codex: 'Codex',
+    'gemini-cli': 'Gemini CLI',
+};
+
+/* Derived, not typed: the harness split below is the same truth the other
+   public surfaces read, so a status flip in lib/productStatus.ts rewrites
+   this page's copy without a hand-edit racing it. */
+const liveHarnesses = (Object.keys(HARNESS_STATUS) as Array<keyof typeof HARNESS_STATUS>)
+    .filter((id) => HARNESS_STATUS[id] === 'live')
+    .map((id) => HARNESS_NAMES[id]);
+const announcedHarnesses = (Object.keys(HARNESS_STATUS) as Array<keyof typeof HARNESS_STATUS>)
+    .filter((id) => HARNESS_STATUS[id] === 'announced')
+    .map((id) => HARNESS_NAMES[id]);
 
 const PRODUCTS = [
     {
@@ -48,10 +68,10 @@ const PRODUCTS = [
         tag: 'Hosted agents',
         title: 'Agent Hosting',
         icon: Cpu,
-        desc: 'Pick a harness and we provision it, run it, give it a subdomain and wire it to the same memory. OpenClaw and Hermes are available today; Claude Code, OpenCode, Codex and Gemini CLI are announced.',
+        desc: `Pick a harness and we provision it, run it, give it a subdomain and wire it to the same memory. ${liveHarnesses.join(' and ')} are ${statusPhrase.live}; ${announcedHarnesses.join(', ')} are announced.`,
         items: [
-            'OpenClaw and Hermes available now',
-            'Claude Code, OpenCode, Codex, Gemini CLI announced',
+            `${liveHarnesses.join(', ')}: available now`,
+            `${announcedHarnesses.join(', ')}: announced`,
             'Desktop editors connect over MCP instead',
             'Swap harnesses without losing what was learned',
         ],
@@ -64,8 +84,8 @@ const PRODUCTS = [
         icon: Server,
         desc: 'The same engine, operated by us. Multi-tenant and isolated by credential on our infrastructure, or deployed into your own VPC, on-premise, or air-gapped. You bring an API key; we bring the operations.',
         items: [
-            'Managed multi-tenant: built and tested, not yet deployed',
-            'Your VPC, on-premise and air-gapped announced',
+            `Managed multi-tenant: ${statusPhrase[DEPLOYMENT_STATUS.managed]}`,
+            `Your VPC, on-premise and air-gapped: ${statusPhrase[DEPLOYMENT_STATUS.vpc]}`,
             'Vectors stay in-region, but turns still reach your LLM provider',
             'Enterprise controls published with current state',
         ],

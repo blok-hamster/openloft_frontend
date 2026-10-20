@@ -61,6 +61,12 @@ export const FEATURES = {
     hostedHarness: readFlag(process.env.NEXT_PUBLIC_FEATURE_HOSTED_HARNESS, 'NEXT_PUBLIC_FEATURE_HOSTED_HARNESS', false),
     /** Hosted memory tier. */
     hostedMemory: readFlag(process.env.NEXT_PUBLIC_FEATURE_HOSTED_MEMORY, 'NEXT_PUBLIC_FEATURE_HOSTED_MEMORY', false),
+    /** A2A Lobby (multi-agent collaboration sessions). A section-level flag:
+     *  while dark, the dashboard sidebar has no Lobby link and every
+     *  /dashboard/lobby route — however reached — renders a placeholder
+     *  instead of talking to the backend. On again with a rebuild once the
+     *  lobby flow is completely figured out and working. */
+    lobby: readFlag(process.env.NEXT_PUBLIC_FEATURE_LOBBY, 'NEXT_PUBLIC_FEATURE_LOBBY', false),
 } as const;
 
 /**

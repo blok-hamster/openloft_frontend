@@ -122,13 +122,12 @@ describe('socket lifecycle', () => {
 describe('terminal button gating', () => {
     const card = stripComments(read('components/dashboard/AgentCard.tsx'));
 
-    it('is only offered for a running agent', () => {
-        // A relay lives inside a container.
-        expect(card).toMatch(/agent\.status !== 'running'/);
-    });
-
-    it('is optional so pages that do not host a terminal compile unchanged', () => {
-        expect(card).toMatch(/onTerminal\?:/);
+    it('no longer mounts a terminal entry point on the agent card', () => {
+        // The interactive shell came off the card with its chat, workspace,
+        // drive and channels siblings while those surfaces are reworked.
+        // TerminalModal remains as a component with its own contract tests;
+        // if the entry point returns, this assertion flips with it.
+        expect(card).not.toMatch(/onTerminal/);
     });
 });
 

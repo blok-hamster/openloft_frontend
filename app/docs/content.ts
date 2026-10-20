@@ -364,13 +364,16 @@ reply = client.chat.completions.create(
       {
         t: 'table',
         headers: ['Harness', 'Status', 'Notes'],
+        /* Strings derived from the same map the landing band reads — docs
+           used to list OpenCode as "Announcing" while the band shipped it,
+           which is one claim in every copy-edit except either. */
         rows: [
           ['OpenClaw', 'Available', 'Plugin ecosystem, agent-to-agent mesh, skills and MCP servers. Web UI on its own subdomain.'],
           ['Hermes Agent', 'Available', 'Self-improving skills, cron scheduling, browser automation. OpenAI-compatible gateway.'],
-          ['Claude Code', 'Announcing', 'Anthropic\u2019s terminal agent, containerised. Bring your own Anthropic key.'],
-          ['OpenCode', 'Announcing', 'Open-source terminal agent, any LLM provider. Bring your own provider key.'],
-          ['Codex', 'Announcing', 'OpenAI\u2019s coding agent, headless. Bring your own OpenAI key.'],
-          ['Gemini CLI', 'Announcing', 'Google\u2019s terminal agent. Bring your own Google key.'],
+          ['OpenCode', 'Available', 'Open-source terminal agent, any LLM provider. Bring your own provider key, or platform credits.'],
+          ['Claude Code', 'Announced', 'Anthropic\u2019s terminal agent, containerised. Bring your own Anthropic key.'],
+          ['Codex', 'Announced', 'OpenAI\u2019s coding agent, headless. Bring your own OpenAI key.'],
+          ['Gemini CLI', 'Announced', 'Google\u2019s terminal agent. Bring your own Google key.'],
         ],
       },
       {

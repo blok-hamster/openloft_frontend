@@ -26,7 +26,13 @@ export const viewport: Viewport = {
    platform this stopped being. Everything here is stated on the landing page
    already: no benchmark, no audit trail, no compliance badge, no price. */
 export const metadata: Metadata = {
-  title: "OpenLoft — agent memory that outlives the context window",
+  title: {
+    /* The landing page argues memory; every other route narrows it through
+       the template so document titles never read as one string stamped
+       site-wide. */
+    default: "OpenLoft — agent memory that outlives the context window",
+    template: "%s — OpenLoft",
+  },
   description: "NMAFC is an open-source memory layer for agents: dated, decay-aware, source-attributed facts, and a small precise context hundreds of sessions later. OpenLoft hosts the agents that use it.",
   icons: {
     icon: "/loft_favicon.png",

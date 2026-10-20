@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/AuthContext';
-import { getBilling, updateSubscription } from '@/lib/api';
+import { getBilling, type IBillingSummary } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -13,8 +13,12 @@ import { CreditCard, Zap, Shield, Crown, TrendingDown, Clock, AlertCircle } from
 export default function BillingPage() {
     const { user } = useAuth();
     const { toast } = useToast();
-    const [billing, setBilling] = useState<any>(null);
+    const [billing, setBilling] = useState<IBillingSummary | null>(null);
     const [loading, setLoading] = useState(true);
+    /* Load failure is a state, not a console line: billing numbers govern
+       real spend, so a silent blank page was never acceptable (they got a
+       toast and a frozen skeleton at best, a TypeError at worst). */
+    const [loadError, setLoadError] = useState(false);
     const [updating, setUpdating] = useState<string | null>(null);
     const [isManageLoading, setIsManageLoading] = useState(false);
 
@@ -22,20 +26,25 @@ export default function BillingPage() {
 
     const isDev = process.env.NEXT_PUBLIC_NODE_ENV === 'dev';
 
-    useEffect(() => {
+    const loadBilling = async () => {
         if (!user?.tenantId) return;
-        async function loadBilling() {
-            try {
-                const data = await getBilling(user!.tenantId);
-                setBilling(data);
-            } catch (err) {
-                toast('Failed to load billing information', 'error');
-            } finally {
-                setLoading(false);
-            }
+        setLoading(true);
+        try {
+            const data = await getBilling(user.tenantId);
+            setBilling(data);
+            setLoadError(false);
+        } catch {
+            setLoadError(true);
+            toast('Failed to load billing information', 'error');
+        } finally {
+            setLoading(false);
         }
+    };
+
+    useEffect(() => {
         loadBilling();
-    }, [user?.tenantId, toast]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.tenantId]);
 
     const handleUpgrade = async (tier: string) => {
         if (!user?.tenantId) return;
@@ -48,7 +57,7 @@ export default function BillingPage() {
                 couponCode: couponCode.trim() || undefined
             });
             window.location.href = url;
-        } catch (err) {
+        } catch {
             toast('Failed to initiate checkout', 'error');
         } finally {
             setUpdating(null);
@@ -64,7 +73,7 @@ export default function BillingPage() {
                 amount: 10 // Default top-up amount
             });
             window.location.href = url;
-        } catch (err) {
+        } catch {
             toast('Failed to initiate top-up', 'error');
         }
     };
@@ -76,7 +85,7 @@ export default function BillingPage() {
             const importApi = await import('@/lib/api');
             const { url } = await importApi.createPortalSession(user.tenantId);
             window.location.href = url;
-        } catch (err) {
+        } catch {
             toast('Failed to open billing portal', 'error');
         } finally {
             setIsManageLoading(false);
@@ -84,6 +93,26 @@ export default function BillingPage() {
     };
 
     if (loading) return <div>Loading billing profile...</div>;
+
+    /* Billing governs real spend — a render crash or silent blank here is
+       worse than an honest failed state with a way back in. */
+    if (loadError) {
+        return (
+            <div className={styles.billingContainer}>
+                <Card>
+                    <div className={styles.devHint}>
+                        <AlertCircle size={14} /> Billing could not be loaded.
+                    </div>
+                    <p className={styles.headerSubtitle}>
+                        Your plan and balance are unchanged; we just could not reach them.
+                    </p>
+                    <Button variant="primary" onClick={loadBilling}>
+                        Retry
+                    </Button>
+                </Card>
+            </div>
+        );
+    }
 
     const plans = [
         {
@@ -121,20 +150,24 @@ export default function BillingPage() {
 
     return (
         <div className={styles.billingContainer}>
+            {/* Shared surface: both the agent and memory sidebars link here.
+                The subscription, credit balance and Stripe portal below are
+                the tenant's, not the agent product's — agent runs and memory
+                usage draw from the same balance. */}
             <header className={styles.dashboardHeader}>
                 <div className={styles.headerLeft}>
                     <h1 className={styles.headerTitle}>Billing & Plan</h1>
-                    <p className={styles.headerSubtitle}>Manage your credits, subscription, and usage limits</p>
+                    <p className={styles.headerSubtitle}>One plan and credit balance, shared by your agents and the memory service</p>
                 </div>
             </header>
 
             {billing?.pauseReason && (
                 <div className={bill.pauseBanner}>
                     <AlertCircle size={20} />
-                    {billing.pauseReason === 'subscription_expired' && "Your subscription has expired. Please renew to resume all agent services."}
+                    {billing.pauseReason === 'subscription_expired' && "Your subscription has expired. Please renew to resume your services — agents and memory alike."}
                     {billing.pauseReason === 'payment_failed' && "Your last payment failed. Please update your payment method. Grace period ends soon."}
                     {billing.pauseReason === 'payment_failed_grace_expired' && "Your payment failed and grace period has expired. Services paused."}
-                    {billing.pauseReason === 'credit_exhausted' && "You have exhausted your platform credits. Please top up or switch your agents to custom keys to resume."}
+                    {billing.pauseReason === 'credit_exhausted' && "You have exhausted your platform credits. Please top up to resume — agents and memory both draw from this balance."}
                 </div>
             )}
 
@@ -152,7 +185,7 @@ export default function BillingPage() {
                         )}
                     </div>
                     <div className={styles.balanceValue}>${billing?.creditBalance?.toFixed(2)}</div>
-                    {billing?.creditCap > 0 && (
+                    {billing?.creditCap != null && billing.creditCap > 0 && (
                         <div className={bill.balanceMeta}>
                             Monthly Cap: ${billing.creditCap.toFixed(2)}
                         </div>
@@ -203,7 +236,10 @@ export default function BillingPage() {
                     </div>
                     <div className={styles.timeRemaining}>
                         <Clock size={16} />
-                        <span>Estimated <strong>{billing?.estimatedDaysRemaining !== null ? `${billing.estimatedDaysRemaining} days` : 'Unlimited'}</strong> remaining</span>
+                        {/* != null covers the loaded-but-missing case AND the
+                            pre-load null — === null once crashed the page
+                            because `undefined !== null` is true. */}
+                        <span>Estimated <strong>{billing?.estimatedDaysRemaining != null ? `${billing.estimatedDaysRemaining} days` : 'Unlimited'}</strong> remaining</span>
                     </div>
                 </Card>
             </div>

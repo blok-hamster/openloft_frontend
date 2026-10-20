@@ -104,8 +104,12 @@
     justify-content: space-between;
 }
 
-.tierCard:hover {
-    transform: translateY(-1px);
+/* The lift is decoration; on touch it would stick to the last-tapped
+   tier card. */
+@media (hover: hover) {
+    .tierCard:hover {
+        transform: translateY(-1px);
+    }
 }
 
 .tierCardSelected {

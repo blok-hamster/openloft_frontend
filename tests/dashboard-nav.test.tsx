@@ -44,6 +44,10 @@ const authState = vi.hoisted(() => ({
 const PLATFORM_ADMIN = { role: 'platform_admin', tenantId: 'tenant-1', email: 'admin@example.com' };
 const TENANT_USER = { role: 'tenant_user', tenantId: 'tenant-1', email: 'user@example.com' };
 
+/* The highlight tests need to walk the sidebar to different pages, so the
+   pathname mock reads a mutable cell (reset in afterEach). */
+const navPath = vi.hoisted(() => ({ pathname: '/dashboard/agents' }));
+
 vi.mock('@/lib/AuthContext', () => ({
     useAuth: () => ({
         user: authState.user,
@@ -53,24 +57,34 @@ vi.mock('@/lib/AuthContext', () => ({
 }));
 
 vi.mock('next/navigation', () => ({
-    usePathname: () => '/dashboard/agents',
+    usePathname: () => navPath.pathname,
     useRouter: () => ({ replace: vi.fn(), push: vi.fn(), prefetch: vi.fn() }),
 }));
 
 afterEach(() => {
     cleanup();
+    navPath.pathname = '/dashboard/agents';
     delete process.env.NEXT_PUBLIC_FEATURE_HOSTED_HARNESS;
+    delete process.env.NEXT_PUBLIC_FEATURE_LOBBY;
 });
 
 /**
  * lib/features reads its flags at module-evaluation time and the layout is
  * wrapped in FeatureGate, so the gate has to be open before the module is
  * imported — a layout rendered with the flags dark renders the pre-launch
- * notice instead of the nav.
+ * notice instead of the nav. Lobby section flags are set to the open state
+ * by default and overridden per test.
  */
-async function loadLayout() {
+async function loadLayout(env: Record<string, string | undefined> = {}) {
     vi.resetModules();
+    delete process.env.NEXT_PUBLIC_FEATURE_HOSTED_HARNESS;
+    delete process.env.NEXT_PUBLIC_FEATURE_LOBBY;
     process.env.NEXT_PUBLIC_FEATURE_HOSTED_HARNESS = 'true';
+    process.env.NEXT_PUBLIC_FEATURE_LOBBY = 'true';
+    for (const [k, v] of Object.entries(env)) {
+        if (v === undefined) delete process.env[k];
+        else process.env[k] = v;
+    }
     return import('../app/dashboard/layout');
 }
 
@@ -88,14 +102,25 @@ describe('dashboard nav order', () => {
     it('keeps the agent sections in their established order', async () => {
         const { navItems } = await loadLayout();
 
+        // Sales Team and Skills came off the sidebar; Lobby is present in
+        // this list when its flag is on (loadLayout opens it above).
         expect(navItems.map((i: { label: string }) => i.label)).toEqual([
             'Agents',
-            'Sales Team',
             'Lobby',
-            'Skills',
             'Billing',
             'Settings',
         ]);
+    });
+
+    it('carries no removed sections', async () => {
+        const { navItems } = await loadLayout();
+
+        // Sales Team and Skills both came off the sidebar. The routes behind
+        // them still exist for their deep links; the sidebar just stops
+        // advertising them.
+        const hrefs = navItems.map((i: { href: string }) => i.href);
+        expect(hrefs.some((href: string) => href.startsWith('/dashboard/team'))).toBe(false);
+        expect(hrefs.some((href: string) => href.startsWith('/dashboard/skills'))).toBe(false);
     });
 
     it('gives every entry a unique href', async () => {
@@ -151,11 +176,92 @@ describe('dashboard nav order', () => {
         expect(links[0]).toHaveAttribute('href', '/dashboard');
         expect(links[0]).toHaveAccessibleName('Agents');
         // Highlighting is derived from the href, so a wrong order here would
-        // also mark the wrong item active.
-        expect(links[1]).toHaveAttribute('href', '/dashboard/team');
-        expect(links[1]).toHaveAccessibleName('Sales Team');
+        // also mark the wrong item active. Lobby is next when its flag is on.
+        expect(links[1]).toHaveAttribute('href', '/dashboard/lobby');
+        expect(links[1]).toHaveAccessibleName('Lobby');
         // The memory service is its own dashboard; nothing here points at it.
         expect(links.map((l) => l.getAttribute('href'))).not.toContain('/dashboard/memory');
+    });
+});
+
+describe('sidebar highlight is a single aria-current (H3)', () => {
+    it('waits until only Billing is current on /dashboard/billing', async () => {
+        navPath.pathname = '/dashboard/billing';
+        const { default: DashboardLayout } = await loadLayout();
+
+        render(
+            <DashboardLayout>
+                <p>child</p>
+            </DashboardLayout>
+        );
+
+        const nav = screen.getByRole('navigation', { name: 'Dashboard' });
+        const current = within(nav)
+            .getAllByRole('link')
+            .filter((l) => l.getAttribute('aria-current') === 'page');
+
+        expect(current.map((l) => l.textContent)).toEqual(['Billing']);
+    });
+
+    it('marks the section root only on its own page', async () => {
+        navPath.pathname = '/dashboard/billing';
+        const { default: DashboardLayout } = await loadLayout();
+
+        render(
+            <DashboardLayout>
+                <p>child</p>
+            </DashboardLayout>
+        );
+
+        const nav = screen.getByRole('navigation', { name: 'Dashboard' });
+        // Agents is the section root: a prefix match would be current on
+        // every nested page and double-highlight with whichever section the
+        // user actually visited. One current link per pathname, everywhere.
+        expect(within(nav).getByRole('link', { name: 'Agents' })).not.toHaveAttribute('aria-current');
+        expect(within(nav).getByRole('link', { name: 'Billing' })).toHaveAttribute('aria-current', 'page');
+    });
+
+    it('marks the root on its own page', async () => {
+        navPath.pathname = '/dashboard';
+        const { default: DashboardLayout } = await loadLayout();
+
+        render(
+            <DashboardLayout>
+                <p>child</p>
+            </DashboardLayout>
+        );
+
+        const nav = screen.getByRole('navigation', { name: 'Dashboard' });
+        expect(
+            within(nav)
+                .getAllByRole('link')
+                .filter((l) => l.getAttribute('aria-current') === 'page')
+                .map((l) => l.textContent),
+        ).toEqual(['Agents']);
+    });
+});
+
+describe('lobby nav flag', () => {
+    /** The build-time flag must reflect at import time because navItems is
+     *  built when the module evaluates. */
+    it('omits Lobby from the sidebar while NEXT_PUBLIC_FEATURE_LOBBY is dark', async () => {
+        const { default: DashboardLayout } = await loadLayout({ NEXT_PUBLIC_FEATURE_LOBBY: 'false' });
+
+        render(
+            <DashboardLayout>
+                <p>child</p>
+            </DashboardLayout>
+        );
+
+        const nav = screen.getByRole('navigation', { name: 'Dashboard' });
+        expect(within(nav).queryByRole('link', { name: 'Lobby' })).not.toBeInTheDocument();
+        // Sections stay adjacent: the flagged-out entries leave no gaps.
+        expect(within(nav).getAllByRole('link').map((l) => l.getAttribute('href'))).toEqual([
+            '/dashboard',
+            '/dashboard/billing',
+            '/dashboard/settings',
+            '/admin',
+        ]);
     });
 });
 

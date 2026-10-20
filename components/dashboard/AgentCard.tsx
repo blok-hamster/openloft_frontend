@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import {
-    FolderOpen, HardDrive, Settings, ScrollText, Key, Link, ExternalLink,
+    Settings, ScrollText, Key, Link, ExternalLink,
     Terminal, Square, Pause, RotateCcw, Play, Trash2, MoreHorizontal,
-    MessageSquare,
 } from 'lucide-react';
 import { IAgent, approveAgentDevice, getAgentCredentials, IAgentCredentials } from '@/lib/api';
 import { requestAgentUiProxySession } from '@/lib/socketApi';
@@ -56,10 +55,10 @@ function useIsMobile() {
 }
 
 interface AgentCardProps {
+    /** "agentId:action" in flight — this card's own action button goes
+        busy (and stops answering) while the transition runs. */
+    pendingAction?: string | null;
     agent: IAgent;
-    onChat: (agent: IAgent) => void;
-    onMemory: (agent: IAgent) => void;
-    onDrive: (agent: IAgent) => void;
     onSettings: (agent: IAgent) => void;
     onStop: (agent: IAgent) => void;
     onStart?: (agent: IAgent) => void;
@@ -68,9 +67,7 @@ interface AgentCardProps {
     onRestart?: (agent: IAgent) => void;
     onDelete?: (agent: IAgent) => void;
     onLogs?: (agent: IAgent) => void;
-    onTerminal?: (agent: IAgent) => void;
     onCustomKey?: (agent: IAgent) => void;
-    onChannels?: (agent: IAgent) => void;
     onHttpDetails?: (agent: IAgent) => void;
 }
 
@@ -130,15 +127,19 @@ async function pairOpenClawDevice(agentId: string): Promise<string | null> {
 }
 
 export default function AgentCard({
-    agent, onChat, onMemory, onDrive, onSettings, onStop,
+    agent, onSettings, onStop,
     onStart, onPause, onResume, onRestart, onDelete,
-    onLogs, onTerminal, onCustomKey, onChannels, onHttpDetails,
+    onLogs, onCustomKey, onHttpDetails, pendingAction = null,
 }: AgentCardProps) {
     const { toast } = useToast();
     const [isPairing, setIsPairing] = useState(false);
     const [isPaired, setIsPaired] = useState(false);
     const [moreOpen, setMoreOpen] = useState(false);
     const isMobile = useIsMobile();
+    /* Lifecycle double-tap guard mirror: the page owns the single-flight
+       rule; the card only paints it. */
+    const isPending = (action: string) =>
+        pendingAction === `${agent.agentId}:${action}`;
 
     /* Previously Math.random() on every render, which re-drew the SVG (and
        invalidated layout) on each poll tick. Stable for the card's lifetime. */
@@ -357,17 +358,17 @@ export default function AgentCard({
                     disabled: isPaired || isPairing,
                     className: isPaired ? styles.pairedButton : '',
                 },
-                { key: 'stop', label: 'Stop', icon: <Square size={12} />, onClick: () => onStop(agent) },
+                { key: 'stop', label: 'Stop', icon: <Square size={12} />, onClick: () => onStop(agent), disabled: isPending('stop') },
             );
-            if (onPause) items.push({ key: 'pause', label: 'Pause', icon: <Pause size={12} />, onClick: () => onPause(agent) });
-            if (onRestart) items.push({ key: 'restart', label: 'Restart', icon: <RotateCcw size={12} />, onClick: () => onRestart(agent) });
+            if (onPause) items.push({ key: 'pause', label: 'Pause', icon: <Pause size={12} />, onClick: () => onPause(agent), disabled: isPending('pause') });
+            if (onRestart) items.push({ key: 'restart', label: 'Restart', icon: <RotateCcw size={12} />, onClick: () => onRestart(agent), disabled: isPending('restart') });
         }
 
         if (isStopped && onStart) {
-            items.push({ key: 'start', label: 'Start', icon: <Play size={12} />, onClick: () => onStart(agent) });
+            items.push({ key: 'start', label: 'Start', icon: <Play size={12} />, onClick: () => onStart(agent), disabled: isPending('start') });
         }
         if (isPaused && onResume) {
-            items.push({ key: 'resume', label: 'Resume', icon: <Play size={12} />, onClick: () => onResume(agent) });
+            items.push({ key: 'resume', label: 'Resume', icon: <Play size={12} />, onClick: () => onResume(agent), disabled: isPending('resume') });
         }
         if (!isProvisioning && onDelete) {
             items.push({
@@ -454,20 +455,11 @@ export default function AgentCard({
                 </span>
             </div>
 
-            {/* Core actions — always visible */}
+            {/* Core actions — always visible. The Chat, Workspace, Drive,
+                Terminal and Channels entries came off the card until those
+                surfaces are reworked; their panels and modals stay in
+                components/dashboard, unwired. */}
             <div className={styles.agentActions}>
-                {/* This button was commented out, which left `onChat` a
-                    required-but-uncalled prop and rendered AgentChatPanel +
-                    UsageMetrics unreachable. */}
-                <Button type="button" variant="ghost" size="sm" icon={<MessageSquare size={12} />} onClick={() => onChat(agent)} disabled={disabled}>
-                    Chat
-                </Button>
-                <Button type="button" variant="ghost" size="sm" icon={<FolderOpen size={12} />} onClick={() => onMemory(agent)} disabled={disabled}>
-                    Workspace
-                </Button>
-                <Button type="button" variant="ghost" size="sm" icon={<HardDrive size={12} />} onClick={() => onDrive(agent)} disabled={disabled}>
-                    Drive
-                </Button>
                 <Button type="button" variant="ghost" size="sm" icon={<Settings size={12} />} onClick={() => onSettings(agent)} disabled={disabled}>
                     Config
                 </Button>
@@ -476,30 +468,9 @@ export default function AgentCard({
                         Logs
                     </Button>
                 )}
-                {onTerminal && (
-                    // A shell in the agent's own container. Only offered for a
-                    // running agent because the relay that spawns /bin/sh lives
-                    // inside one.
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        icon={<Terminal size={12} />}
-                        onClick={() => onTerminal(agent)}
-                        disabled={disabled || agent.status !== 'running'}
-                        title={agent.status === 'running' ? undefined : 'Start the agent to open a terminal'}
-                    >
-                        Terminal
-                    </Button>
-                )}
                 {onCustomKey && (
                     <Button type="button" variant="ghost" size="sm" icon={<Key size={12} />} onClick={() => onCustomKey(agent)} disabled={disabled}>
                         Keys
-                    </Button>
-                )}
-                {onChannels && (
-                    <Button type="button" variant="ghost" size="sm" icon={<Link size={12} />} onClick={() => onChannels(agent)} disabled={disabled}>
-                        Channels
                     </Button>
                 )}
             </div>

@@ -7,20 +7,14 @@ import { useToast } from '@/components/ui/Toast';
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
 import AgentList from '@/components/dashboard/AgentList';
 import AgentCreationWizard from '@/components/dashboard/AgentCreationWizard';
-import AgentChatPanel from '@/components/dashboard/AgentChatPanel';
-import UsageMetrics from '@/components/dashboard/UsageMetrics';
-import MemoryEditor from '@/components/dashboard/MemoryEditor';
-import AgentDrive from '@/components/dashboard/AgentDrive';
 import ConfirmDestructiveAction from '@/components/dashboard/ConfirmDestructiveAction';
 import HumanApprovalQueue from '@/components/dashboard/HumanApprovalQueue';
 import ConfigEditor from '@/components/dashboard/ConfigEditor';
 import LogsPanel from '@/components/dashboard/LogsPanel';
 import CustomKeyModal from '@/components/dashboard/CustomKeyModal';
-import SocialConnections from '@/components/dashboard/SocialConnections';
 import HttpDetailsModal from '@/components/dashboard/HttpDetailsModal';
 import SkeletonLoader from '@/components/ui/SkeletonLoader';
 import { createSocket } from '@/lib/socket';
-import TerminalModal from '@/components/dashboard/TerminalModal';
 import styles from '@/components/dashboard/Dashboard.module.css';
 
 export default function DashboardPage() {
@@ -33,18 +27,13 @@ export default function DashboardPage() {
 
   // Modal states
   const [showWizard, setShowWizard] = useState(false);
-  const [chatAgent, setChatAgent] = useState<IAgent | null>(null);
-  const [memoryAgent, setMemoryAgent] = useState<IAgent | null>(null);
-  const [driveAgent, setDriveAgent] = useState<IAgent | null>(null);
   const [stopTarget, setStopTarget] = useState<IAgent | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<IAgent | null>(null);
   const [stopping, setStopping] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [configAgent, setConfigAgent] = useState<IAgent | null>(null);
   const [logsAgent, setLogsAgent] = useState<IAgent | null>(null);
-  const [terminalAgent, setTerminalAgent] = useState<IAgent | null>(null);
   const [customKeyAgent, setCustomKeyAgent] = useState<IAgent | null>(null);
-  const [channelsAgent, setChannelsAgent] = useState<IAgent | null>(null);
   const [httpDetailsAgent, setHttpDetailsAgent] = useState<IAgent | null>(null);
 
   const pollRef = useRef<NodeJS.Timeout | null>(null);
@@ -165,14 +154,33 @@ export default function DashboardPage() {
     }
   };
 
+  // Lifecycle handlers
+  const [pendingAction, setPendingAction] = useState<string | null>(null);
+
+  /* Past tenses spelled out: templating `${action}ed` shipped "pauseed" and
+     "restarteded" next to real buttons. */
+  const actionDone: Record<string, string> = {
+    start: 'started',
+    pause: 'paused',
+    resume: 'resumed',
+    restart: 'restarted',
+  };
+
+  /* One lifecycle transition at a time: the buttons stay enabled across the
+     await, and a double-tap on Start or Restart queued two conflicting
+     requests that made the agent flap. */
   const handleLifecycleAction = async (action: 'start' | 'pause' | 'resume' | 'restart', agent: IAgent) => {
+    if (pendingAction) return;
+    setPendingAction(`${agent.agentId}:${action}`);
     const actions = { start: startAgent, pause: pauseAgent, resume: resumeAgent, restart: restartAgent };
     try {
       await actions[action](agent.agentId);
-      toast(`Agent ${action === 'resume' ? 'resumed' : `${action}ed`} successfully`, 'success');
+      toast(`Agent ${actionDone[action]} successfully`, 'success');
       loadData();
     } catch {
       toast(`Failed to ${action} agent`, 'error');
+    } finally {
+      setPendingAction(null);
     }
   };
 
@@ -192,9 +200,6 @@ export default function DashboardPage() {
       ) : (
         <AgentList
           agents={agents}
-          onChat={(a) => setChatAgent(a)}
-          onMemory={(a) => setMemoryAgent(a)}
-          onDrive={(a) => setDriveAgent(a)}
           onSettings={(a) => setConfigAgent(a)}
           onStop={(a) => setStopTarget(a)}
           onStart={(a) => handleLifecycleAction('start', a)}
@@ -203,19 +208,10 @@ export default function DashboardPage() {
           onRestart={(a) => handleLifecycleAction('restart', a)}
           onDelete={(a) => setDeleteTarget(a)}
           onLogs={(a) => setLogsAgent(a)}
-          onTerminal={(a) => setTerminalAgent(a)}
           onCustomKey={(a) => setCustomKeyAgent(a)}
-          onChannels={(a) => setChannelsAgent(a)}
           onHttpDetails={(a) => setHttpDetailsAgent(a)}
+          pendingAction={pendingAction}
         />
-      )}
-
-      {/* Chat Panel & Metrics */}
-      {chatAgent && (
-        <div className={styles.metricsStack}>
-          <UsageMetrics agentId={chatAgent.agentId} />
-          <AgentChatPanel agent={chatAgent} onClose={() => setChatAgent(null)} />
-        </div>
       )}
 
       {/* Modals */}
@@ -223,18 +219,6 @@ export default function DashboardPage() {
         open={showWizard}
         onClose={() => setShowWizard(false)}
         onCreated={loadData}
-      />
-
-      <MemoryEditor
-        agent={memoryAgent}
-        open={!!memoryAgent}
-        onClose={() => setMemoryAgent(null)}
-      />
-
-      <AgentDrive
-        agent={driveAgent}
-        open={!!driveAgent}
-        onClose={() => setDriveAgent(null)}
       />
 
       <ConfirmDestructiveAction
@@ -273,22 +257,10 @@ export default function DashboardPage() {
         onClose={() => setCustomKeyAgent(null)}
       />
 
-      <SocialConnections
-        agent={channelsAgent}
-        open={!!channelsAgent}
-        onClose={() => setChannelsAgent(null)}
-      />
-
       <HttpDetailsModal
         agent={httpDetailsAgent}
         open={!!httpDetailsAgent}
         onClose={() => setHttpDetailsAgent(null)}
-      />
-
-      <TerminalModal
-        agent={terminalAgent}
-        open={!!terminalAgent}
-        onClose={() => setTerminalAgent(null)}
       />
     </>
   );

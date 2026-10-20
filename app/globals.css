@@ -4,11 +4,17 @@
   /* Primary */
   --bg-color: #C8CCC8;
   --text-primary: #1A1A1A;
-  --text-secondary: #8A8E8A;
+  /* Secondary text: darkened past AA. It sat at ~3.1:1 on white — under the
+     4.5:1 small-text floor — and is everywhere meta information lives. */
+  --text-secondary: #5F6560;
 
   /* Accent */
   --accent-pink: #F5A0F0;
   --accent-coral: #F47A4A;
+  /* Paused: intermediate between idle and error — "holding, not broken".
+     Paused previously borrowed coral, so it signalled the same urgency as
+     a crash; amber is the semantically honest middle. */
+  --accent-amber: #C77A00;
   --accent-forest: #0A5C3A;
   --accent-blue: #1A2EE6;
   --accent-green: #2EA82E;
@@ -137,6 +143,17 @@ button {
   box-sizing: border-box;
   cursor: pointer;
   font-family: inherit;
+}
+
+/* Keyboard focus ring — the reset above also wiped the UA focus outline,
+   and only Toggle/Card/sidebar recovered one, so every Button and pill CTA
+   was invisible to keyboard users. One global ring instead of hoping each
+   component remembers; :focus-visible keeps pointer/mouse taps ringless. */
+button:focus-visible,
+a:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--off-black);
+  outline-offset: 2px;
 }
 
 /* Pill Button — Primary */

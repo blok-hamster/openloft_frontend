@@ -28,6 +28,9 @@ interface MemoryRecordTableProps {
   onLimitChange: (limit: number) => void;
   onOffsetChange: (offset: number) => void;
   onSelect: (record: MemoryRecord) => void;
+  /** Set when the fetched window sits entirely behind a client-side filter —
+      the empty cell then explains the filter instead of implying no data. */
+  windowNote?: string | null;
 }
 
 /**
@@ -60,6 +63,7 @@ export default function MemoryRecordTable({
   onLimitChange,
   onOffsetChange,
   onSelect,
+  windowNote = null,
 }: MemoryRecordTableProps) {
   /* The service returns records newest creation turn first and takes no sort
      parameter, so ordering is applied to the window that was fetched. The
@@ -107,7 +111,7 @@ export default function MemoryRecordTable({
 
   return (
     <div>
-      <div className={styles.tableScroll}>
+      <div className={`${styles.tableScroll} ${styles.stickyFirst}`}>
         <table className={styles.table}>
           <caption className={styles.tableCaption}>
             {from}–{to} of {total} records. Ordering applies to this page: the service
@@ -171,7 +175,7 @@ export default function MemoryRecordTable({
             {rows.length === 0 && (
               <tr>
                 <td colSpan={COLUMNS} className={styles.emptyCell}>
-                  No records in this window.
+                  {windowNote ?? 'No records in this window.'}
                 </td>
               </tr>
             )}
@@ -217,7 +221,9 @@ export default function MemoryRecordTable({
             </div>
           </div>
         ))}
-        {rows.length === 0 && <div className={styles.emptyCell}>No records in this window.</div>}
+        {rows.length === 0 && (
+          <div className={styles.emptyCell}>{windowNote ?? 'No records in this window.'}</div>
+        )}
       </div>
 
       <div className={styles.pager}>

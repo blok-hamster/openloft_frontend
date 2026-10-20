@@ -66,6 +66,7 @@ export default function ConfigurationStep({ tier, onComplete }: Props) {
           <option value="google">Google (Gemini)</option>
           <option value="groq">Groq (Llama)</option>
           <option value="deepseek">DeepSeek</option>
+          <option value="openrouter">OpenRouter</option>
         </select>
       </label>
 

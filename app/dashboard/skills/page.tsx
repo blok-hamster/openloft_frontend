@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { useSearchParams } from 'next/navigation';
-import { fetchAgents, getSkills, toggleSkill, uploadSkill, getPlugins, togglePlugin, uploadPlugin, IAgent, searchClawHub, installSkill, getSkillDetails, getSkillFileContent, getTrendingSkills, saveAgentSecret } from '@/lib/api';
+import { fetchAgents, getSkills, toggleSkill, uploadSkill, getPlugins, togglePlugin, uploadPlugin, IAgent, searchClawHub, installSkill, getSkillDetails, getSkillFileContent, getTrendingSkills, saveAgentSecret, ISkillResult } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import Toggle from '@/components/ui/Toggle';
 import Card from '@/components/ui/Card';
@@ -41,10 +41,14 @@ function MarketplaceContent() {
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [remoteResults, setRemoteResults] = useState<any[]>([]);
-    const [trendingResults, setTrendingResults] = useState<any[]>([]);
+    const [remoteResults, setRemoteResults] = useState<ISkillResult[]>([]);
+    const [trendingResults, setTrendingResults] = useState<ISkillResult[]>([]);
     const [searchingRemote, setSearchingRemote] = useState(false);
     const [loadingTrending, setLoadingTrending] = useState(false);
+    /* Failures the tab can show instead of an empty panel and a console
+       line the reader never sees. */
+    const [remoteError, setRemoteError] = useState<string | null>(null);
+    const [trendingError, setTrendingError] = useState<string | null>(null);
     const [installing, setInstalling] = useState<string | null>(null);
     const [installConfirmSlug, setInstallConfirmSlug] = useState<string | null>(null);
     const [detailSlug, setDetailSlug] = useState<string | null>(null);
@@ -69,15 +73,32 @@ function MarketplaceContent() {
             setAgents(agentData);
             setSkills(skillData as Extension[]);
             setPlugins(pluginData as Extension[]);
-            if (agentData.length > 0 && !selectedAgent) {
-                setSelectedAgent(agentData[0].agentId);
-            }
+            /* Functional pick: no `selectedAgent` dependency, so changing
+               the picker — or this very set — cannot re-create the callback
+               and re-fire the effect. That dependency was a refetch storm:
+               mount fetched twice, and every picker change refetched all
+               three lists. */
+            setSelectedAgent((current) => current || agentData[0]?.agentId || '');
         } catch {
             toast('Failed to load extensions', 'error');
         } finally {
             setLoading(false);
         }
-    }, [user?.tenantId, selectedAgent, toast]);
+    }, [user?.tenantId, toast]);
+
+    /* Registry trending. A failure is UI-visible info, not a console line —
+       the empty Discover tab with no explanation was the bug. */
+    const loadTrending = useCallback(async () => {
+        setLoadingTrending(true);
+        try {
+            const data = await getTrendingSkills();
+            setTrendingResults(data);
+        } catch {
+            setTrendingError('Trending skills are unavailable right now.');
+        } finally {
+            setLoadingTrending(false);
+        }
+    }, []);
 
     useEffect(() => {
         loadData();
@@ -89,26 +110,26 @@ function MarketplaceContent() {
             // Clean up URL without refreshing
             window.history.replaceState(null, '', window.location.pathname);
         }
-    }, [loadData, searchParams]);
+    }, [loadData, loadTrending, searchParams]);
 
-    const loadTrending = async () => {
-        setLoadingTrending(true);
-        try {
-            const data = await getTrendingSkills();
-            setTrendingResults(data);
-        } catch (err) {
-            console.error('Failed to load trending skills', err);
-        } finally {
-            setLoadingTrending(false);
+    /* Registry search: debounced per keystroke, and guarded against a slow
+       older response overwriting a newer one — the results panel obeyed
+       whoever answered last, not whoever was asked last. */
+    const searchTokenRef = useRef(0);
+    useEffect(() => {
+        const query = searchQuery.trim();
+        if (query.length <= 2) {
+            setRemoteResults([]);
+            setSearchingRemote(false);
+            setRemoteError(null);
+            return;
         }
-    };
-
-    const handleSearch = async (val: string) => {
-        setSearchQuery(val);
-        if (val.trim().length > 2) {
+        const token = ++searchTokenRef.current;
+        const timer = setTimeout(async () => {
             setSearchingRemote(true);
             try {
-                const results = await searchClawHub(val);
+                const results = await searchClawHub(query);
+                if (searchTokenRef.current !== token) return; // a newer query exists
                 setRemoteResults(results.map(r => ({
                     id: r.slug,
                     name: r.displayName || r.slug,
@@ -117,15 +138,15 @@ function MarketplaceContent() {
                     version: r.version,
                     score: r.score
                 })));
-            } catch (err) {
-                console.error('Remote search failed', err);
+            } catch {
+                if (searchTokenRef.current !== token) return;
+                setRemoteError('Search failed — try again in a moment.');
             } finally {
-                setSearchingRemote(false);
+                if (searchTokenRef.current === token) setSearchingRemote(false);
             }
-        } else {
-            setRemoteResults([]);
-        }
-    };
+        }, 350);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     const handleOpenDetails = async (slug: string) => {
         setDetailSlug(slug);
@@ -280,7 +301,7 @@ function MarketplaceContent() {
                         <Input
                             placeholder="Search ClawHub..."
                             value={searchQuery}
-                            onChange={(e) => handleSearch(e.target.value)}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
                     <input
@@ -339,6 +360,10 @@ function MarketplaceContent() {
                     <div className={marketplace.stack}>
                         {searchingRemote ? (
                             <SkeletonLoader variant="card" count={2} />
+                        ) : remoteError ? (
+                            <div className={`${styles.emptyState} ${marketplace.emptyPadded}`}>
+                                <div className={`${styles.emptyDescription} ${marketplace.errorNote}`}>{remoteError}</div>
+                            </div>
                         ) : remoteResults.length > 0 ? (
                             remoteResults.map(res => {
                                 const isInstalled = skills.some(s => s.id === res.slug);
@@ -354,7 +379,7 @@ function MarketplaceContent() {
                                                         {res.displayName || res.name}
                                                         <div className={marketplace.resultStats}>
                                                             <span className={marketplace.statStar}>
-                                                                <Star size={10} fill={res.stats?.stars > 0 ? "#FFB800" : "none"} /> {res.stats?.stars || 0}
+                                                                <Star size={10} fill={(res.stats?.stars ?? 0) > 0 ? "#FFB800" : "none"} /> {res.stats?.stars || 0}
                                                             </span>
                                                             <span className={marketplace.statDownload}>
                                                                 <Download size={10} /> {res.stats?.downloads ? (res.stats.downloads > 1000 ? (res.stats.downloads/1000).toFixed(1)+'k' : res.stats.downloads) : 0}
@@ -403,6 +428,10 @@ function MarketplaceContent() {
                     <div className={marketplace.stack}>
                         {loadingTrending ? (
                             <SkeletonLoader variant="card" count={3} />
+                        ) : trendingError ? (
+                            <div className={`${styles.emptyState} ${marketplace.emptyPadded}`}>
+                                <div className={`${styles.emptyDescription} ${marketplace.errorNote}`}>{trendingError}</div>
+                            </div>
                         ) : trendingResults.length > 0 ? (
                             trendingResults.map(res => {
                                 const isInstalled = skills.some(s => s.id === res.slug);
@@ -418,7 +447,7 @@ function MarketplaceContent() {
                                                         {res.displayName}
                                                         <div className={marketplace.resultStats}>
                                                             <span className={marketplace.statStar}>
-                                                                <Star size={10} fill={res.stats?.stars > 0 ? "#FFB800" : "none"} /> {res.stats?.stars || 0}
+                                                                <Star size={10} fill={(res.stats?.stars ?? 0) > 0 ? "#FFB800" : "none"} /> {res.stats?.stars || 0}
                                                             </span>
                                                             <span className={marketplace.statDownload}>
                                                                 <Download size={10} /> {res.stats?.downloads ? (res.stats.downloads > 1000 ? (res.stats.downloads/1000).toFixed(1)+'k' : res.stats.downloads) : 0}

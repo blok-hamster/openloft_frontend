@@ -156,8 +156,12 @@
     transition: transform var(--transition-base);
 }
 
-.agentCard:hover {
-    transform: translateY(-2px);
+/* The lift is decoration; on touch it would stick to the last-tapped
+   card, so it only exists where a pointer exists. */
+@media (hover: hover) {
+    .agentCard:hover {
+        transform: translateY(-2px);
+    }
 }
 
 .agentCardProvisioning,
@@ -204,8 +208,10 @@
     color: var(--accent-coral, #e54d2e) !important;
 }
 
-.dangerButton:hover {
-    background: rgba(229, 77, 46, 0.06) !important;
+@media (hover: hover) {
+    .dangerButton:hover {
+        background: rgba(229, 77, 46, 0.06) !important;
+    }
 }
 
 .agentCardHeader {
@@ -301,6 +307,9 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    /* The transcript is the inner scroller; running off its end must not
+       rubber-band the page behind the chat. */
+    overscroll-behavior: contain;
 }
 
 .chatBubble {
@@ -416,8 +425,10 @@
     gap: 0.375rem;
 }
 
-.memoryTab:hover {
-    color: var(--text-primary);
+@media (hover: hover) {
+    .memoryTab:hover {
+        color: var(--text-primary);
+    }
 }
 
 .memoryTabActive {
@@ -488,9 +499,11 @@
     color: var(--text-secondary);
 }
 
-.driveDropZone:hover {
-    border-color: var(--off-black);
-    color: var(--text-primary);
+@media (hover: hover) {
+    .driveDropZone:hover {
+        border-color: var(--off-black);
+        color: var(--text-primary);
+    }
 }
 
 .driveDropZoneActive {
@@ -526,9 +539,11 @@
     transition: all var(--transition-fast);
 }
 
-.driveUploadBtn:hover {
-    color: var(--text-primary);
-    border-color: var(--off-black);
+@media (hover: hover) {
+    .driveUploadBtn:hover {
+        color: var(--text-primary);
+        border-color: var(--off-black);
+    }
 }
 
 .driveFileList {
@@ -552,8 +567,10 @@
     border-bottom: none;
 }
 
-.driveFileRow:hover {
-    background: rgba(26, 26, 26, 0.02);
+@media (hover: hover) {
+    .driveFileRow:hover {
+        background: rgba(26, 26, 26, 0.02);
+    }
 }
 
 .driveFileInfo {
@@ -596,9 +613,11 @@
     align-items: center;
 }
 
-.driveIconBtn:hover {
-    background: rgba(26, 26, 26, 0.06);
-    color: var(--text-primary);
+@media (hover: hover) {
+    .driveIconBtn:hover {
+        background: rgba(26, 26, 26, 0.06);
+        color: var(--text-primary);
+    }
 }
 
 .driveEmpty {
@@ -797,8 +816,11 @@
 }
 
 @media (max-width: 480px) {
+    /* The header still fights the menu button for space at 320px; a tracked
+       2rem title buys nothing at that width. */
     .headerTitle {
-        font-size: var(--font-size-xl);
+        font-size: var(--font-size-lg);
+        letter-spacing: 0.03em;
     }
 
     /* Sticky footers inside modals sit above the bar. */
@@ -815,152 +837,11 @@
     }
 }
 
-/* ===========================
-   Terminal Styles
-   =========================== */
 
-.terminalOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(200, 204, 200, 0.85);
-    backdrop-filter: blur(4px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-}
+/* The terminal styles that lived between the wizard actions and here were
+   removed with the unwiring — TerminalModal owns its own module.
 
-.terminalModal {
-    width: 90%;
-    max-width: 800px;
-    height: 80vh;
-    background: var(--off-black);
-    border: 1px solid var(--off-black);
-    border-radius: var(--radius-md);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-}
-
-.terminalHeader {
-    padding: 0.75rem 1.25rem;
-    background: var(--off-black);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    color: var(--white);
-    font-size: var(--font-size-xs);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-}
-
-.terminalHeaderLeft {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.terminalHeaderTitle {
-   color: #F5A0F0; /* Pink accent */
-}
-
-.terminalHeaderClose {
-    background: none;
-    border: none;
-    color: var(--white);
-    opacity: 0.5;
-    cursor: pointer;
-    transition: opacity var(--transition-fast);
-}
-
-.terminalHeaderClose:hover {
-    opacity: 1;
-}
-
-.terminalBody {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    padding: 1.25rem;
-    overflow: hidden;
-}
-
-.terminalOutput {
-    flex: 1;
-    overflow-y: auto;
-    font-family: var(--font-family-mono);
-    font-size: 13px;
-    line-height: 1.6;
-    color: #2EA82E; /* Vivid Green accent */
-    margin-bottom: 1rem;
-    white-space: pre-wrap;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
-}
-
-.terminalOutput::-webkit-scrollbar {
-    width: 6px;
-}
-
-.terminalOutput::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.terminalHistoryItem {
-    margin-bottom: 0.75rem;
-}
-
-.terminalHistoryCommand {
-    color: #F47A4A; /* Coral accent */
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 0.25rem;
-}
-
-.terminalInputLine {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-family: var(--font-family-mono);
-    padding-top: 0.75rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.terminalPrompt {
-    color: #F47A4A; /* Coral accent */
-    font-weight: 700;
-}
-
-.terminalInput {
-    flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--white);
-    font-family: var(--font-family-mono);
-    font-size: 13px;
-}
-
-.terminalLoading {
-    display: inline-block;
-    width: 8px;
-    height: 14px;
-    background: #2EA82E;
-    animation: blink 1s step-end infinite;
-    vertical-align: middle;
-}
-
-@keyframes blink {
-    50% { opacity: 0; }
-}
-
-/* Metrics */
+   Metrics */
 .metricsGrid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -1258,9 +1139,11 @@
     align-items: center;
 }
 
-.httpDetailValue button:hover {
-    background: rgba(26, 26, 26, 0.05);
-    color: var(--text-primary);
+@media (hover: hover) {
+    .httpDetailValue button:hover {
+        background: rgba(26, 26, 26, 0.05);
+        color: var(--text-primary);
+    }
 }
 
 .copySuccess {
@@ -1422,6 +1305,8 @@
     max-height: 52dvh;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    /* Inner scroller: end of the log must not scroll the page. */
+    overscroll-behavior: contain;
     white-space: pre-wrap;
     word-break: break-all;
     color: var(--text-primary);
@@ -1432,6 +1317,7 @@
     max-height: 52dvh;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
 }
 
 .auditEmpty {
@@ -1717,8 +1603,10 @@
     cursor: pointer;
 }
 
-.chatHeaderBtn:hover {
-    color: var(--text-primary);
+@media (hover: hover) {
+    .chatHeaderBtn:hover {
+        color: var(--text-primary);
+    }
 }
 
 .chatHeaderBtn:focus-visible {
@@ -1809,8 +1697,10 @@
     cursor: pointer;
 }
 
-.chatRetryBtn:hover {
-    border-color: var(--text-secondary);
+@media (hover: hover) {
+    .chatRetryBtn:hover {
+        border-color: var(--text-secondary);
+    }
 }
 
 .chatRetryBtn:focus-visible {

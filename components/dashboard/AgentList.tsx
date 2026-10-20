@@ -9,9 +9,6 @@ interface AgentListProps {
     agents: IAgent[];
     /** Shown in the empty state — without it, "no agents" is a dead end. */
     onDeploy?: () => void;
-    onChat: (agent: IAgent) => void;
-    onMemory: (agent: IAgent) => void;
-    onDrive: (agent: IAgent) => void;
     onSettings: (agent: IAgent) => void;
     onStop: (agent: IAgent) => void;
     onStart?: (agent: IAgent) => void;
@@ -20,13 +17,15 @@ interface AgentListProps {
     onRestart?: (agent: IAgent) => void;
     onDelete?: (agent: IAgent) => void;
     onLogs?: (agent: IAgent) => void;
-    onTerminal?: (agent: IAgent) => void;
     onCustomKey?: (agent: IAgent) => void;
-    onChannels?: (agent: IAgent) => void;
     onHttpDetails?: (agent: IAgent) => void;
+    /** "agentId:action" while a lifecycle request is in flight — the page
+        blocks concurrent transitions and the list shows which button owns
+        the wait, instead of a second tap queueing a conflicting one. */
+    pendingAction?: string | null;
 }
 
-export default function AgentList({ agents, onDeploy, onChat, onMemory, onDrive, onSettings, onStop, onStart, onPause, onResume, onRestart, onDelete, onLogs, onTerminal, onCustomKey, onChannels, onHttpDetails }: AgentListProps) {
+export default function AgentList({ agents, onDeploy, onSettings, onStop, onStart, onPause, onResume, onRestart, onDelete, onLogs, onCustomKey, onHttpDetails, pendingAction = null }: AgentListProps) {
     if (agents.length === 0) {
         return (
             <div className={styles.emptyState}>
@@ -50,9 +49,6 @@ export default function AgentList({ agents, onDeploy, onChat, onMemory, onDrive,
                 <AgentCard
                     key={agent._id}
                     agent={agent}
-                    onChat={onChat}
-                    onMemory={onMemory}
-                    onDrive={onDrive}
                     onSettings={onSettings}
                     onStop={onStop}
                     onStart={onStart}
@@ -61,10 +57,9 @@ export default function AgentList({ agents, onDeploy, onChat, onMemory, onDrive,
                     onRestart={onRestart}
                     onDelete={onDelete}
                     onLogs={onLogs}
-                    onTerminal={onTerminal}
                     onCustomKey={onCustomKey}
-                    onChannels={onChannels}
                     onHttpDetails={onHttpDetails}
+                    pendingAction={pendingAction}
                 />
             ))}
         </div>

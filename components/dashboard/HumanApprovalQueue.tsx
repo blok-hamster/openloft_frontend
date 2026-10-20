@@ -17,7 +17,11 @@ export default function HumanApprovalQueue({ logs, onUpdate }: HumanApprovalQueu
        double-tap on Approve fired two POSTs for the same log. */
     const [busyId, setBusyId] = useState<string | null>(null);
 
-    const pendingLogs = logs.filter((l) => l.status === 'pending');
+    /* The backend enum is 'pending_human_approval' — filtering on the bare
+       'pending' this once was meant the queue filtered out everything the
+       page had just fetched, so approvals never rendered and shell actions
+       passed silently. */
+    const pendingLogs = logs.filter((l) => l.status === 'pending_human_approval');
 
     const handleApproval = async (logId: string, approved: boolean) => {
         if (busyId !== null) return;

@@ -14,6 +14,7 @@ const read = (rel: string) => readFileSync(path.join(ROOT, rel), 'utf8');
 
 const HARNESS = 'NEXT_PUBLIC_FEATURE_HOSTED_HARNESS';
 const MEMORY = 'NEXT_PUBLIC_FEATURE_HOSTED_MEMORY';
+const LOBBY = 'NEXT_PUBLIC_FEATURE_LOBBY';
 
 async function loadFeatures(env: Record<string, string | undefined>) {
     vi.resetModules();
@@ -82,6 +83,16 @@ describe('feature flags default to off', () => {
         const { FEATURES } = await loadFeatures({});
         expect(FEATURES.hostedHarness).toBe(false);
         expect(FEATURES.hostedMemory).toBe(false);
+    });
+
+    it('has the lobby section dark when its flag is unset', async () => {
+        const { FEATURES } = await loadFeatures({});
+        expect(FEATURES.lobby).toBe(false);
+    });
+
+    it('opens the lobby section on a truthy spelling', async () => {
+        const { FEATURES } = await loadFeatures({ [LOBBY]: 'yes' });
+        expect(FEATURES.lobby).toBe(true);
     });
 
     it('treats the framework as the live product', async () => {

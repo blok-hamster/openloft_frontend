@@ -59,7 +59,12 @@
 }
 
 .copyBtn { position: absolute; top: 0.4rem; right: 0.4rem; opacity: 0.85; }
-.copyBtn:hover { opacity: 1; }
+
+/* The opacity lift is pointer feedback; without the gate it sticks after a
+   tap on touch. */
+@media (hover: hover) {
+  .copyBtn:hover { opacity: 1; }
+}
 
 .scopeNote {
   font-size: var(--font-size-xs, 0.6875rem);
@@ -71,7 +76,16 @@
   font-family: var(--font-mono, ui-monospace, monospace);
 }
 
-@media (max-width: 600px) {
-  .code { font-size: 0.625rem; padding: 0.65rem 0.7rem; }
+/* 480, not 600: the convention is two breakpoints, and the code face needs
+   the static copy button only once the guide is truly one column. */
+@media (max-width: 480px) {
+  .code { font-size: 0.75rem; padding: 0.65rem 0.7rem; }
   .copyBtn { position: static; margin-top: 0.4rem; }
+}
+
+/* Touch floor for the harness picker tabs. */
+@media (max-width: 900px) {
+  .tab, .tabActive {
+    min-height: var(--touch-target);
+  }
 }

@@ -39,6 +39,9 @@
     border-radius: var(--radius-sm);
     padding: 0.5rem;
     -webkit-overflow-scrolling: touch;
+    /* The picker is an inner scroller inside the lobby page; running off
+       its end must not scroll the page behind it. */
+    overscroll-behavior: contain;
 }
 
 .pickerRow {

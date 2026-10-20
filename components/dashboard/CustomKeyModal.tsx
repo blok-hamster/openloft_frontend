@@ -1,16 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { IAgent } from '@/lib/api';
+import { useEffect, useState } from 'react';
+import { IAgent, saveCustomKey, switchAgentKeyType } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
 import styles from './Dashboard.module.css';
-import axios from 'axios';
-
-const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 interface CustomKeyModalProps {
     agent: IAgent | null;
@@ -26,6 +23,8 @@ const providers = [
     { value: 'deepseek', label: 'DeepSeek' },
     { value: 'xai', label: 'xAI' },
     { value: 'mistral', label: 'Mistral' },
+    { value: 'openrouter', label: 'OpenRouter' },
+    { value: 'azure-openai', label: 'Azure OpenAI' },
 ];
 
 export default function CustomKeyModal({ agent, open, onClose }: CustomKeyModalProps) {
@@ -34,8 +33,25 @@ export default function CustomKeyModal({ agent, open, onClose }: CustomKeyModalP
     const [apiKey, setApiKey] = useState('');
     const [validating, setValidating] = useState(false);
     const [result, setResult] = useState<{ valid: boolean; error?: string } | null>(null);
-    const [keyType, setKeyType] = useState<'platform' | 'custom'>(agent?.llmKeyType || 'platform');
+    const [keyType, setKeyType] = useState<'platform' | 'custom'>('platform');
+    /* A validated key, for THIS agent, THIS session. Switching to custom
+       without it was possible before — the deploy then charged a custom
+       key that had never validated. */
+    const [validated, setValidated] = useState(false);
     const [switching, setSwitching] = useState(false);
+
+    /* State followed the modal, not the agent: opening it on a platform-key
+       agent after a custom-key agent kept the previous agent's keyType, so
+       the pill buttons showed and did the wrong thing. Re-sync every open. */
+    useEffect(() => {
+        if (open && agent) {
+            setKeyType(agent.llmKeyType === 'custom' ? 'custom' : 'platform');
+            setProvider('openai');
+            setApiKey('');
+            setResult(null);
+            setValidated(false);
+        }
+    }, [open, agent]);
 
     const handleValidate = async () => {
         if (!agent || !apiKey.trim()) return;
@@ -43,14 +59,12 @@ export default function CustomKeyModal({ agent, open, onClose }: CustomKeyModalP
         setResult(null);
 
         try {
-            const token = typeof window !== 'undefined' ? localStorage.getItem('loft_token') : null;
-            const { data } = await axios.post(`${apiBase}/agents/${agent.agentId}/custom-key`, { provider, apiKey }, {
-                headers: token ? { Authorization: `Bearer ${token}` } : {},
-            });
+            const data = await saveCustomKey(agent.agentId, provider, apiKey);
             setResult(data);
             if (data.valid) {
                 toast('API key validated & saved — switching to custom key...', 'success');
                 // Automatically switch to custom key if valid
+                setValidated(true);
                 await handleSwitchKeyType('custom');
                 setTimeout(() => { onClose(); setApiKey(''); setResult(null); }, 1500);
             }
@@ -63,15 +77,22 @@ export default function CustomKeyModal({ agent, open, onClose }: CustomKeyModalP
 
     const handleSwitchKeyType = async (type: 'platform' | 'custom') => {
         if (!agent) return;
+        // Without a validated key there is nothing to bill on; the pill used
+        // to flip and the agent ran on an unbacked key.
+        if (type === 'custom' && !validated && agent.llmKeyType !== 'custom') {
+            toast('Validate and save a custom key first', 'error');
+            setResult({ valid: false, error: 'Validate and save a key before switching' });
+            return;
+        }
         setSwitching(true);
         try {
-            const api = await import('@/lib/api');
-            await api.switchAgentKeyType(agent.agentId, type);
+            await switchAgentKeyType(agent.agentId, type);
             setKeyType(type);
             toast(`Switched to ${type === 'platform' ? 'Platform Credits' : 'Custom Key'}`, 'success');
-        } catch (err: any) {
-            toast(err.response?.data?.error || `Failed to switch to ${type} key`, 'error');
-            setResult({ valid: false, error: err.response?.data?.error || 'Switch failed' });
+        } catch (err) {
+            const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+            toast(message || `Failed to switch to ${type} key`, 'error');
+            setResult({ valid: false, error: message || 'Switch failed' });
         } finally {
             setSwitching(false);
         }

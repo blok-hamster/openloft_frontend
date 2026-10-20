@@ -111,8 +111,10 @@
     transition: border-color var(--transition-fast);
 }
 
-.uploadZone:hover {
-    border-color: var(--off-black);
+@media (hover: hover) {
+    .uploadZone:hover {
+        border-color: var(--off-black);
+    }
 }
 
 .uploadLabel {
@@ -153,10 +155,10 @@
     color: var(--accent-coral);
 }
 
-/* Table plumbing */
+/* Table plumbing — the wrapper is the shared table pattern; admin keeps
+   its own card internals (fields/actions differ from the memory trio). */
 .tableScroll {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    composes: tableScroll from '../ui/TablePattern.module.css';
 }
 
 .cellMono {
@@ -299,7 +301,9 @@
     }
 }
 
-@media (max-width: 768px) {
+/* 900, not 768: the convention is two breakpoints, and a 761–799px window
+   is a tablet that was still getting a four-column heatmap. */
+@media (max-width: 900px) {
     .heatmapGrid {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -339,16 +343,13 @@
    ============================================================ */
 
 .cardStack {
-    display: none;
-    flex-direction: column;
-    gap: 0.75rem;
+    composes: cardStack from '../ui/TablePattern.module.css';
+    --tablecard-gap: 0.75rem;
 }
 
 .tableCard {
-    border: var(--border);
-    border-radius: var(--radius-md);
-    background: var(--bg-color);
-    overflow: hidden;
+    composes: tableCard from '../ui/TablePattern.module.css';
+    --tablecard-bg: var(--bg-color);
 }
 
 .tableCardHead {
@@ -419,7 +420,8 @@
     border-radius: var(--radius-md);
 }
 
-@media (max-width: 768px) {
+/* 900, not 768 — same convention line as every other card-stack switch. */
+@media (max-width: 900px) {
     .tableScroll {
         display: none;
     }

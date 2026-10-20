@@ -84,6 +84,31 @@
     white-space: nowrap;
 }
 
+/* --- Decay sparkline ---
+   The engine's own law, `w0 * e^{-λΔt}`, projected forward. The dashed line
+   is the prune threshold: a curve crossing it is a fact the model will
+   forget on its own, which is the whole point of looking. The single colour
+   is deliberate — the threshold is the only accent on the chart. */
+.sparkSvg {
+    display: block;
+    width: 100%;
+    height: 56px;
+    margin-top: 0.5rem;
+}
+
+.sparkLine {
+    fill: none;
+    stroke: var(--off-black);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+}
+
+.sparkThreshold {
+    stroke: var(--accent-coral);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+}
+
 /* --- Stat tiles --- */
 .statGrid {
     display: grid;
@@ -180,6 +205,21 @@
     gap: 0.75rem;
 }
 
+/* The (agent, conversation) scope selector: a slim committed form, not a
+   filter row that fires per keystroke — each commit re-answers every read on
+   the page. */
+.scopeBar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.scopeInput {
+    width: 16rem;
+}
+
 /* A nested surface so a card can hold several self-contained blocks without
    stacking full borders three deep. */
 .subPanel {
@@ -245,10 +285,14 @@
     margin-top: 0.75rem;
 }
 
-/* --- Records table --- */
+/* --- Records table ---
+   The scroll wrapper and the phone card stack are the shared table
+   pattern (components/ui/TablePattern.module.css); memory contributes
+   only its surface palette through the pattern's custom properties. */
 .tableScroll {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    composes: tableScroll from '../ui/TablePattern.module.css';
+    --table-sticky-bg: var(--memory-surface);
+    --table-sticky-hover: var(--memory-row-hover);
 }
 
 .table {
@@ -292,8 +336,12 @@
     border-bottom: none;
 }
 
-.table tbody tr:hover {
-    background: var(--memory-row-hover);
+/* Row highlight is pointer feedback only — on touch it would stick to
+   whatever row was last tapped. */
+@media (hover: hover) {
+    .table tbody tr:hover {
+        background: var(--memory-row-hover);
+    }
 }
 
 /* A superseded fact is still real — it is just no longer current. Dimmed
@@ -452,8 +500,10 @@
     transition: background var(--transition-fast);
 }
 
-.searchHit:hover {
-    background: var(--memory-row-hover);
+@media (hover: hover) {
+    .searchHit:hover {
+        background: var(--memory-row-hover);
+    }
 }
 
 .searchHitHead {
@@ -605,30 +655,26 @@
 
 /* --- Mobile: the table becomes a stack of cards --- */
 .cardStack {
-    display: none;
-    flex-direction: column;
-    gap: 0.6rem;
+    composes: cardStack from '../ui/TablePattern.module.css';
+    --tablecard-cell: var(--memory-font-size-cell);
+    --tablecard-hairline: var(--memory-hairline);
 }
 
 .tableCard {
-    border: var(--border);
-    border-radius: var(--radius-md);
-    background: var(--memory-surface);
-    overflow: hidden;
+    composes: tableCard from '../ui/TablePattern.module.css';
+    --tablecard-bg: var(--memory-surface);
+}
+
+.stickyFirst {
+    composes: stickyFirst from '../ui/TablePattern.module.css';
 }
 
 .tableCardHead {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    border-bottom: var(--memory-hairline);
-    background: rgba(26, 26, 26, 0.03);
+    composes: tableCardHead from '../ui/TablePattern.module.css';
 }
 
 .tableCardBody {
-    padding: 0.5rem 0.75rem 0.75rem;
+    composes: tableCardBody from '../ui/TablePattern.module.css';
 }
 
 .tableCardFact {
@@ -639,32 +685,7 @@
 }
 
 .tableCardRow {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.75rem;
-    border-bottom: var(--memory-hairline);
-    padding: 0.2rem 0;
-    font-size: var(--memory-font-size-cell);
-}
-
-.tableCardRow:last-child {
-    border-bottom: none;
-}
-
-.tableCardRow dt {
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    white-space: nowrap;
-}
-
-.tableCardRow dd {
-    margin: 0;
-    font-family: var(--font-family-mono);
-    font-variant-numeric: tabular-nums;
-    text-align: right;
-    word-break: break-word;
+    composes: tableCardRow from '../ui/TablePattern.module.css';
 }
 
 /* ============================================================

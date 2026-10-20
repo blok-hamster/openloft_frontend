@@ -25,8 +25,9 @@ function LoginPageContent() {
         setLoading(true);
         try {
             await login({ email, password });
-        } catch (err: any) {
-            const message = err.response?.data?.error || err.message || 'Login failed';
+        } catch (err: unknown) {
+            const cast = err as { response?: { data?: { error?: string } }; message?: string };
+            const message = cast.response?.data?.error || cast.message || 'Login failed';
             if (message.includes('not verified')) {
                 setIsVerifying(true);
             }

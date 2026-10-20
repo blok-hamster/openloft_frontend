@@ -5,47 +5,63 @@ import { useAuth } from '@/lib/AuthContext';
 import styles from './TeamSettings.module.css';
 
 export default function TeamSettingsPage() {
-  const { user } = useAuth();
+  const { token } = useAuth();
   const [styleGuide, setStyleGuide] = useState<any>({});
   const [deploymentId, setDeploymentId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  /* Errors surface here instead of dying in the console: a failed load used
+     to read exactly like an unset guide. */
+  const [error, setError] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+  /* The token lives beside the user in the auth context, not on the user
+     object — `(user as any)?.token` sent `Bearer undefined` on every call. */
+  const authHeaders = (): HeadersInit =>
+    token ? { Authorization: `Bearer ${token}` } : {};
+
   useEffect(() => {
     fetchSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchSettings = async () => {
+    setError(null);
     try {
-      const res = await fetch(`${API_URL}/api/teams`, {
-        headers: { Authorization: `Bearer ${(user as any)?.token}` },
-      });
+      const res = await fetch(`${API_URL}/api/teams`, { headers: authHeaders() });
+      if (!res.ok) throw new Error(`team lookup failed (${res.status})`);
       const deployments = await res.json();
       if (deployments.length > 0) {
         setDeploymentId(deployments[0].deploymentId);
         const guideRes = await fetch(`${API_URL}/api/teams/${deployments[0].deploymentId}/style-guide`, {
-          headers: { Authorization: `Bearer ${(user as any)?.token}` },
+          headers: authHeaders(),
         });
+        if (!guideRes.ok) throw new Error(`style guide failed (${guideRes.status})`);
         const guide = await guideRes.json();
         setStyleGuide(guide);
       }
-    } catch (error) {
-      console.error('Failed to fetch settings:', error);
+    } catch (err) {
+      console.error('Failed to fetch settings:', err);
+      setError('Failed to load your team settings. Check your connection and try again.');
     }
   };
 
   const handleSave = async () => {
     if (!deploymentId) return;
     setSaving(true);
+    setSaved(false);
     try {
-      await fetch(`${API_URL}/api/teams/${deploymentId}/style-guide`, {
+      const res = await fetch(`${API_URL}/api/teams/${deploymentId}/style-guide`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${(user as any)?.token}` },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify(styleGuide),
       });
-    } catch (error) {
-      console.error('Failed to save:', error);
+      if (!res.ok) throw new Error(`save failed (${res.status})`);
+      setSaved(true);
+    } catch (err) {
+      console.error('Failed to save:', err);
+      setError('Failed to save the style guide. Check your connection and try again.');
     } finally {
       setSaving(false);
     }
@@ -85,9 +101,23 @@ export default function TeamSettingsPage() {
           </label>
         </div>
 
-        <button onClick={handleSave} disabled={saving} className={styles.saveButton}>
+        {error && (
+          <p className={styles.sectionNote} role="alert" style={{ color: '#b91c1c' }}>
+            {error}{' '}
+            <button type="button" onClick={fetchSettings} className={styles.saveButton}>
+              Retry
+            </button>
+          </p>
+        )}
+
+        <button type="button" onClick={handleSave} disabled={saving} className={styles.saveButton}>
           {saving ? 'Saving...' : 'Save Style Guide'}
         </button>
+        {saved && !saving && (
+          <p className={styles.sectionNote} aria-live="polite">
+            Style guide saved.
+          </p>
+        )}
       </section>
 
       <section className={styles.sectionLast}>

@@ -7,10 +7,12 @@ import { useToast } from '@/components/ui/Toast';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import ConfirmDestructiveAction from '@/components/dashboard/ConfirmDestructiveAction';
 import styles from '@/components/dashboard/Dashboard.module.css';
 import lb from './LobbyList.module.css';
 import Link from 'next/link';
 import { Plus, Trash2, Users } from 'lucide-react';
+import { FEATURES } from '@/lib/features';
 
 export default function LobbyListPage() {
   const { user } = useAuth();
@@ -21,12 +23,17 @@ export default function LobbyListPage() {
   const [newName, setNewName] = useState('');
   const [availableAgents, setAvailableAgents] = useState<IAgent[]>([]);
   const [selectedAgents, setSelectedAgents] = useState<string[]>([]);
+  /* Deleting a lobby destroys its room and its drive — behind a flag but a
+     real action, and it used to fire on the first click with no talk. */
+  const [deleteTarget, setDeleteTarget] = useState<ILobby | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    if (user?.tenantId) {
-      loadLobbies();
-      loadAgents();
-    }
+    // Gated: while the lobby flag is dark the page renders the placeholder
+    // below and must not talk to the backend.
+    if (!FEATURES.lobby || !user?.tenantId) return;
+    loadLobbies();
+    loadAgents();
   }, [user?.tenantId]);
 
   const loadLobbies = async () => {
@@ -63,13 +70,18 @@ export default function LobbyListPage() {
     }
   };
 
-  const handleDeleteLobby = async (lobbyId: string) => {
+  const handleDeleteLobby = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await deleteLobby(lobbyId);
+      await deleteLobby(deleteTarget.lobbyId);
       toast('Lobby deleted', 'success');
+      setDeleteTarget(null);
       loadLobbies();
     } catch {
       toast('Failed to delete lobby', 'error');
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -78,6 +90,26 @@ export default function LobbyListPage() {
       prev.includes(agentId) ? prev.filter(id => id !== agentId) : [...prev, agentId]
     );
   };
+
+  /* The lobby ships behind its own flag until the multi-agent flow is fully
+     figured out: the sidebar has no Lobby link while dark, and this return
+     makes a bookmark, stale tab or typed URL land on the placeholder rather
+     than on live lobby UI. */
+  if (!FEATURES.lobby) {
+    return (
+      <div className={lb.page}>
+        <div className={styles.emptyState}>
+          <div className={styles.emptyIcon}><Users size={48} /></div>
+          <div className={styles.emptyTitle}>The Lobby is not open yet</div>
+          <p className={styles.emptyDescription}>
+            Multi-agent collaboration sessions are still being figured out. This
+            section opens once it is fully working — nothing else in the dashboard
+            is affected.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={lb.page}>
@@ -127,12 +159,12 @@ export default function LobbyListPage() {
                 <Link href={`/dashboard/lobby/${lobby.lobbyId}`} passHref>
                   <Button variant="ghost" size="sm">Enter Lobby</Button>
                 </Link>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  icon={<Trash2 size={12} />} 
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon={<Trash2 size={12} />}
                   className={styles.dangerButton}
-                  onClick={() => handleDeleteLobby(lobby.lobbyId)}
+                  onClick={() => setDeleteTarget(lobby)}
                 >
                   Delete
                 </Button>
@@ -141,6 +173,15 @@ export default function LobbyListPage() {
           ))}
         </div>
       )}
+
+      <ConfirmDestructiveAction
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDeleteLobby}
+        title="Delete Lobby"
+        confirmText={deleteTarget?.lobbyId || 'confirm'}
+        loading={deleting}
+      />
 
       <Modal open={showCreate} onClose={() => setShowCreate(false)} title="Create New Collaboration Lobby">
         <div className={styles.wizardSteps}>

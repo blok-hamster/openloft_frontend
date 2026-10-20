@@ -5,41 +5,40 @@ import { useParams } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { fetchLobby, sendLobbyMessage, ILobby, IAgent } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
-import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import AgentDrive from '@/components/dashboard/AgentDrive';
 import styles from '@/components/dashboard/Dashboard.module.css';
 import room from './LobbyRoom.module.css';
 import { Send, Users, HardDrive } from 'lucide-react';
 import { createSocket } from '@/lib/socket';
+import { FEATURES } from '@/lib/features';
+
+interface LobbyMessage {
+  senderName: string;
+  content: string;
+  timestamp: string;
+}
 
 export default function LobbyDetailPage() {
   const { lobbyId } = useParams();
   const { user } = useAuth();
   const { toast } = useToast();
   const [lobby, setLobby] = useState<ILobby | null>(null);
-  const [messages, setMessages] = useState<any[]>([]);
+  /* The room's own view of a feed entry — the socket payload is trusted
+     for these three fields only, and rendering code should not spread
+     wider than that. */
+  /* The room's own view of a feed entry — the socket payload is trusted
+     for these three fields only, and rendering code should not spread
+     wider than that. */
+  const [messages, setMessages] = useState<LobbyMessage[]>([]);
   const [input, setInput] = useState('');
   const [showDrive, setShowDrive] = useState(false);
   const socketRef = useRef<ReturnType<typeof createSocket> | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (lobbyId) {
-      loadLobby();
-      setupSocket();
-    }
-    return () => {
-      socketRef.current?.emit('lobby:leave', lobbyId);
-      socketRef.current?.disconnect();
-    };
-  }, [lobbyId]);
-
-  useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
+  /* Declared before the effect that calls them — the effect previously
+     referenced both above their declarations, which the compiler tolerates
+     only because they are read at invocation time, not render time. */
   const loadLobby = async () => {
     try {
       const data = await fetchLobby(lobbyId as string);
@@ -53,6 +52,7 @@ export default function LobbyDetailPage() {
     // createSocket() carries the JWT; the backend rejects an anonymous
     // handshake, so the raw io() this replaces never connected at all.
     socketRef.current = createSocket();
+
     socketRef.current.on('connect', () => {
       socketRef.current?.emit('lobby:join', lobbyId);
     });
@@ -61,10 +61,29 @@ export default function LobbyDetailPage() {
       console.warn('[Socket] Connection rejected:', err.message);
     });
 
-    socketRef.current.on('lobby:message', (msg: any) => {
+    socketRef.current.on('lobby:message', (msg: LobbyMessage) => {
       setMessages(prev => [...prev, msg]);
     });
   };
+
+  useEffect(() => {
+    // Gated: while the lobby flag is dark this page renders the placeholder
+    // and must not join the socket room or fetch the lobby.
+    if (!FEATURES.lobby || !lobbyId) return;
+    loadLobby();
+    setupSocket();
+    return () => {
+      socketRef.current?.emit('lobby:leave', lobbyId);
+      socketRef.current?.disconnect();
+    };
+    // The room effect runs per lobbyId only: the loaders are re-created
+    // every render and belong to no dependency that should rejoin the room.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lobbyId]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const handleSendMessage = async () => {
     if (!input.trim() || !user) return;
@@ -76,7 +95,33 @@ export default function LobbyDetailPage() {
     }
   };
 
+  /* Same section gate as the lobby list: a direct URL to a room must not
+     expose live lobby UI while the flag is dark. */
+  if (!FEATURES.lobby) {
+    return (
+      <div className={room.page}>
+        <div className={styles.emptyState}>
+          <div className={styles.emptyIcon}><Users size={48} /></div>
+          <div className={styles.emptyTitle}>The Lobby is not open yet</div>
+          <p className={styles.emptyDescription}>
+            Multi-agent collaboration sessions are still being figured out. This
+            section opens once it is fully working.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (!lobby) return <div className={room.loading}>Loading lobby...</div>;
+
+  /* Who to show in the sidebar: embedded agent records when the document
+     carries them, ids otherwise. No `as IAgent[]` over a string[]. */
+  const presentAgents = Array.isArray(lobby.agentIds)
+    ? lobby.agentIds.filter((a): a is IAgent => typeof a === 'object' && a !== null)
+    : [];
+  const presentAgentStrings = Array.isArray(lobby.agentIds)
+    ? lobby.agentIds.filter((a): a is string => typeof a === 'string')
+    : [];
 
   return (
     <div className={room.page}>
@@ -99,10 +144,22 @@ export default function LobbyDetailPage() {
         <div className={room.agentPanel}>
           <h3 className={`${styles.headerSubtitle} ${room.agentPanelTitle}`}>Agents present</h3>
           <div className={room.agentList}>
-            {(lobby.agentIds as IAgent[]).map(agent => (
-              <div key={agent._id} className={room.agentRow}>
+            {presentAgents.length === 0 && !presentAgentStrings.length && (
+              <div className={room.agentName}>No agents have joined yet.</div>
+            )}
+            {presentAgents.map(agent => (
+              <div key={agent.agentId} className={room.agentRow}>
                 <div className={agent.status === 'running' ? room.agentDotRunning : room.agentDotStopped} />
                 <span className={room.agentName}>{agent.name || agent.agentId}</span>
+              </div>
+            ))}
+            {/* The schema is a union: `agentIds` arrives as either ids or embedded
+               agent records depending on the writer. Casts hid that; the room
+               renders whichever half it actually received. */}
+            {presentAgentStrings.map(id => (
+              <div key={id} className={room.agentRow}>
+                <div className={room.agentDotStopped} />
+                <span className={room.agentName}>{id}</span>
               </div>
             ))}
           </div>
@@ -142,23 +199,27 @@ export default function LobbyDetailPage() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
             />
-            <Button variant="primary" size="sm" onClick={handleSendMessage} disabled={!input.trim()}>
-              <Send size={14} />
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleSendMessage}
+              disabled={!input.trim()}
+              aria-label="Send message"
+            >
+              <Send size={14} aria-hidden />
             </Button>
           </div>
         </div>
       </div>
 
-      <Modal open={showDrive} onClose={() => setShowDrive(false)} title="Lobby Shared Drive">
-        <div className={room.driveScroll}>
-          <AgentDrive 
-            agent={{ agentId: lobby.lobbyId } as any} 
-            open={showDrive} 
-            onClose={() => setShowDrive(false)} 
-            // In a real implementation, we'd pass the special drivePrefix here
-          />
-        </div>
-      </Modal>
+      {/* AgentDrive owns its modal — wrapping it in another one stacked two
+          scrims and two Esc handlers over the same overlay. */}
+      <AgentDrive
+        agent={{ agentId: lobby.lobbyId } as IAgent}
+        open={showDrive}
+        onClose={() => setShowDrive(false)}
+        // In a real implementation, we'd pass the special drivePrefix here
+      />
     </div>
   );
 }

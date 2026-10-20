@@ -5,7 +5,8 @@ import { ReactNode, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
-import { Brain, KeyRound, LogOut, Menu, ScrollText, X, Plus, Activity, Share2, TrendingDown, FlaskConical } from 'lucide-react';
+import { useDrawerFocus } from '@/lib/useDrawerFocus';
+import { Brain, CreditCard, KeyRound, LogOut, Menu, ScrollText, X, Plus, Share2, FlaskConical } from 'lucide-react';
 import styles from '@/components/dashboard/Dashboard.module.css';
 import shell from './MemoryShell.module.css';
 import FeatureGate from '@/components/FeatureGate';
@@ -15,29 +16,37 @@ import { isAccountAreaEnabled } from '@/lib/features';
 /**
  * The hosted memory service is a product of its own, not a section of the
  * agent console, so it gets a shell of its own: /memory is the service's
- * dashboard and /dashboard stays the agent's. The two shells share nothing in
- * their section lists — the ProductSwitcher above them is the single bridge
- * between the products, so a user never types a URL to hop services. The
- * auth and drawer mechanics are deliberately identical so a user with both
- * products does not have to relearn how the sidebar behaves.
+ * dashboard and /dashboard stays the agent's. The section lists stay
+ * service-specific — the ProductSwitcher above them is the bridge between
+ * the products — and the one deliberate exception is Billing below: the
+ * tenant's subscription and credit balance is a single shared surface (the
+ * backend debits the same Tenant.billing for agent runs and memory usage),
+ * so both shells link the same page rather than shipping two billing UIs.
+ * The auth and drawer mechanics are deliberately identical so a user with
+ * both products does not have to relearn how the sidebar behaves.
  *
- * The sections are the service's own surface: the chat endpoints are behind
- * Playground, and the rest is the read-only observability over records,
- * events, the entity graph and decay projections.
+ * The sections are the service's own surface, kept to the five the user
+ * actually navigates between: the console home, one observability page
+ * (Records folds Events and Decay into tabs beside the fact list), the
+ * entity graph as it is drawn, the chat endpoints behind Playground, and
+ * Keys/Connections for wiring clients.
  */
 export const memoryNavItems = [
     { href: '/memory', label: 'Console', icon: Brain },
     { href: '/memory/records', label: 'Records', icon: ScrollText },
-    { href: '/memory/events', label: 'Events', icon: Activity },
     { href: '/memory/graph', label: 'Graph', icon: Share2 },
-    { href: '/memory/decay', label: 'Decay', icon: TrendingDown },
     { href: '/memory/playground', label: 'Playground', icon: FlaskConical },
     { href: '/memory/connections', label: 'Connections', icon: KeyRound },
+    /* Shared with the agent shell on purpose — see the comment above. */
+    { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
 ];
 
-/** Exact match for the root, prefix match for nested routes, so
- *  /memory/connections still highlights Connections. */
+/* Exact match for the section root, prefix match for nested routes, so
+ *  /memory/records highlights Records — and /memory highlights Console on
+ *  its own page only: two simultaneously current links is a lying
+ *  navigation landmark, not a highlight style. */
 function isRouteActive(pathname: string, href: string) {
+    if (href === '/memory') return pathname === href;
     return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -57,7 +66,13 @@ export default function MemoryLayout({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (!isAccountAreaEnabled()) return;
         if (!isLoading && !user) {
-            router.replace('/auth/login');
+            // The destination rides along: ?redirect= means a sign-in puts
+            // the reader back where they were, not at /dashboard. Read off
+            // window.location rather than the useSearchParams hook — a
+            // layout can statically render, and the hook then demands a
+            // Suspense boundary this shell has no need to carry.
+            const here = `${window.location.pathname}${window.location.search}`;
+            router.replace(`/auth/login?redirect=${encodeURIComponent(here)}`);
             return;
         }
         if (!isLoading && user && !user.tenantId) {
@@ -65,26 +80,13 @@ export default function MemoryLayout({ children }: { children: ReactNode }) {
         }
     }, [user, isLoading, router]);
 
-    /* Escape closes, and focus returns to the trigger. */
-    useEffect(() => {
-        if (!navOpen) return;
-        const onKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                setNavOpen(false);
-                menuButtonRef.current?.focus();
-            }
-        };
-        document.addEventListener('keydown', onKey);
-        return () => document.removeEventListener('keydown', onKey);
-    }, [navOpen]);
-
-    /* Move focus into the drawer when it opens so keyboard users land
-     * on the nav rather than staying behind the scrim. */
-    useEffect(() => {
-        if (navOpen) {
-            drawerRef.current?.querySelector<HTMLAnchorElement>('a')?.focus();
-        }
-    }, [navOpen]);
+    /* Escape closes, and focus returns to the trigger. Tab stays inside:
+       the drawer promises aria-modal, and a Tab that leaks through the
+       scrim is a modal that lied (shared with the agent shell). */
+    useDrawerFocus(navOpen, drawerRef, menuButtonRef, () => {
+        setNavOpen(false);
+        menuButtonRef.current?.focus();
+    });
 
     /* Lock background scroll while the drawer is open. */
     useEffect(() => {

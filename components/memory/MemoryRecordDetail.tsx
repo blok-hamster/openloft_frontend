@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { MemoryRecord, MemoryRecordSource } from '@/lib/api';
+import type { MemoryDecayCurve, MemoryRecord, MemoryRecordSource, MemoryScopeParams } from '@/lib/api';
 import { getMemoryRecordSource } from '@/lib/api';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import SkeletonLoader from '@/components/ui/SkeletonLoader';
 import MemoryTypeBadge from './MemoryTypeBadge';
 import WeightMeter from './WeightMeter';
-import { formatTurn, memoryErrorMessage } from './memoryFormat';
+import DecaySparkline from './DecaySparkline';
+import { formatTurn, formatWeight, memoryErrorMessage } from './memoryFormat';
 import styles from './Memory.module.css';
 
 interface MemoryRecordDetailProps {
@@ -14,6 +15,13 @@ interface MemoryRecordDetailProps {
   open: boolean;
   onClose: () => void;
   onForget: (record: MemoryRecord) => void;
+  /** The record's decay projection, when the caller has it — a curve without
+   *  its threshold needs the prune line to be readable, so both travel
+   *  together. Optional: surfaces that never fetched one skip the block. */
+  decay?: { curve: MemoryDecayCurve; threshold: number; turnsAhead: number } | null;
+  /** Sub-scope the record was read from; the source fetch must query the same
+   *  store or the drawer answers with a 404 for a record that exists. */
+  scope?: MemoryScopeParams;
 }
 
 /**
@@ -30,6 +38,8 @@ export default function MemoryRecordDetail({
   open,
   onClose,
   onForget,
+  decay = null,
+  scope,
 }: MemoryRecordDetailProps) {
   const [source, setSource] = useState<MemoryRecordSource | null>(null);
   const [loading, setLoading] = useState(false);
@@ -51,7 +61,7 @@ export default function MemoryRecordDetail({
     setError(null);
     setSource(null);
 
-    getMemoryRecordSource(record.id)
+    getMemoryRecordSource(record.id, scope)
       .then((data) => {
         if (live) setSource(data);
       })
@@ -65,7 +75,7 @@ export default function MemoryRecordDetail({
     return () => {
       live = false;
     };
-  }, [open, record]);
+  }, [open, record, scope]);
 
   if (!record) return null;
 
@@ -155,6 +165,37 @@ export default function MemoryRecordDetail({
             </>
           )}
         </div>
+
+        {decay && (
+          <div className={styles.subPanel}>
+            <div className={styles.subPanelTitle}>Decay projection</div>
+            <p className={styles.caption}>
+              Weight over the next {decay.turnsAhead} turns under the engine&rsquo;s own law,
+              projected from now — asking for the curve does not move it.
+            </p>
+            <DecaySparkline
+              points={decay.curve.points}
+              threshold={decay.threshold}
+              ariaLabel={`${record.entity_name} decays from ${formatWeight(
+                decay.curve.current_weight,
+              )} to ${
+                formatWeight(
+                  decay.curve.points[decay.curve.points.length - 1]?.weight ??
+                    decay.curve.current_weight,
+                )
+              } over ${decay.turnsAhead} turns.`}
+            />
+            <p className={styles.caption}>
+              now {formatWeight(decay.curve.current_weight)} → +{decay.turnsAhead}{' '}
+              {formatWeight(
+                decay.curve.points[decay.curve.points.length - 1]?.weight ??
+                  decay.curve.current_weight,
+              )}
+              {' · '}λ-index {decay.curve.consolidation_index}. The dashed line is the prune
+              threshold.
+            </p>
+          </div>
+        )}
 
         <div className={styles.subPanel}>
           <div className={styles.subPanelTitle}>Source turns</div>

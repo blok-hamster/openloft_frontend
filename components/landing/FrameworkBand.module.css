@@ -102,10 +102,12 @@
   border: 1px solid var(--border);
 }
 
-.primary:hover,
-.secondary:hover {
-  transform: scale(1.03);
-  opacity: 0.9;
+@media (hover: hover) {
+  .primary:hover,
+  .secondary:hover {
+    transform: scale(1.03);
+    opacity: 0.9;
+  }
 }
 
 /* ------------------------------------------------------------- integrations */
@@ -249,4 +251,13 @@
   font-size: var(--font-size-xs);
   color: var(--text-secondary);
   line-height: 1.6;
+}
+
+/* Both other bands step their container to 1rem of edge padding at 480px;
+   they already own that rule. This band does not, and 2rem of padding is a
+   fifth of a 320px screen. */
+@media (max-width: 480px) {
+  .container {
+    padding: 0 1rem;
+  }
 }

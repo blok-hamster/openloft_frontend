@@ -129,7 +129,62 @@
 
 ---
 
-## 9. LLM Prompt Usage
+## 9. Responsive & Touch Conventions
+
+These are the mobile rules the codebase now runs on. They are enforced by
+`frontend/tests/mobile-invariants.test.ts` — breaking them fails CI, not a
+review.
+
+### Breakpoints — two, and only two
+- **`max-width: 900px`** — the desktop→mobile boundary: shell chrome (bottom
+  bar, drawers), form factors, modal→bottom-sheet, table card stacks for
+  admin, touch floors engage.
+- **`max-width: 480px`** — the phone data boundary: tables become card
+  stacks, hero/type steps compress, action rows go full-width.
+- No other breakpoints. Combined queries are allowed only as
+  `900px and (hover: hover)`-style feature conjunctions. `768`, `600`,
+  `1100` reintroduction is a test failure. The whitelisted global helpers:
+  `min-width: 560px`, `hover: hover` / `hover: none`,
+  `prefers-reduced-motion`, `forced-colors`, `print`, `landscape`.
+
+### Touch
+- Every tappable control is ≥44px under 900px — `min-height:
+  var(--touch-target)` (pills, tabs, list rows, copy buttons, close
+  buttons). Keyboard/AT affordances (Escape, focus) are never removed;
+  touch extras (drag strips) are additions, not replacements.
+- Hover is never the only affordance. `:hover` styles live inside
+  `@media (hover: hover)`; row/element highlight is pointer feedback only,
+  so a touch tap can't weld a state to the screen.
+
+### Forms
+- Inputs, textareas and selects are ≥16px — below that iOS Safari
+  auto-zooms on focus. `--font-size-base` never drops below 1rem under 900.
+- Pinch-zoom is never capped in the viewport meta (`maximumScale` stays
+  unset).
+
+### Heights & fixed chrome
+- In-page sections avoid `100vh`/`100dvh`; use `min-height: 100%` and let
+  the shell own any viewport clearance, or clearance composes twice and
+  content sinks under the bar. Compose fixed offsets the same way:
+  toast/bottom-bar geometry includes `var(--touch-target)` and
+  `env(safe-area-inset-bottom)`.
+
+### Structures to reach for
+- **Tables → cards**: compose `components/ui/TablePattern.module.css`
+  (scroll wrapper, sticky first column ≤900, card skeleton); point its
+  custom properties at your surface palette — do not fork the CSS per
+  page. The visibility switch (which breakpoint hides which rendering)
+  stays local to the page module.
+- **Modals**: ≤900 render as bottom sheets with a grab strip
+  (drag-to-dismiss: quarter height or a fast flick); X, scrim and Escape
+  remain for everyone else.
+- **Graphs/canvas**: `touch-action` declares intention — `pan-y` on the
+  canvas so the page still scrolls, `none` on interactive nodes, and any
+  hit area invisible to the eye but generous to the finger.
+
+---
+
+## 10. LLM Prompt Usage
 
 When feeding this to an LLM for design generation, use this context:
 

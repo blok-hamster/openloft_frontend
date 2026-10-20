@@ -147,11 +147,6 @@ export default function ConnectionsPage() {
       <header className={styles.header}>
         <div>
           <h1 className={styles.title}>Connections</h1>
-          <p className={styles.subtitle}>
-            A connection is how an application reaches this workspace&rsquo;s memory. Mint a key,
-            point a harness or a client at the endpoint below, and it reads and writes the same
-            memory you see in the console.
-          </p>
         </div>
         <Button variant="primary" size="md" icon={<Plus size={15} />} onClick={() => setMintOpen(true)}>
           New connection
@@ -189,42 +184,86 @@ export default function ConnectionsPage() {
             service.
           </div>
         ) : (
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th scope="col">Label</th>
-                <th scope="col">Key</th>
-                <th scope="col">Scopes</th>
-                <th scope="col">Created</th>
-                <th scope="col" aria-label="Actions" />
-              </tr>
-            </thead>
-            <tbody>
+          <>
+            {/* Between the phone cutoff and full width the five columns
+                scroll sideways instead of being clipped by the page. */}
+            <div className={`${styles.tableScroll} ${styles.stickyFirst}`}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th scope="col">Label</th>
+                    <th scope="col">Key</th>
+                    <th scope="col">Scopes</th>
+                    <th scope="col">Created</th>
+                    <th scope="col" aria-label="Actions" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {connections.map((c) => (
+                    <tr key={c.keyId}>
+                      <td className={styles.labelCell}>{c.label}</td>
+                      <td>
+                        <code className={styles.keyCell}>{c.keyPrefix}</code>
+                      </td>
+                      <td>
+                        <span className={styles.scopeList}>{c.scopes.join(', ')}</span>
+                      </td>
+                      <td className={styles.dateCell}>{new Date(c.createdAt).toLocaleString()}</td>
+                      <td className={styles.actionsCell}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          icon={<Trash2 size={14} />}
+                          onClick={() => setRevoking(c)}
+                          aria-label={`Revoke ${c.label}`}
+                        >
+                          Revoke
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* The same connections as cards: five columns do not fit a
+                phone. Shapes mirror the records card stack. */}
+            <div className={styles.cardStack}>
               {connections.map((c) => (
-                <tr key={c.keyId}>
-                  <td className={styles.labelCell}>{c.label}</td>
-                  <td>
+                <div key={c.keyId} className={styles.tableCard}>
+                  <div className={styles.tableCardHead}>
+                    <span className={styles.labelCell}>{c.label}</span>
                     <code className={styles.keyCell}>{c.keyPrefix}</code>
-                  </td>
-                  <td>
-                    <span className={styles.scopeList}>{c.scopes.join(', ')}</span>
-                  </td>
-                  <td className={styles.dateCell}>{new Date(c.createdAt).toLocaleString()}</td>
-                  <td className={styles.actionsCell}>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      icon={<Trash2 size={14} />}
-                      onClick={() => setRevoking(c)}
-                      aria-label={`Revoke ${c.label}`}
-                    >
-                      Revoke
-                    </Button>
-                  </td>
-                </tr>
+                  </div>
+                  <div className={styles.tableCardBody}>
+                    <dl>
+                      <div className={styles.tableCardRow}>
+                        <dt>Scopes</dt>
+                        <dd>
+                          <span className={styles.scopeList}>{c.scopes.join(', ')}</span>
+                        </dd>
+                      </div>
+                      <div className={styles.tableCardRow}>
+                        <dt>Created</dt>
+                        <dd>{new Date(c.createdAt).toLocaleString()}</dd>
+                      </div>
+                    </dl>
+                    <div className={styles.detailActions}>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        icon={<Trash2 size={14} />}
+                        onClick={() => setRevoking(c)}
+                        aria-label={`Revoke ${c.label}`}
+                      >
+                        Revoke
+                      </Button>
+                    </div>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </>
         )}
       </Card>
 

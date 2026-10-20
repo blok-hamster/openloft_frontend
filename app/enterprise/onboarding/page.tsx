@@ -24,7 +24,7 @@ function EnterpriseOnboardingInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tier = searchParams.get('tier') || 'starter';
-  const { user } = useAuth();
+  const { user, token } = useAuth();
 
   const [currentStep, setCurrentStep] = useState(0);
   const [deploymentId, setDeploymentId] = useState<string | null>(null);
@@ -36,11 +36,19 @@ function EnterpriseOnboardingInner() {
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+  /* The token lives next to the user in the auth context, not on the user
+     object: `(user as any)?.token` sent `Bearer undefined`, so this flow
+     never authenticated a single request. Same fix as the team pages. */
+  const authHeaders = (): HeadersInit => ({
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  });
+
   const handleStartOnboarding = async () => {
     const res = await fetch(`${API_URL}/api/enterprise/onboarding/start`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${(user as any)?.token}` },
-      body: JSON.stringify({ tenantId: (user as any)?.tenantId, templateId: `enterprise-sales-${tier}` }),
+      headers: authHeaders(),
+      body: JSON.stringify({ tenantId: user?.tenantId, templateId: `enterprise-sales-${tier}` }),
     });
     const data = await res.json();
     setDeploymentId(data.deploymentId);
@@ -66,17 +74,17 @@ function EnterpriseOnboardingInner() {
     if (!deploymentId) return;
     await fetch(`${API_URL}/api/enterprise/onboarding/${deploymentId}/discovery`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${(user as any)?.token}` },
+      headers: authHeaders(),
       body: JSON.stringify(formData.discovery),
     });
     await fetch(`${API_URL}/api/enterprise/onboarding/${deploymentId}/integrations`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${(user as any)?.token}` },
+      headers: authHeaders(),
       body: JSON.stringify(formData.integrations),
     });
     await fetch(`${API_URL}/api/enterprise/onboarding/${deploymentId}/deploy`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${(user as any)?.token}` },
+      headers: authHeaders(),
     });
     router.push('/dashboard/team');
   };

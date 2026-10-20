@@ -1,0 +1,124 @@
+/* ============================================================
+   Table pattern (shared)
+   The one "real table on desktop → the same rows as cards on a
+   phone" composition. Surfaces compose this skeleton into their
+   own CSS module and point the custom properties at their surface
+   palette when it differs from the default; the module-integrity
+   test keeps every composed name defined locally, so a composes
+   can never silently unstyle a consumer.
+
+     --tablecard-border    card edge            (default: var(--border))
+     --tablecard-bg        card face            (default: transparent)
+     --tablecard-hairline  inner separators     (default: 7% ink)
+     --tablecard-cell      row/dl face size     (default: var(--font-size-xs))
+     --tablecard-gap       stack gap            (default: 0.6rem)
+     --table-sticky-bg     sticky-col face      (default: var(--white))
+     --table-sticky-hover  sticky col on hover  (default: 3% ink)
+
+   The visibility switch (which breakpoint hides which rendering) stays
+   with the consumers on purpose: admin swaps its tables at 900, memory
+   and connections at 480 — one shared number here would silently move
+   all three.
+   ============================================================ */
+
+.tableScroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    /* Sideways scroll stays sideways: no chaining into the page. */
+    overscroll-behavior: contain;
+}
+
+/* Between the phone cutoff and full width a wrapped table keeps its
+   first column pinned while the rest slides — a row whose identity you
+   cannot see while reading its values is a table you scroll blind.
+   Scoped ≤900 on purpose: at full width the table fits, so sticky
+   positioning would only draw its edge shadow. */
+.stickyFirst {
+    position: relative;
+}
+
+@media (max-width: 900px) {
+    .stickyFirst th:first-child,
+    .stickyFirst td:first-child {
+        position: sticky;
+        left: 0;
+        background: var(--table-sticky-bg, var(--white));
+        /* The edge that replaces the cell border the pinned column now
+           sits over. Own value — the hairline custom properties carry
+           full `border` shorthands, which are invalid inside a shadow. */
+        box-shadow: -1px 0 0 rgba(26, 26, 26, 0.12);
+        z-index: 1;
+    }
+}
+
+@media (max-width: 900px) and (hover: hover) {
+    .stickyFirst tbody tr:hover td:first-child {
+        background: var(--table-sticky-hover, rgba(26, 26, 26, 0.03));
+    }
+}
+
+.cardStack {
+    display: none;
+    flex-direction: column;
+    gap: var(--tablecard-gap, 0.6rem);
+}
+
+.tableCard {
+    border: var(--tablecard-border, var(--border));
+    border-radius: var(--radius-md);
+    background: var(--tablecard-bg, transparent);
+    overflow: hidden;
+}
+
+.tableCardHead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-bottom: var(--tablecard-hairline, rgba(26, 26, 26, 0.07));
+    background: rgba(26, 26, 26, 0.03);
+}
+
+.tableCardBody {
+    padding: 0.5rem 0.75rem 0.75rem;
+}
+
+.tableCardBody dl {
+    margin: 0;
+}
+
+.tableCardRow {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border-bottom: var(--tablecard-hairline, rgba(26, 26, 26, 0.07));
+    padding: 0.2rem 0;
+    font-size: var(--tablecard-cell, var(--font-size-xs));
+}
+
+.tableCardRow:last-child {
+    border-bottom: none;
+}
+
+.tableCardRow dt {
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+.tableCardRow dd {
+    margin: 0;
+    font-family: var(--font-family-mono);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    word-break: break-word;
+}
+
+.detailActions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.45rem;
+}

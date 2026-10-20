@@ -97,6 +97,21 @@ const providerModels: Record<string, { label: string; models: ModelOption[] }> =
             { value: 'codestral-latest', label: 'Codestral' },
         ],
     },
+    openrouter: {
+        label: 'OpenRouter',
+        models: [
+            // Vendor-prefixed ids in OpenRouter's catalogue. VERIFIED against
+            // GET /api/v1/models with the platform's OpenRouter key (2026-10):
+            // every id below is present. OpenRouter adds models constantly;
+            // these are the stable popular ones, not the whole catalogue.
+            { value: 'openai/gpt-4o-mini', label: 'GPT-4o Mini' },
+            { value: 'anthropic/claude-sonnet-4.5', label: 'Claude Sonnet 4.5' },
+            { value: 'anthropic/claude-haiku-4.5', label: 'Claude Haiku 4.5' },
+            { value: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+            { value: 'meta-llama/llama-3.3-70b-instruct', label: 'Llama 3.3 70B' },
+            { value: 'deepseek/deepseek-chat-v3.1', label: 'DeepSeek V3.1 Chat' },
+        ],
+    },
 };
 
 export default function AgentCreationWizard({ open, onClose, onCreated }: AgentCreationWizardProps) {
@@ -121,20 +136,38 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
     const [customSecret, setCustomSecret] = useState('');
     const [saveToSecretManager, setSaveToSecretManager] = useState(true);
     const [availableTenantSecrets, setAvailableTenantSecrets] = useState<string[]>([]);
+    /* The provisioning request (providers, secrets, harness registry) used to
+       `.catch(() => {})` — a failed fetch left the wizard on defaults and let
+       users advance against a runtime it knew nothing about. */
+    const [provisionError, setWardrobeError] = useState(false);
+    const [provisionLoading, setWardrobeLoading] = useState(false);
 
     // Fetch available providers and tenant secrets
-    useEffect(() => {
-        if (open && user?.tenantId) {
-            Promise.all([
+    const loadProvisioning = async () => {
+        if (!user?.tenantId) return;
+        setWardrobeLoading(true);
+        setWardrobeError(false);
+        try {
+            const [providers, secrets, h] = await Promise.all([
                 getAvailableProviders(),
                 import('@/lib/api').then(m => m.getTenantSecretsInfo(user.tenantId)),
                 import('@/lib/api').then(m => m.getHarnesses())
-            ]).then(([providers, secrets, h]) => {
-                setAvailableProviders(providers);
-                setAvailableTenantSecrets(secrets);
-                setHarnesses(h);
-            }).catch(() => {});
+            ]);
+            setAvailableProviders(providers);
+            setAvailableTenantSecrets(secrets);
+            setHarnesses(h);
+        } catch {
+            setWardrobeError(true);
+        } finally {
+            setWardrobeLoading(false);
         }
+    };
+
+    useEffect(() => {
+        if (open && user?.tenantId) {
+            loadProvisioning();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, user?.tenantId]);
 
     // Filter providers based on billing strategy
@@ -161,6 +194,9 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
         setLlmProvider(value);
         const firstModel = providerModels[value]?.models[0]?.value ?? '';
         setModel(firstModel);
+        /* A key typed for the previous provider must not ride along: the
+           deploy would save e.g. an OpenAI key under ANTHROPIC_API_KEY. */
+        setCustomSecret('');
     };
 
     const hasSavedKeyForProvider = useMemo(() => {
@@ -172,6 +208,7 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
             deepseek: 'DEEPSEEK_API_KEY',
             xai: 'XAI_API_KEY',
             mistral: 'MISTRAL_API_KEY',
+            openrouter: 'OPENROUTER_API_KEY',
             'azure-openai': 'AZURE_OPENAI_API_KEY'
         };
         const keyName = providerKeyMap[llmProvider];
@@ -193,6 +230,7 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
                 deepseek: 'DEEPSEEK_API_KEY',
                 xai: 'XAI_API_KEY',
                 mistral: 'MISTRAL_API_KEY',
+                openrouter: 'OPENROUTER_API_KEY',
                 'azure-openai': 'AZURE_OPENAI_API_KEY'
             };
             
@@ -249,6 +287,17 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
                     <div className={`${styles.headerTitle} ${wiz.stepHeading}`}>
                         Choose Agent Runtime
                     </div>
+                    {provisionError && (
+                        <div className={`${styles.agentMetaItem} ${wiz.keyHint}`} role="alert">
+                            Could not load the runtime registry — the list below may be empty or
+                            stale, and deploying against a guessed runtime fails later anyway.
+                            <div style={{ marginTop: '0.5rem' }}>
+                                <Button variant="secondary" size="sm" loading={provisionLoading} onClick={loadProvisioning}>
+                                    Retry
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                     <AgentTypeSelector
                         value={agentType}
                         onChange={setAgentType}
@@ -315,6 +364,17 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
 
             {step === 3 && (
                 <div className={styles.wizardSteps}>
+                    {provisionError && (
+                        <div className={`${styles.agentMetaItem} ${wiz.keyHint}`} role="alert">
+                            Could not load the provider list — catalog favourites may be
+                            hidden until this loads.
+                            <div style={{ marginTop: '0.5rem' }}>
+                                <Button variant="secondary" size="sm" loading={provisionLoading} onClick={loadProvisioning}>
+                                    Retry
+                                </Button>
+                            </div>
+                        </div>
+                    )}
                     <Select
                         label="LLM Provider"
                         value={llmProvider}
@@ -358,13 +418,23 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
                             </div>
 
                             {!useSavedKey ? (
-                                <Input
-                                    label={`${providerModels[llmProvider]?.label} API Key`}
-                                    type="password"
-                                    placeholder="sk-..."
-                                    value={customSecret}
-                                    onChange={(e) => setCustomSecret(e.target.value)}
-                                />
+                                <>
+                                    <Input
+                                        label={`${providerModels[llmProvider]?.label} API Key`}
+                                        type="password"
+                                        placeholder="sk-..."
+                                        value={customSecret}
+                                        onChange={(e) => setCustomSecret(e.target.value)}
+                                    />
+                                    <label className={`${styles.agentMetaItem} ${wiz.keyHint}`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={saveToSecretManager}
+                                            onChange={(e) => setSaveToSecretManager(e.target.checked)}
+                                        />
+                                        {' '}Store this key in your Vault for future deploys
+                                    </label>
+                                </>
                             ) : hasSavedKeyForProvider && (
                                 <div className={`${styles.agentMetaItem} ${wiz.keyHint}`}>
                                     Using saved {providerModels[llmProvider]?.label} key from Vault.
@@ -375,7 +445,15 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
 
                     <div className={styles.wizardActions}>
                         <Button variant="ghost" onClick={() => setStep(3)}>Back</Button>
-                        <Button variant="primary" onClick={() => setStep(5)} disabled={!model || (!usePlatformCredits && !useSavedKey && !customSecret)}>
+                        <Button
+                            variant="primary"
+                            onClick={() => setStep(5)}
+                            /* The old gate allowed "Use Saved Key (None)" to
+                               pass: with no vault key and an empty field the
+                               deploy went out keyless. The credential now has
+                               to exist before the review step. */
+                            disabled={!model || (!usePlatformCredits && !hasSavedKeyForProvider && !customSecret.trim())}
+                        >
                             Next: Review
                         </Button>
                     </div>

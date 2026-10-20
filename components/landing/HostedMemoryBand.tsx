@@ -2,8 +2,7 @@ import Link from 'next/link';
 import { ArrowRight, Check, Clock, Server, Wrench } from 'lucide-react';
 import styles from './HostedMemoryBand.module.css';
 import { isAccountAreaEnabled } from '@/lib/features';
-
-type Status = 'live' | 'built' | 'committed' | 'announced';
+import { ProductStatus, STATUS_META, DEPLOYMENT_STATUS } from '@/lib/productStatus';
 
 /**
  * The hosted memory tier.
@@ -52,48 +51,17 @@ type Status = 'live' | 'built' | 'committed' | 'announced';
  * ---------------------------------------------------------------------------
  */
 
-const STATUS_META: Record<
-    Status,
-    { label: string; bare: string; title: string; accent: boolean }
-> = {
-    live: {
-        label: 'Available',
-        bare: 'Live',
-        title: 'Running and available to customers today.',
-        accent: true,
-    },
-    built: {
-        label: 'In build',
-        bare: 'Built',
-        title:
-            'Written and covered by tests in this repo. Not deployed for customers: not in the production compose stack, and no tenant credentials provisioned.',
-        accent: true,
-    },
-    committed: {
-        label: 'Committed',
-        bare: 'Committed',
-        title: 'Scoped and committed. Not built, not shipped.',
-        accent: false,
-    },
-    announced: {
-        label: 'Announced',
-        bare: 'Announced',
-        title: 'Announced publicly. No implementation exists in the repository yet.',
-        accent: false,
-    },
-};
-
 const FORMATS: Array<{
     name: string;
     blurb: string;
-    status: Status;
+    status: ProductStatus;
     points: string[];
     note: string;
 }> = [
     {
         name: 'Managed',
         blurb: 'Multi-tenant, run by us. One key per tenant, isolated by construction.',
-        status: 'built',
+        status: DEPLOYMENT_STATUS.managed,
         points: [
             'No vector database to provision',
             'Bring your own LLM key, or use platform credits',
@@ -105,7 +73,7 @@ const FORMATS: Array<{
     {
         name: 'Your VPC',
         blurb: 'Managed Helm charts for EKS, GKE and AKS, in your cloud account.',
-        status: 'announced',
+        status: DEPLOYMENT_STATUS.vpc,
         points: [
             'No chart in the repository yet',
             'Your network, your account',
@@ -116,7 +84,7 @@ const FORMATS: Array<{
     {
         name: 'On-premise',
         blurb: 'A container bundle running next to your own inference — vLLM, Ollama.',
-        status: 'announced',
+        status: DEPLOYMENT_STATUS['on-premise'],
         points: [
             'No appliance or bundle exists yet',
             'Target property: nothing leaves the building',
@@ -127,7 +95,7 @@ const FORMATS: Array<{
     {
         name: 'Air-gapped / classified',
         blurb: 'Zero network egress. Local embeddings, local models, offline bundle.',
-        status: 'announced',
+        status: DEPLOYMENT_STATUS['air-gapped'],
         points: [
             'No offline bundle exists yet',
             'No verified no-egress build exists yet',
@@ -137,13 +105,13 @@ const FORMATS: Array<{
     },
 ];
 
-const CONTROLS = [
-    { label: 'Tenant isolation by credential', state: 'built' as Status },
-    { label: 'Bounded per-tenant resources', state: 'built' as Status },
-    { label: 'SSO / OIDC and role-based access', state: 'committed' as Status },
-    { label: 'Access audit log with actor identity', state: 'committed' as Status },
-    { label: 'Right-to-erasure with certificate', state: 'committed' as Status },
-    { label: 'Support SLA and named engineer', state: 'committed' as Status },
+const CONTROLS: Array<{ label: string; state: ProductStatus }> = [
+    { label: 'Tenant isolation by credential', state: DEPLOYMENT_STATUS.managed },
+    { label: 'Bounded per-tenant resources', state: DEPLOYMENT_STATUS.managed },
+    { label: 'SSO / OIDC and role-based access', state: 'committed' },
+    { label: 'Access audit log with actor identity', state: 'committed' },
+    { label: 'Right-to-erasure with certificate', state: 'committed' },
+    { label: 'Support SLA and named engineer', state: 'committed' },
 ];
 
 export default function HostedMemoryBand() {
@@ -221,7 +189,7 @@ export default function HostedMemoryBand() {
     );
 }
 
-function Badge({ status, bare = false }: { status: Status; bare?: boolean }) {
+function Badge({ status, bare = false }: { status: ProductStatus; bare?: boolean }) {
     const meta = STATUS_META[status];
     const Icon = status === 'live' ? Check : status === 'built' ? Wrench : Clock;
     const tone = meta.accent ? styles.badgeAccent : styles.badgeMuted;

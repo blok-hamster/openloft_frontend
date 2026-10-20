@@ -1,16 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { IAgent } from '@/lib/api';
+import {
+    IAgent,
+    getAgentChannels,
+    approveAgentChannel,
+    saveAgentChannels,
+} from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import styles from './Dashboard.module.css';
 import soc from './SocialConnections.module.css';
-import axios from 'axios';
-
-const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+import { MessageCircle, MessagesSquare, Send, Slack as SlackIcon } from 'lucide-react';
 
 interface SocialConnectionsProps {
     agent: IAgent | null;
@@ -18,6 +21,8 @@ interface SocialConnectionsProps {
     onClose: () => void;
 }
 
+/* Icons replace the emoji set: the emoji never carried meaning beyond the
+   name next to it and read as decoration rather than UI. */
 interface ChannelState {
     discord: { token: string };
     telegram: { token: string };
@@ -39,19 +44,34 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
     const [pairingCodes, setPairingCodes] = useState<Record<string, string>>({});
     const [pairing, setPairing] = useState<Record<string, boolean>>({});
     const [activeChannels, setActiveChannels] = useState<Record<string, boolean>>({});
+    /* What the user touched this session. The GET only reports which
+       channels are enabled — never the stored tokens (they are secrets) —
+       so a Save that posts the whole shape would have written empty
+       strings over every configured channel. Only changed channels go
+       out; the server keeps what it has for the rest. */
+    const [dirty, setDirty] = useState<Set<string>>(new Set());
+
+    const markDirty = (key: string) =>
+        setDirty((prev) => {
+            if (prev.has(key)) return prev;
+            const next = new Set(prev);
+            next.add(key);
+            return next;
+        });
 
     useEffect(() => {
         if (open && agent) {
-            const token = typeof window !== 'undefined' ? localStorage.getItem('loft_token') : null;
-            const headers = token ? { Authorization: `Bearer ${token}` } : {};
-            axios.get(`${apiBase}/agents/${agent.agentId}/channels`, { headers })
-                .then(({ data }: { data: { channels: Record<string, { enabled?: boolean }> } }) => {
-                    const ch = data.channels || {};
+            // A re-open must not keep the last agent's typed secrets around.
+            setChannels(emptyChannels);
+            setDirty(new Set());
+            setPairingCodes({});
+            getAgentChannels(agent.agentId)
+                .then(({ channels }) => {
                     setActiveChannels({
-                        discord: !!ch.discord?.enabled,
-                        telegram: !!ch.telegram?.enabled,
-                        slack: !!ch.slack?.enabled,
-                        whatsapp: !!ch.whatsapp?.enabled,
+                        discord: !!channels.discord?.enabled,
+                        telegram: !!channels.telegram?.enabled,
+                        slack: !!channels.slack?.enabled,
+                        whatsapp: !!channels.whatsapp?.enabled,
                     });
                 })
                 .catch(() => {});
@@ -62,18 +82,13 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
         if (!agent || !pairingCodes[channel]) return;
         setPairing(prev => ({ ...prev, [channel]: true }));
         try {
-            const token = typeof window !== 'undefined' ? localStorage.getItem('loft_token') : null;
-            const response = await axios.post(`${apiBase}/agents/${agent.agentId}/channels/approve`, {
-                channel,
-                code: pairingCodes[channel]
-            }, {
-                headers: token ? { Authorization: `Bearer ${token}` } : {},
-            });
-            toast(response.data.message || 'Successfully paired!', 'success');
+            const data = await approveAgentChannel(agent.agentId, channel, pairingCodes[channel]);
+            toast(data.message || 'Successfully paired!', 'success');
             setPairingCodes(prev => ({ ...prev, [channel]: '' }));
             // Optionally re-fetch active channels or just assume it's good
-        } catch (err: any) {
-            toast(err.response?.data?.error || 'Failed to pair channel', 'error');
+        } catch (err) {
+            const message = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+            toast(message || 'Failed to pair channel', 'error');
         } finally {
             setPairing(prev => ({ ...prev, [channel]: false }));
         }
@@ -81,12 +96,19 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
 
     const handleSave = async () => {
         if (!agent) return;
+        if (dirty.size === 0) {
+            toast('Change a channel configuration first', 'info');
+            return;
+        }
         setSaving(true);
         try {
-            const token = typeof window !== 'undefined' ? localStorage.getItem('loft_token') : null;
-            await axios.post(`${apiBase}/agents/${agent.agentId}/channels`, { channels }, {
-                headers: token ? { Authorization: `Bearer ${token}` } : {},
-            });
+            /* Only the touched channels leave the client. An untouched
+               channel keeps its in-memory empty fields here — that empty is
+               "I did not type anything", not "delete my token". */
+            const payload = Object.fromEntries(
+                [...dirty].map((key) => [key, channels[key as keyof ChannelState]]),
+            );
+            await saveAgentChannels(agent.agentId, payload);
             toast('Channels saved — agent restarting', 'success');
             onClose();
         } catch {
@@ -100,7 +122,7 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
         {
             key: 'discord',
             label: 'Discord',
-            icon: '🎮',
+            icon: <MessagesSquare size={16} aria-hidden />,
             active: activeChannels.discord,
             fields: (
                 <>
@@ -112,7 +134,7 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
                         type="password"
                         placeholder="Your Discord bot token"
                         value={channels.discord.token}
-                        onChange={(e) => setChannels(c => ({ ...c, discord: { token: e.target.value } }))}
+                        onChange={(e) => { setChannels(c => ({ ...c, discord: { token: e.target.value } })); markDirty('discord'); }}
                     />
                     
                     <div className={soc.stepDivider}>
@@ -150,7 +172,7 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
         {
             key: 'telegram',
             label: 'Telegram',
-            icon: '✈️',
+            icon: <Send size={16} aria-hidden />,
             active: activeChannels.telegram,
             fields: (
                 <>
@@ -162,7 +184,7 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
                         type="password"
                         placeholder="123456:ABC-DEF..."
                         value={channels.telegram.token}
-                        onChange={(e) => setChannels(c => ({ ...c, telegram: { token: e.target.value } }))}
+                        onChange={(e) => { setChannels(c => ({ ...c, telegram: { token: e.target.value } })); markDirty('telegram'); }}
                     />
                     
                     <div className={soc.stepDivider}>
@@ -200,7 +222,7 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
         {
             key: 'slack',
             label: 'Slack',
-            icon: '💬',
+            icon: <SlackIcon size={16} aria-hidden />,
             active: activeChannels.slack,
             fields: (
                 <>
@@ -209,14 +231,14 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
                         type="password"
                         placeholder="xapp-1-..."
                         value={channels.slack.appToken}
-                        onChange={(e) => setChannels(c => ({ ...c, slack: { ...c.slack, appToken: e.target.value } }))}
+                        onChange={(e) => { setChannels(c => ({ ...c, slack: { ...c.slack, appToken: e.target.value } })); markDirty('slack'); }}
                     />
                     <Input
                         label="Bot Token (xoxb-...)"
                         type="password"
                         placeholder="xoxb-..."
                         value={channels.slack.botToken}
-                        onChange={(e) => setChannels(c => ({ ...c, slack: { ...c.slack, botToken: e.target.value } }))}
+                        onChange={(e) => { setChannels(c => ({ ...c, slack: { ...c.slack, botToken: e.target.value } })); markDirty('slack'); }}
                     />
                 </>
             ),
@@ -224,7 +246,7 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
         {
             key: 'whatsapp',
             label: 'WhatsApp',
-            icon: '📱',
+            icon: <MessageCircle size={16} aria-hidden />,
             active: activeChannels.whatsapp,
             fields: (
                 <div className={soc.whatsappNote}>
@@ -234,7 +256,7 @@ export default function SocialConnections({ agent, open, onClose }: SocialConnec
                             <input
                                 type="checkbox"
                                 checked={channels.whatsapp.enabled}
-                                onChange={(e) => setChannels(c => ({ ...c, whatsapp: { enabled: e.target.checked } }))}
+                                onChange={(e) => { setChannels(c => ({ ...c, whatsapp: { enabled: e.target.checked } })); markDirty('whatsapp'); }}
                             />
                             <span className={soc.checkboxText}>
                                 Enable WhatsApp

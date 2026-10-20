@@ -462,6 +462,51 @@ export const saveAgentSecret = async (agentId: string, keyName: string, value: s
   await api.post(`/agents/${agentId}/secret`, { keyName, value });
 };
 
+/* Custom billing key: validate-and-save. Auth flows through the shared
+   axios instance (the AuthContext default header) — the callers used to
+   re-read localStorage and build raw axios calls beside it. */
+export const saveCustomKey = async (
+  agentId: string,
+  provider: string,
+  apiKey: string,
+): Promise<{ valid: boolean; error?: string }> => {
+  const { data } = await api.post<{ valid: boolean; error?: string }>(
+    `/agents/${agentId}/custom-key`,
+    { provider, apiKey },
+  );
+  return data;
+};
+
+export interface IAgentChannels {
+  channels: Record<string, { enabled?: boolean }>;
+}
+
+export const getAgentChannels = async (agentId: string): Promise<IAgentChannels> => {
+  const { data } = await api.get<IAgentChannels>(`/agents/${agentId}/channels`);
+  return data;
+};
+
+export const approveAgentChannel = async (
+  agentId: string,
+  channel: string,
+  code: string,
+): Promise<{ message?: string }> => {
+  const { data } = await api.post<{ message?: string }>(`/agents/${agentId}/channels/approve`, {
+    channel,
+    code,
+  });
+  return data;
+};
+
+/* Partial save: only the listed channels are written, so a client that
+   cannot read stored tokens can never erase one it did not touch. */
+export const saveAgentChannels = async (
+  agentId: string,
+  channels: Record<string, unknown>,
+): Promise<void> => {
+  await api.post(`/agents/${agentId}/channels`, { channels });
+};
+
 export const switchAgentKeyType = async (agentId: string, keyType: 'platform' | 'custom'): Promise<{message: string, agent: IAgent}> => {
   const { data } = await api.post<{message: string, agent: IAgent}>(`/agents/${agentId}/switch-key-type`, { keyType });
   return data;
@@ -519,7 +564,7 @@ export const getAgentCard = async (agentId: string): Promise<unknown> => {
   return data;
 };
 
-export const getBilling = async (tenantId: string): Promise<{
+export interface IBillingSummary {
     creditBalance: number;
     creditCap?: number;
     subscriptionTier: string;
@@ -531,8 +576,10 @@ export const getBilling = async (tenantId: string): Promise<{
     llmKeyType: string;
     stripeCustomerId: boolean;
     stripeSubscriptionId: boolean;
-}> => {
-    const { data } = await api.get(`/tenants/${tenantId}/billing`);
+}
+
+export const getBilling = async (tenantId: string): Promise<IBillingSummary> => {
+    const { data } = await api.get<IBillingSummary>(`/tenants/${tenantId}/billing`);
     return data;
 };
 
@@ -678,13 +725,34 @@ export const uploadPlugin = async (manifestFile: File): Promise<IUploadSkillResp
   return data;
 };
 
-export const searchClawHub = async (query: string): Promise<any[]> => {
-  const { data } = await api.get<any[]>(`/registry/search?q=${encodeURIComponent(query)}`);
+/* Registry search/trending results. The service's response is denormalized
+   across implementations, so every presentational field is optional and the
+   login (`slug`) is the only contract. */
+export interface ISkillResult {
+  slug: string;
+  name?: string;
+  displayName?: string;
+  summary?: string;
+  description?: string;
+  version?: string;
+  score?: number;
+  author?: string;
+  installs?: number;
+  stats?: { stars?: number; downloads?: number };
+}
+
+export const searchClawHub = async (query: string): Promise<ISkillResult[]> => {
+  const { data } = await api.get<ISkillResult[]>(`/registry/search?q=${encodeURIComponent(query)}`);
   return data;
 };
 
-export const getSkillDetails = async (slug: string): Promise<any> => {
-  const { data } = await api.get<any>(`/registry/skills/${slug}/details`);
+export const getTrendingSkills = async (): Promise<ISkillResult[]> => {
+  const { data } = await api.get<ISkillResult[]>('/registry/trending');
+  return data;
+};
+
+export const getSkillDetails = async (slug: string): Promise<ISkillResult & Record<string, unknown>> => {
+  const { data } = await api.get<ISkillResult & Record<string, unknown>>(`/registry/skills/${slug}/details`);
   return data;
 };
 
@@ -693,11 +761,6 @@ export const getSkillFileContent = async (slug: string, filePath: string): Promi
     params: { filePath }
   });
   return data.content;
-};
-
-export const getTrendingSkills = async (): Promise<any[]> => {
-    const { data } = await api.get<any[]>('/registry/trending');
-    return data;
 };
 
 export const installSkill = async (slug: string): Promise<{ message: string; slug: string }> => {
@@ -899,21 +962,41 @@ export interface MemoryHealth {
   checks?: Record<string, unknown>;
 }
 
+/**
+ * Caller-selectable sub-scopes *inside* the tenant: which agent's memory, in
+ * which conversation. Both optional; absent means the tenant's own default
+ * store, which is where everything written before agent scoping existed
+ * lives. camelCase on the wire — memoryController reads `req.query.agentId`.
+ */
+export interface MemoryScopeParams {
+  agentId?: string;
+  conversationId?: string;
+}
+
 export const getMemoryRecords = async (
-  params: { limit?: number; offset?: number } = {},
+  params: { limit?: number; offset?: number } & MemoryScopeParams = {},
 ): Promise<MemoryRecordPage> => {
   const { data } = await api.get<MemoryRecordPage>('/memory/records', { params });
   return data;
 };
 
-export const getMemoryRecord = async (recordId: string): Promise<MemoryRecord> => {
-  const { data } = await api.get<MemoryRecord>(`/memory/records/${encodeURIComponent(recordId)}`);
+export const getMemoryRecord = async (
+  recordId: string,
+  scope: MemoryScopeParams = {},
+): Promise<MemoryRecord> => {
+  const { data } = await api.get<MemoryRecord>(`/memory/records/${encodeURIComponent(recordId)}`, {
+    params: scope,
+  });
   return data;
 };
 
-export const getMemoryRecordSource = async (recordId: string): Promise<MemoryRecordSource> => {
+export const getMemoryRecordSource = async (
+  recordId: string,
+  scope: MemoryScopeParams = {},
+): Promise<MemoryRecordSource> => {
   const { data } = await api.get<MemoryRecordSource>(
     `/memory/records/${encodeURIComponent(recordId)}/source`,
+    { params: scope },
   );
   return data;
 };
@@ -924,6 +1007,7 @@ export const getMemoryRecordSource = async (recordId: string): Promise<MemoryRec
 export const searchMemoryRecords = async (
   query: string,
   top_k = 10,
+  scope: MemoryScopeParams = {},
 ): Promise<{ results: MemorySearchHit[] }> => {
   // camelCase on the wire: memoryController.searchRecords reads `body.topK`
   // and converts downstream. Sending top_k here was silently ignored, which
@@ -932,6 +1016,7 @@ export const searchMemoryRecords = async (
   const { data } = await api.post<{ results: MemorySearchHit[] }>('/memory/records/search', {
     query,
     topK: top_k,
+    ...scope,
   });
   return data;
 };
@@ -944,7 +1029,7 @@ export const getMemoryEvents = async (
     entity_name?: string;
     limit?: number;
     offset?: number;
-  } = {},
+  } & MemoryScopeParams = {},
 ): Promise<MemoryEventPage> => {
   const { data } = await api.get<MemoryEventPage>('/memory/events', { params });
   return data;
@@ -952,30 +1037,35 @@ export const getMemoryEvents = async (
 
 export const getMemoryEventTimeline = async (
   limit = 100,
+  scope: MemoryScopeParams = {},
 ): Promise<MemoryTimelinePoint[]> => {
   const { data } = await api.get<MemoryTimelinePoint[]>('/memory/events/timeline', {
-    params: { limit },
+    params: { limit, ...scope },
   });
   return data;
 };
 
-export const getMemoryEventStats = async (): Promise<{
+export const getMemoryEventStats = async (
+  scope: MemoryScopeParams = {},
+): Promise<{
   total_events: number;
   by_type: Record<string, number>;
 }> => {
   const { data } = await api.get<{ total_events: number; by_type: Record<string, number> }>(
     '/memory/events/stats',
+    { params: scope },
   );
   return data;
 };
 
-export const getMemoryGraph = async (): Promise<MemoryGraph> => {
-  const { data } = await api.get<MemoryGraph>('/memory/graph');
+export const getMemoryGraph = async (scope: MemoryScopeParams = {}): Promise<MemoryGraph> => {
+  const { data } = await api.get<MemoryGraph>('/memory/graph', { params: scope });
   return data;
 };
 
 export const getMemoryEntity = async (
   entityName: string,
+  scope: MemoryScopeParams = {},
 ): Promise<{
   entity_name: string;
   records: MemoryRecord[];
@@ -983,7 +1073,9 @@ export const getMemoryEntity = async (
   neighbors: string[];
   degree: number;
 }> => {
-  const { data } = await api.get(`/memory/graph/entity/${encodeURIComponent(entityName)}`);
+  const { data } = await api.get(`/memory/graph/entity/${encodeURIComponent(entityName)}`, {
+    params: scope,
+  });
   return data;
 };
 
@@ -991,15 +1083,16 @@ export const getMemoryEntity = async (
  *  asking for the curve cannot move it. */
 export const getMemoryDecayCurves = async (
   turns_ahead = 50,
+  scope: MemoryScopeParams = {},
 ): Promise<MemoryDecayProjection> => {
   const { data } = await api.get<MemoryDecayProjection>('/memory/decay/curves', {
-    params: { turns_ahead },
+    params: { turns_ahead, ...scope },
   });
   return data;
 };
 
-export const getMemoryStats = async (): Promise<MemoryStats> => {
-  const { data } = await api.get<MemoryStats>('/memory/stats');
+export const getMemoryStats = async (scope: MemoryScopeParams = {}): Promise<MemoryStats> => {
+  const { data } = await api.get<MemoryStats>('/memory/stats', { params: scope });
   return data;
 };
 
@@ -1016,10 +1109,11 @@ export const getMemoryHealth = async (): Promise<MemoryHealth> => {
  */
 export const forgetMemoryRecord = async (
   recordId: string,
+  scope: MemoryScopeParams = {},
 ): Promise<{ forgotten: number; by: string; semantics: string }> => {
   const { data } = await api.post<{ forgotten: number; by: string; semantics: string }>(
     '/memory/forget',
-    { recordId },
+    { recordId, ...scope },
   );
   return data;
 };
@@ -1044,11 +1138,13 @@ export const chatMemory = async (input: {
   message: string;
   history?: { role: string; content: string }[];
   conversationId?: string;
+  agentId?: string;
 }): Promise<MemoryChatResult> => {
   const { data } = await api.post<MemoryChatResult>('/memory/chat', {
     message: input.message,
     history: input.history ?? [],
     conversationId: input.conversationId,
+    agentId: input.agentId,
   });
   return data;
 };
@@ -1059,7 +1155,9 @@ export interface MemoryRecallHit {
   entity_name: string;
   fact: string;
   memory_type: MemoryType | string;
-  score: number;
+  /** Cosine similarity, or null when the hit arrived through keyword or
+   *  graph-walk provenance — the engine does not score those. */
+  score: number | null;
   source: string;
   hop_distance: number;
 }
@@ -1075,6 +1173,7 @@ export const recallMemory = async (input: {
   query: string;
   topK?: number;
   conversationId?: string;
+  agentId?: string;
 }): Promise<MemoryRecallResult> => {
   const { data } = await api.post<MemoryRecallResult>('/memory/recall', {
     query: input.query,
@@ -1082,6 +1181,7 @@ export const recallMemory = async (input: {
     // converts to the service's top_k itself.
     topK: input.topK,
     conversationId: input.conversationId,
+    agentId: input.agentId,
   });
   return data;
 };
@@ -1097,10 +1197,12 @@ export interface MemoryRememberResult {
 export const rememberMemory = async (input: {
   messages: { role: string; content: string }[];
   conversationId?: string;
+  agentId?: string;
 }): Promise<MemoryRememberResult> => {
   const { data } = await api.post<MemoryRememberResult>('/memory/remember', {
     messages: input.messages,
     conversationId: input.conversationId,
+    agentId: input.agentId,
   });
   return data;
 };

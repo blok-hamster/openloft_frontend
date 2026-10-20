@@ -6,9 +6,12 @@
 .page {
     display: flex;
     flex-direction: column;
-    /* 100dvh tracks the mobile URL bar; 100vh is the fallback */
-    height: 100vh;
-    height: 100dvh;
+    /* The dashboard shell owns the fixed chrome (menu button, bottom bar,
+       safe areas) and already pads its column for it. A fixed 100vh/100dvh
+       here added that clearance on top — the room was ~124px taller than
+       the visible column and the composer sat under the bottom bar — so
+       the room just fills the column it is given. */
+    min-height: 100%;
     padding: 2rem;
 }
 

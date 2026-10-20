@@ -5,11 +5,12 @@ import { ReactNode, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
-import { LayoutGrid, Puzzle, Settings, Shield, LogOut, Users, CreditCard, Briefcase, Menu, X, Plus } from 'lucide-react';
+import { useDrawerFocus } from '@/lib/useDrawerFocus';
+import { LayoutGrid, Settings, Shield, LogOut, Users, CreditCard, Menu, X, Plus } from 'lucide-react';
 import styles from '@/components/dashboard/Dashboard.module.css';
 import FeatureGate from '@/components/FeatureGate';
 import ProductSwitcher from '@/components/dashboard/ProductSwitcher';
-import { isAccountAreaEnabled } from '@/lib/features';
+import { isAccountAreaEnabled, FEATURES } from '@/lib/features';
 
 /** Agent hosting sections only. The hosted memory service is an independent
     product with its own dashboard at /memory and its own section list; the
@@ -17,16 +18,22 @@ import { isAccountAreaEnabled } from '@/lib/features';
     the products, so a user never has to type a URL to reach Memory. */
 export const navItems = [
     { href: '/dashboard', label: 'Agents', icon: LayoutGrid },
-    { href: '/dashboard/team', label: 'Sales Team', icon: Briefcase },
-    { href: '/dashboard/lobby', label: 'Lobby', icon: Users },
-    { href: '/dashboard/skills', label: 'Skills', icon: Puzzle },
+    /* The Lobby is behind its own build-time flag until the multi-agent
+       flow is fully figured out and working: flipping
+       NEXT_PUBLIC_FEATURE_LOBBY (and rebuilding) restores the section. */
+    ...(FEATURES.lobby ? [{ href: '/dashboard/lobby', label: 'Lobby', icon: Users }] : []),
     { href: '/dashboard/billing', label: 'Billing', icon: CreditCard },
     { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ];
 
-/** Exact match for the root, prefix match for nested routes, so
- *  /dashboard/billing/success still highlights Billing. */
+/* Exact match for the section roots, prefix match for nested routes, so
+ *  /dashboard/billing/success still highlights Billing — and /dashboard
+ *  highlights Agents on its own page only. A root prefix match would make
+ *  Agents current on every nested page: two aria-current="page" links in
+ *  one nav is a landmark that lies to screen readers (and both items
+ *  rendered in the active style). */
 function isRouteActive(pathname: string, href: string) {
+    if (href === '/dashboard' || href === '/memory') return pathname === href;
     return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -46,7 +53,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (!isAccountAreaEnabled()) return;
         if (!isLoading && !user) {
-            router.replace('/auth/login');
+            // The destination rides along: ?redirect= means a sign-in puts
+            // the reader back where they were, not at /dashboard. Read off
+            // window.location rather than the useSearchParams hook — a
+            // layout can statically render, and the hook then demands a
+            // Suspense boundary this shell has no need to carry.
+            const here = `${window.location.pathname}${window.location.search}`;
+            router.replace(`/auth/login?redirect=${encodeURIComponent(here)}`);
             return;
         }
         if (!isLoading && user && !user.tenantId) {
@@ -54,26 +67,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         }
     }, [user, isLoading, router]);
 
-    /* Escape closes, and focus returns to the trigger. */
-    useEffect(() => {
-        if (!navOpen) return;
-        const onKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                setNavOpen(false);
-                menuButtonRef.current?.focus();
-            }
-        };
-        document.addEventListener('keydown', onKey);
-        return () => document.removeEventListener('keydown', onKey);
-    }, [navOpen]);
-
-    /* Move focus into the drawer when it opens so keyboard users land
-     * on the nav rather than staying behind the scrim. */
-    useEffect(() => {
-        if (navOpen) {
-            drawerRef.current?.querySelector<HTMLAnchorElement>('a')?.focus();
-        }
-    }, [navOpen]);
+    /* Escape closes, and focus returns to the trigger. Tab stays inside:
+       the drawer promises aria-modal, and a Tab that leaks through the
+       scrim is a modal that lied (shared with the memory shell). */
+    useDrawerFocus(navOpen, drawerRef, menuButtonRef, () => {
+        setNavOpen(false);
+        menuButtonRef.current?.focus();
+    });
 
     /* Lock background scroll while the drawer is open. */
     useEffect(() => {

@@ -13,7 +13,7 @@ interface Metrics {
 }
 
 export default function TeamAnalyticsPage() {
-  const { user } = useAuth();
+  const { token } = useAuth();
   const [metrics, setMetrics] = useState<Metrics>({
     leadsCapured: 0,
     emailsSent: 0,
@@ -24,15 +24,24 @@ export default function TeamAnalyticsPage() {
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
+  /* A load failure is a state: the zeroed metric grid used to be the only
+     output of a broken backend, indistinguishable from a quiet day. */
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     fetchMetrics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchMetrics = async () => {
     try {
+      /* Token from the auth context, `res.ok` before trusting the body —
+         `Bearer undefined` plus a swallowed failure made this page report
+         zeros for a broken backend. */
       const res = await fetch(`${API_URL}/api/teams`, {
-        headers: { Authorization: `Bearer ${(user as any)?.token}` },
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
+      if (!res.ok) throw new Error(`team lookup failed (${res.status})`);
       const deployments = await res.json();
       if (deployments.length > 0) {
         // Metrics would come from a dedicated endpoint in production
@@ -44,8 +53,9 @@ export default function TeamAnalyticsPage() {
           pipelineExecutions: 0,
         });
       }
-    } catch (error) {
-      console.error('Failed to fetch metrics:', error);
+    } catch (err) {
+      console.error('Failed to fetch metrics:', err);
+      setError('Failed to load team analytics. Check your connection and try again.');
     }
   };
 
@@ -60,6 +70,12 @@ export default function TeamAnalyticsPage() {
         <MetricCard label="QA Pass Rate" value={`${metrics.qaPassRate}%`} />
         <MetricCard label="Pipeline Executions" value={metrics.pipelineExecutions} />
       </div>
+
+      {error && (
+        <div className={styles.notice} role="alert">
+          <p>{error}</p>
+        </div>
+      )}
 
       <div className={styles.notice}>
         <p>Detailed analytics will populate once your team has been active for 24+ hours.</p>

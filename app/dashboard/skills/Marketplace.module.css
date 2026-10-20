@@ -153,6 +153,13 @@
   padding: 2rem;
 }
 
+/* Failed fetch, told in place: the Discover tab's errors explain
+   themselves instead of rendering as just "no results". */
+.errorNote {
+  color: var(--red);
+  font-size: 0.9rem;
+}
+
 .centerNote {
   text-align: center;
   padding: 2rem;

@@ -1,8 +1,7 @@
 import Link from 'next/link';
 import { Check, Clock, Monitor } from 'lucide-react';
 import styles from './HarnessBand.module.css';
-
-type Status = 'live' | 'announced';
+import { ProductStatus, HARNESS_STATUS, STATUS_META } from '@/lib/productStatus';
 
 /**
  * The agents we host.
@@ -20,6 +19,10 @@ type Status = 'live' | 'announced';
  *                run headless and take an API key. A desktop IDE is not
  *                hostable and is listed separately below instead of being
  *                promised here.
+ *
+ * This band no longer owns the vocabulary: `lib/productStatus.ts` carries
+ * the ladder and the per-harness truth (`HARNESS_STATUS`), and docs and the
+ * products page read the same source.
  *
  * The enum is `['openclaw','hermes','opencode','claude-code','codex']`
  * (`backend/src/models/Agent.ts:8`, mirrored at `Agent.ts:45` and
@@ -54,43 +57,43 @@ type Status = 'live' | 'announced';
 const AGENTS: Array<{
     name: string;
     blurb: string;
-    status: Status;
+    status: ProductStatus;
     detail: string;
 }> = [
     {
         name: 'OpenClaw',
         blurb: 'Plugin ecosystem, A2A agent mesh, skills and MCP servers.',
-        status: 'live',
+        status: HARNESS_STATUS.openclaw,
         detail: 'Web UI on a dedicated subdomain',
     },
     {
         name: 'OpenCode',
         blurb: 'Open-source terminal agent, any LLM provider.',
-        status: 'live',
+        status: HARNESS_STATUS.opencode,
         detail: 'Bring your own provider key, or platform credits',
     },
     {
         name: 'Hermes Agent',
         blurb: 'Self-improving skills, cron scheduling, browser automation.',
-        status: 'live',
+        status: HARNESS_STATUS.hermes,
         detail: 'OpenAI-compatible gateway, standalone (no A2A mesh)',
     },
     {
         name: 'Claude Code',
         blurb: 'Anthropic’s terminal agent, containerised and run on our infrastructure.',
-        status: 'announced',
+        status: HARNESS_STATUS['claude-code'],
         detail: 'Bring your own Anthropic key',
     },
     {
         name: 'Codex',
         blurb: 'OpenAI’s coding agent, headless in its own container.',
-        status: 'announced',
+        status: HARNESS_STATUS.codex,
         detail: 'Bring your own OpenAI key',
     },
     {
         name: 'Gemini CLI',
         blurb: 'Google’s terminal agent, same hosting and same memory.',
-        status: 'announced',
+        status: HARNESS_STATUS['gemini-cli'],
         detail: 'Bring your own Google key',
     },
 ];
@@ -120,7 +123,7 @@ export default function HarnessBand() {
                     ))}
                 </div>
 
-                <p className={styles.groupLabel}>Announcing</p>
+                <p className={styles.groupLabel}>Announced</p>
                 <div className={styles.grid}>
                     {announced.map((agent) => (
                         <AgentCard key={agent.name} {...agent} />
@@ -170,14 +173,10 @@ function AgentCard({
                 <h3 className={styles.cardName}>{name}</h3>
                 <span
                     className={live ? styles.badgeLive : styles.badgeAnnounced}
-                    title={
-                        live
-                            ? 'Deployable today'
-                            : 'Announced. Not yet selectable in the dashboard.'
-                    }
+                    title={live ? STATUS_META[status].title : 'Announced. Not yet selectable in the dashboard.'}
                 >
                     <Badge size={10} aria-hidden />
-                    {live ? 'Available' : 'Announcing'}
+                    {STATUS_META[status].label}
                 </span>
             </div>
             <p className={styles.cardBlurb}>{blurb}</p>

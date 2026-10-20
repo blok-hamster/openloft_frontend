@@ -9,6 +9,7 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import SkeletonLoader from '@/components/ui/SkeletonLoader';
 import { HARNESS_NAMES } from '@/components/dashboard/AgentTypeSelector';
+import ConfirmDestructiveAction from '@/components/dashboard/ConfirmDestructiveAction';
 import styles from '@/components/admin/Admin.module.css';
 
 export default function AdminPage() {
@@ -21,6 +22,14 @@ export default function AdminPage() {
     const [agents, setAgents] = useState<IAgent[]>([]);
     const [coupons, setCoupons] = useState<ICoupon[]>([]);
     const [loading, setLoading] = useState(true);
+
+    /* Destructive actions are confirmed in-app with type-to-confirm: the
+       native confirm() was unstyleable and Restart Fleet had no guard at
+       all. */
+    const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+    const [pendingDeleteName, setPendingDeleteName] = useState<string>('');
+    const [confirmBusy, setConfirmBusy] = useState(false);
+    const [pendingRestart, setPendingRestart] = useState(false);
 
     // Coupon Creation Form State
     const [creatingCoupon, setCreatingCoupon] = useState(false);
@@ -36,35 +45,46 @@ export default function AdminPage() {
     });
 
     const loadData = useCallback(async () => {
-        try {
-            const [healthData, tenantData, agentData, couponData] = await Promise.all([
-                getFleetHealth(),
-                getTenants(),
-                adminGetAllAgents(),
-                getCoupons()
-            ]);
-            setHealth(healthData);
-            setTenants(tenantData);
-            setAgents(agentData);
-            setCoupons(couponData);
-        } catch {
-            toast('Failed to load admin data', 'error');
-        } finally {
-            setLoading(false);
-        }
+        /* allSettled: one failed Promise.all used to blank all four datasets
+           — the still-good tables rendered transient, false empty rows while
+           a single dead endpoint took the whole page down. */
+        const [healthR, tenantsR, agentsR, couponsR] = await Promise.allSettled([
+            getFleetHealth(),
+            getTenants(),
+            adminGetAllAgents(),
+            getCoupons()
+        ]);
+        setHealth(healthR.status === 'fulfilled' ? healthR.value : null);
+        setTenants(tenantsR.status === 'fulfilled' ? tenantsR.value : []);
+        setAgents(agentsR.status === 'fulfilled' ? agentsR.value : []);
+        setCoupons(couponsR.status === 'fulfilled' ? couponsR.value : []);
+
+        const failed = [healthR, tenantsR, agentsR, couponsR].filter((r) => r.status === 'rejected').length;
+        if (failed === 4) toast('Failed to load admin data', 'error');
+        else if (failed > 0) toast('Some admin data failed to load — reload to retry', 'error');
+        setLoading(false);
     }, [toast]);
 
+    /* The load used to run for any authenticated user: a non-admin saw the
+       "Access Denied" card rendered only after the probes had already gone
+       out. The probes are behind the same gate that renders the page. */
+    const isAdmin = user?.role === 'platform_admin' || user?.role === 'admin';
     useEffect(() => {
+        if (!isAdmin) return;
         loadData();
-    }, [loadData]);
+    }, [isAdmin, loadData]);
 
     const handleRestart = async () => {
+        setPendingRestart(false);
+        setConfirmBusy(true);
         try {
             await restartFleet();
             toast('Fleet restart initiated', 'success');
             loadData();
         } catch {
             toast('Failed to restart fleet', 'error');
+        } finally {
+            setConfirmBusy(false);
         }
     };
 
@@ -114,12 +134,15 @@ export default function AdminPage() {
     };
 
     const handleAgentDelete = async (agentId: string) => {
-        if (!confirm(`Delete agent ${agentId}? This cannot be undone.`)) return;
+        setPendingDeleteId(null);
+        setConfirmBusy(true);
         try {
             await adminDeleteAgent(agentId);
             toast('Agent deleted', 'success');
             loadData();
-        } catch { toast('Failed to delete agent', 'error'); }
+        } catch { toast('Failed to delete agent', 'error'); } finally {
+            setConfirmBusy(false);
+        }
     };
 
     const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -191,7 +214,7 @@ export default function AdminPage() {
                     <Button variant="secondary" size="sm" onClick={handleScaleOut}>Test Scale Out</Button>
                     <Button variant="secondary" size="sm" onClick={handleScaleIn}>Test Scale In</Button>
                     <Button variant="secondary" size="sm" onClick={handleSync}>Sync Policy</Button>
-                    <Button variant="danger" size="sm" onClick={handleRestart}>Restart Fleet</Button>
+                    <Button variant="danger" size="sm" onClick={() => setPendingRestart(true)}>Restart Fleet</Button>
                 </div>
             </div>
 
@@ -272,7 +295,7 @@ export default function AdminPage() {
                                                 <Button variant="ghost" size="sm" onClick={() => handleAgentStop(a.agentId)}>Stop</Button>
                                             </>
                                         )}
-                                        <Button variant="danger" size="sm" onClick={() => handleAgentDelete(a.agentId)}>Delete</Button>
+                                        <Button variant="danger" size="sm" onClick={() => { setPendingDeleteId(a.agentId); setPendingDeleteName(a.name || a.agentId); }}>Delete</Button>
                                     </td>
                                 </tr>
                             ))}
@@ -328,7 +351,7 @@ export default function AdminPage() {
                                         <Button type="button" variant="ghost" size="sm" onClick={() => handleAgentStop(a.agentId)}>Stop</Button>
                                     </>
                                 )}
-                                <Button type="button" variant="danger" size="sm" onClick={() => handleAgentDelete(a.agentId)}>Delete</Button>
+                                <Button type="button" variant="danger" size="sm" onClick={() => { setPendingDeleteId(a.agentId); setPendingDeleteName(a.name || a.agentId); }}>Delete</Button>
                             </div>
                         </div>
                     ))}
@@ -546,6 +569,28 @@ export default function AdminPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Both destructive guards share the typed-confirmation modal; the
+                fleet restart was guarded by nothing at all, and agent delete
+                used the unstyleable native confirm(). */}
+            <ConfirmDestructiveAction
+                open={pendingRestart}
+                onClose={() => setPendingRestart(false)}
+                onConfirm={handleRestart}
+                title="Restart Fleet"
+                confirmText="RESTART"
+                loading={confirmBusy}
+                description="All deployed agents restart. Runs in flight are interrupted; memory is not touched."
+            />
+            <ConfirmDestructiveAction
+                open={pendingDeleteId !== null}
+                onClose={() => { setPendingDeleteId(null); setPendingDeleteName(''); }}
+                onConfirm={() => pendingDeleteId && handleAgentDelete(pendingDeleteId)}
+                title="Delete agent"
+                confirmText={pendingDeleteName}
+                loading={confirmBusy}
+                description={pendingDeleteName ? `This permanently removes ${pendingDeleteName}, its containers and its logs. Its memory records stay with the tenant.` : undefined}
+            />
         </div>
     );
 }

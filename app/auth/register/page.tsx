@@ -28,10 +28,13 @@ function RegisterPageContent() {
             const res = await register({ email, password, companyName });
             setEmail(res.email);
             setIsVerifying(true);
-        } catch (err: any) {
-            const message = err.response?.data?.error || err.message || 'Registration failed';
-            setEmail(email); // Ensure email is set even if something went wrong
-            setIsVerifying(true);
+        } catch (err: unknown) {
+            /* Failure stays on the form. The catch used to flip to the OTP
+               view for EVERY error — "email already registered" showed a
+               verification form for a code that was never sent. */
+            const message = (err as { response?: { data?: { error?: string }; message?: string } })?.response?.data?.error
+                || (err instanceof Error ? err.message : '')
+                || 'Registration failed';
             setError(message);
         } finally {
             setLoading(false);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Header from '@/components/landing/Header';
 import styles from '@/components/landing/Landing.module.css';
 import { isAccountAreaEnabled } from '@/lib/features';
@@ -9,7 +9,7 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { Search, Download, Star, TrendingUp, Box } from 'lucide-react';
-import { getTrendingSkills, searchClawHub } from '@/lib/api';
+import { getTrendingSkills, searchClawHub, ISkillResult } from '@/lib/api';
 import { useAuth } from '@/lib/AuthContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -17,11 +17,14 @@ import { useRouter } from 'next/navigation';
 export default function PublicSkillsPage() {
     const { isAuthenticated } = useAuth();
     const router = useRouter();
-    const [searchQuery, setSearchQuery] = useState('');
-    const [trending, setTrending] = useState<any[]>([]);
-    const [results, setResults] = useState<any[]>([]);
+    const [trending, setTrending] = useState<ISkillResult[]>([]);
+    const [results, setResults] = useState<ISkillResult[]>([]);
     const [loading, setLoading] = useState(false);
     const [searching, setSearching] = useState(false);
+    /* The catalogue's failures were console-only; the panels just sat
+       empty, indistinguishable from a quiet registry. */
+    const [trendingError, setTrendingError] = useState<string | null>(null);
+    const [searchError, setSearchError] = useState<string | null>(null);
 
     useEffect(() => {
         async function loadTrending() {
@@ -29,8 +32,8 @@ export default function PublicSkillsPage() {
             try {
                 const data = await getTrendingSkills();
                 setTrending(data);
-            } catch (err) {
-                console.error('Failed to load trending skills', err);
+            } catch {
+                setTrendingError('Trending skills are unavailable right now.');
             } finally {
                 setLoading(false);
             }
@@ -38,22 +41,34 @@ export default function PublicSkillsPage() {
         loadTrending();
     }, []);
 
-    const handleSearch = async (val: string) => {
-        setSearchQuery(val);
-        if (val.length > 2) {
+    /* Same contract as the dashboard marketplace: debounced, and a slow old
+       response cannot overwrite the results of a newer query. */
+    const searchTokenRef = useRef(0);
+    const [searchQuery, setSearchQuery] = useState('');
+    useEffect(() => {
+        const query = searchQuery.trim();
+        if (query.length <= 2) {
+            setResults([]);
+            setSearching(false);
+            setSearchError(null);
+            return;
+        }
+        const token = ++searchTokenRef.current;
+        const timer = setTimeout(async () => {
             setSearching(true);
             try {
-                const data = await searchClawHub(val);
+                const data = await searchClawHub(query);
+                if (searchTokenRef.current !== token) return;
                 setResults(data);
-            } catch (err) {
-                console.error('Search failed', err);
+            } catch {
+                if (searchTokenRef.current !== token) return;
+                setSearchError('Search failed — try again in a moment.');
             } finally {
-                setSearching(false);
+                if (searchTokenRef.current === token) setSearching(false);
             }
-        } else {
-            setResults([]);
-        }
-    };
+        }, 350);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     /* Browsing the public catalogue stays open pre-launch — only the
        install path, which lands in the gated dashboard, is withdrawn. */
@@ -84,7 +99,7 @@ export default function PublicSkillsPage() {
                         <Input 
                             placeholder="Search skills, plugins, or creators..." 
                             value={searchQuery}
-                            onChange={(e) => handleSearch(e.target.value)}
+                            onChange={(e) => setSearchQuery(e.target.value)}
                             icon={<Search size={18} />}
                         />
                     </div>
@@ -98,6 +113,8 @@ export default function PublicSkillsPage() {
                         <div className={ps.grid}>
                             {searching ? (
                                 <div className={ps.statusNote}>Searching ClawHub...</div>
+                            ) : searchError ? (
+                                <div className={ps.statusNote}>{searchError}</div>
                             ) : results.map((res) => (
                                 <SkillCard key={res.slug} skill={res} onInstall={handleInstallClick} canInstall={accountEnabled} />
                             ))}
@@ -111,6 +128,8 @@ export default function PublicSkillsPage() {
                         <div className={ps.grid}>
                             {loading ? (
                                 <div className={ps.statusNote}>Loading trending...</div>
+                            ) : trendingError ? (
+                                <div className={ps.statusNote}>{trendingError}</div>
                             ) : trending.map((res) => (
                                 <SkillCard key={res.slug} skill={res} onInstall={handleInstallClick} canInstall={accountEnabled} />
                             ))}
@@ -127,7 +146,7 @@ function SkillCard({
     onInstall,
     canInstall,
 }: {
-    skill: any;
+    skill: ISkillResult;
     onInstall: (slug: string) => void;
     canInstall: boolean;
 }) {

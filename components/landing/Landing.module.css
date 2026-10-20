@@ -172,6 +172,51 @@
     position: relative;
 }
 
+/* Phones render a static memory postcard instead of the 3D scene: three
+   tyre-coloured chips restating the three properties the headline already
+   claims — dated, decay-aware, source-attributed — as visual consistency
+   for what they mean. Text first for LCP; no Spline weight on a phone
+   contract. */
+.heroPostcard {
+    width: 100%;
+    max-width: 420px;
+    aspect-ratio: 16 / 9;
+    border: var(--border);
+    border-radius: 16px;
+    background: rgba(26, 26, 26, 0.03);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    margin: 0 auto;
+}
+
+.heroPostcardRow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-primary);
+}
+
+.heroPostcardRow > span:first-child {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.heroPostcardFacts {
+    font-size: 0.625rem;
+    color: var(--text-secondary);
+    letter-spacing: 0.05em;
+}
+
+
 .splineCanvas {
     width: 100%;
     height: 100%;
@@ -256,8 +301,32 @@
         text-align: center;
     }
 
+    /* The 3D scene does not travel — it is heavy, pointer-first and the
+       page's LCP should be the headline. The right column becomes a static
+       memory postcard under the CTAs instead of vanishing: the phone keeps
+       a visual beat, the desktop keeps its scene. */
     .heroRight {
+        display: block;
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+
+    .splineBox {
         display: none;
+    }
+}
+
+/* Small phones: the headline fits at 2rem and the CTA pills take the full
+   row — two side-by-side links is a thumb's worth of misses. */
+@media (max-width: 480px) {
+    .heroHeadline {
+        font-size: 2rem;
+    }
+
+    .heroActions {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
     }
 }
 
@@ -322,7 +391,7 @@
 
 .pricingGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
     gap: 2rem;
 }
 
@@ -416,7 +485,7 @@
 
 .faqGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
     gap: 3rem;
     margin-top: 2rem;
 }
@@ -531,8 +600,10 @@
     transition: color 0.2s ease;
 }
 
-.docsNavItem:hover {
-    color: var(--accent-blue);
+@media (hover: hover) {
+    .docsNavItem:hover {
+        color: var(--accent-blue);
+    }
 }
 
 .docsNavItemActive {
@@ -551,8 +622,12 @@
     transition: transform 0.2s ease;
 }
 
-.resourceCard:hover {
-    transform: translateY(-5px);
+/* The lift is decoration; on touch it would stick to the last-tapped
+   card. */
+@media (hover: hover) {
+    .resourceCard:hover {
+        transform: translateY(-5px);
+    }
 }
 /* Shown when the account area is gated off — the nav collapses to the
    logo and hamburger rather than advertising a sign-in that cannot work. */

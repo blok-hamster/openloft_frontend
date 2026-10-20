@@ -255,32 +255,48 @@ export default function DocsPage() {
       <div className={styles.container}>
         <div className={styles.body}>
           <aside className={styles.sidebar}>
-            {/* Uncontrolled so the native <summary> toggle keeps working;
-                closed imperatively when a link is tapped. */}
-            <details className={styles.tocMobile} ref={tocRef}>
-              <summary className={styles.tocSummary}>Contents</summary>
-            {GROUPS.map((group) => {
-              const items = filtered.filter((s) => s.group === group);
-              if (items.length === 0) return null;
-              return (
-                <div key={group} className={styles.navGroup}>
-                  <h4 className={styles.navTitle}>{group}</h4>
-                  {items.map((s) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      onClick={() => { jump(s.id); if (tocRef.current) tocRef.current.open = false; }}
-                      className={`${styles.navItem} ${
-                        effectiveActive === s.id ? styles.navItemActive : ''
-                      }`}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
-              );
-            })}
-            </details>
+            {/* One renderer, two wrappings. On phones the nav is a native
+                <details> that stacks above the content — closed by default so
+                it does not push every section below the fold, uncontrolled so
+                the native <summary> toggle keeps working, closed imperatively
+                when a link is tapped. On desktop it is a plain sticky list:
+                the details variant was display:none up there, which left
+                keyboard users and the scrollspy an empty aside. */}
+            {(() => {
+                const renderGroups = () =>
+                    GROUPS.map((group) => {
+                        const items = filtered.filter((s) => s.group === group);
+                        if (items.length === 0) return null;
+                        return (
+                            <div key={group} className={styles.navGroup}>
+                                <h4 className={styles.navTitle}>{group}</h4>
+                                {items.map((s) => (
+                                    <button
+                                        key={s.id}
+                                        type="button"
+                                        onClick={() => { jump(s.id); if (tocRef.current) tocRef.current.open = false; }}
+                                        className={`${styles.navItem} ${
+                                            effectiveActive === s.id ? styles.navItemActive : ''
+                                        }`}
+                                    >
+                                        {s.label}
+                                    </button>
+                                ))}
+                            </div>
+                        );
+                    });
+                return (
+                    <>
+                        <details className={styles.tocMobile} ref={tocRef}>
+                            <summary className={styles.tocSummary}>Contents</summary>
+                            {renderGroups()}
+                        </details>
+                        <nav className={styles.tocDesktop} aria-label="On this page">
+                            {renderGroups()}
+                        </nav>
+                    </>
+                );
+            })()}
           </aside>
 
           <div className={styles.content}>

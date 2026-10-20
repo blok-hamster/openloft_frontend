@@ -49,8 +49,12 @@
     transition: border-color var(--transition-fast);
 }
 
-.reconnect:hover:not(:disabled) {
-    border-color: var(--off-black);
+/* Hover is pointer-only state: without the gate the border stays dark
+   after a tap on touch. */
+@media (hover: hover) {
+    .reconnect:hover:not(:disabled) {
+        border-color: var(--off-black);
+    }
 }
 
 .reconnect:disabled {
@@ -108,5 +112,11 @@
 @media (max-width: 900px) {
     .host {
         min-height: 200px;
+    }
+
+    /* Touch floor: a reconnection retry is the primary action when a
+       session drops. */
+    .reconnect {
+        min-height: var(--touch-target);
     }
 }

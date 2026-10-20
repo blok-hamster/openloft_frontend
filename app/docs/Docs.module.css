@@ -69,9 +69,11 @@
   transition: transform var(--transition-fast), opacity var(--transition-fast);
 }
 
-.repoLink:hover {
-  transform: scale(1.03);
-  opacity: 0.9;
+@media (hover: hover) {
+  .repoLink:hover {
+    transform: scale(1.03);
+    opacity: 0.9;
+  }
 }
 
 /* ---------------------------------------------------------------- search */
@@ -166,8 +168,10 @@
   transition: color var(--transition-fast), border-color var(--transition-fast);
 }
 
-.navItem:hover {
-  color: var(--text-primary);
+@media (hover: hover) {
+  .navItem:hover {
+    color: var(--text-primary);
+  }
 }
 
 .navItemActive {
@@ -291,9 +295,20 @@
   transition: color var(--transition-fast), border-color var(--transition-fast);
 }
 
-.copyButton:hover {
-  color: #e8eae6;
-  border-color: #6b706b;
+@media (hover: hover) {
+  .copyButton:hover {
+    color: #e8eae6;
+    border-color: #6b706b;
+  }
+}
+
+/* Docs copy buttons sit against dark code blocks and are primary actions
+   for anyone reading on a phone; 0.25rem padding put them under 26px. */
+@media (max-width: 900px) {
+  .copyButton {
+    min-height: var(--touch-target);
+    min-width: var(--touch-target);
+  }
 }
 
 .code pre {
@@ -444,6 +459,12 @@
     display: none;
 }
 
+/* Desktop twin: the plain sticky list. Same nav, no collapse — the mobile
+   details variant is hidden here. */
+.tocDesktop {
+    display: block;
+}
+
 .tocSummary {
     display: flex;
     align-items: center;
@@ -492,6 +513,10 @@
 
     .tocMobile {
         display: block;
+    }
+
+    .tocDesktop {
+        display: none;
     }
 
     /* The fixed header plus the collapsed TOC both need scroll margin */
