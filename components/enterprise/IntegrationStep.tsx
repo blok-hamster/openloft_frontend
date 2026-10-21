@@ -1,12 +1,50 @@
 'use client';
 
 import { useState } from 'react';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import Button from '@/components/ui/Button';
 import steps from './EnterpriseSteps.module.css';
 
-interface Props {
-  onComplete: (data: any) => void;
+export interface IntegrationData {
+  crm: { provider: string; apiKey: string; connected: boolean };
+  email: { provider: string; apiKey: string; connected: boolean };
+  social: { platforms: string[]; connected: boolean };
+  analytics: { provider: string; trackingId: string; connected: boolean };
 }
 
+interface Props {
+  onComplete: (data: IntegrationData) => void;
+}
+
+const CRM_OPTIONS = [
+  { value: '', label: 'Select CRM...' },
+  { value: 'hubspot', label: 'HubSpot' },
+  { value: 'salesforce', label: 'Salesforce' },
+  { value: 'pipedrive', label: 'Pipedrive' },
+  { value: 'other', label: 'Other' },
+];
+
+const EMAIL_OPTIONS = [
+  { value: '', label: 'Select provider...' },
+  { value: 'sendgrid', label: 'SendGrid' },
+  { value: 'mailgun', label: 'Mailgun' },
+  { value: 'resend', label: 'Resend' },
+  { value: 'smtp', label: 'Custom SMTP' },
+];
+
+const ANALYTICS_OPTIONS = [
+  { value: '', label: 'Select provider...' },
+  { value: 'google-analytics', label: 'Google Analytics' },
+  { value: 'mixpanel', label: 'Mixpanel' },
+  { value: 'plausible', label: 'Plausible' },
+];
+
+/**
+ * Step two. Kit fields, so a provider picker behaves like every other
+ * picker in the product and the API-key inputs get the kit's paste and
+ * autocomplete posture instead of a bare styled input.
+ */
 export default function IntegrationStep({ onComplete }: Props) {
   const [form, setForm] = useState({
     crmProvider: '',
@@ -18,12 +56,18 @@ export default function IntegrationStep({ onComplete }: Props) {
     analyticsTrackingId: '',
   });
 
+  const set = (key: keyof typeof form) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm((current) => ({ ...current, [key]: event.target.value }));
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onComplete({
       crm: { provider: form.crmProvider, apiKey: form.crmApiKey, connected: !!form.crmApiKey },
       email: { provider: form.emailProvider, apiKey: form.emailApiKey, connected: !!form.emailApiKey },
-      social: { platforms: form.socialPlatforms.split(',').map((s) => s.trim()).filter(Boolean), connected: !!form.socialPlatforms },
+      social: {
+        platforms: form.socialPlatforms.split(',').map((part) => part.trim()).filter(Boolean),
+        connected: !!form.socialPlatforms,
+      },
       analytics: { provider: form.analyticsProvider, trackingId: form.analyticsTrackingId, connected: !!form.analyticsTrackingId },
     });
   };
@@ -35,49 +79,54 @@ export default function IntegrationStep({ onComplete }: Props) {
 
       <fieldset className={steps.fieldset}>
         <legend className={steps.legend}>CRM</legend>
-        <select value={form.crmProvider} onChange={(e) => setForm({ ...form, crmProvider: e.target.value })} className={steps.select}>
-          <option value="">Select CRM...</option>
-          <option value="hubspot">HubSpot</option>
-          <option value="salesforce">Salesforce</option>
-          <option value="pipedrive">Pipedrive</option>
-          <option value="other">Other</option>
-        </select>
-        <input type="password" autoComplete="off" placeholder="API Key" value={form.crmApiKey} onChange={(e) => setForm({ ...form, crmApiKey: e.target.value })} className={steps.input} />
+        <Select label="Provider" options={CRM_OPTIONS} value={form.crmProvider} onChange={set('crmProvider')} />
+        <Input
+          label="API Key"
+          type="password"
+          autoComplete="off"
+          placeholder="API Key"
+          value={form.crmApiKey}
+          onChange={set('crmApiKey')}
+        />
       </fieldset>
 
       <fieldset className={steps.fieldset}>
         <legend className={steps.legend}>Email Provider</legend>
-        <select value={form.emailProvider} onChange={(e) => setForm({ ...form, emailProvider: e.target.value })} className={steps.select}>
-          <option value="">Select provider...</option>
-          <option value="sendgrid">SendGrid</option>
-          <option value="mailgun">Mailgun</option>
-          <option value="resend">Resend</option>
-          <option value="smtp">Custom SMTP</option>
-        </select>
-        <input type="password" autoComplete="off" placeholder="API Key" value={form.emailApiKey} onChange={(e) => setForm({ ...form, emailApiKey: e.target.value })} className={steps.input} />
+        <Select label="Provider" options={EMAIL_OPTIONS} value={form.emailProvider} onChange={set('emailProvider')} />
+        <Input
+          label="API Key"
+          type="password"
+          autoComplete="off"
+          placeholder="API Key"
+          value={form.emailApiKey}
+          onChange={set('emailApiKey')}
+        />
       </fieldset>
 
       <fieldset className={steps.fieldset}>
         <legend className={steps.legend}>Social Media</legend>
-        <input type="text" placeholder="Platforms (comma-separated): linkedin, twitter, instagram" value={form.socialPlatforms} onChange={(e) => setForm({ ...form, socialPlatforms: e.target.value })} className={steps.input} />
+        <Input
+          label="Platforms (comma-separated)"
+          type="text"
+          placeholder="linkedin, twitter, instagram"
+          value={form.socialPlatforms}
+          onChange={set('socialPlatforms')}
+        />
       </fieldset>
 
       <fieldset className={steps.fieldset}>
         <legend className={steps.legend}>Analytics</legend>
-        <select value={form.analyticsProvider} onChange={(e) => setForm({ ...form, analyticsProvider: e.target.value })} className={steps.select}>
-          <option value="">Select provider...</option>
-          <option value="google-analytics">Google Analytics</option>
-          <option value="mixpanel">Mixpanel</option>
-          <option value="plausible">Plausible</option>
-        </select>
-        <input type="text" placeholder="Tracking ID" value={form.analyticsTrackingId} onChange={(e) => setForm({ ...form, analyticsTrackingId: e.target.value })} className={steps.input} />
+        <Select label="Provider" options={ANALYTICS_OPTIONS} value={form.analyticsProvider} onChange={set('analyticsProvider')} />
+        <Input
+          label="Tracking ID"
+          type="text"
+          placeholder="Tracking ID"
+          value={form.analyticsTrackingId}
+          onChange={set('analyticsTrackingId')}
+        />
       </fieldset>
 
-      <button type="submit" className={steps.submitButton}>Continue to Configuration</button>
+      <Button type="submit" variant="primary" size="lg">Continue to Configuration</Button>
     </form>
   );
 }
-
-
-
-

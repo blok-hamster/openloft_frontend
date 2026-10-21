@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/AuthContext';
 import styles from './TeamAnalytics.module.css';
 
 interface Metrics {
-  leadsCapured: number;
+  leadsCaptured: number;
   emailsSent: number;
   contentPublished: number;
   qaPassRate: number;
@@ -15,7 +15,7 @@ interface Metrics {
 export default function TeamAnalyticsPage() {
   const { token } = useAuth();
   const [metrics, setMetrics] = useState<Metrics>({
-    leadsCapured: 0,
+    leadsCaptured: 0,
     emailsSent: 0,
     contentPublished: 0,
     qaPassRate: 0,
@@ -46,7 +46,7 @@ export default function TeamAnalyticsPage() {
       if (deployments.length > 0) {
         // Metrics would come from a dedicated endpoint in production
         setMetrics({
-          leadsCapured: 0,
+          leadsCaptured: 0,
           emailsSent: 0,
           contentPublished: 0,
           qaPassRate: 0,
@@ -64,7 +64,7 @@ export default function TeamAnalyticsPage() {
       <h1 className={styles.pageTitle}>Team Analytics</h1>
 
       <div className={styles.metricGrid}>
-        <MetricCard label="Leads Captured" value={metrics.leadsCapured} />
+        <MetricCard label="Leads Captured" value={metrics.leadsCaptured} />
         <MetricCard label="Emails Sent" value={metrics.emailsSent} />
         <MetricCard label="Content Published" value={metrics.contentPublished} />
         <MetricCard label="QA Pass Rate" value={`${metrics.qaPassRate}%`} />

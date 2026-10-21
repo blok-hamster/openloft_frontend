@@ -228,7 +228,9 @@ summary:focus-visible {
 /* Pill Button — Danger */
 .btn-danger {
   background: var(--accent-coral);
-  color: var(--white);
+  /* Ink, not white: white on coral is 2.72:1 and fails every text floor.
+     Off-black on the same coral is 6.4:1 and keeps the colour's urgency. */
+  color: var(--off-black);
   padding: 0.65rem 1.5rem;
   border-radius: var(--radius-pill);
   font-weight: 700;
@@ -357,6 +359,18 @@ div[style*="background"] canvas {
 }
 
 @media (max-width: 480px) {
+  /* The desktop type scale was built for a 2rem page title and 1.5rem
+     metrics. On a 320–480px phone that reads as a marketing hero, not an
+     app: "CONSOLE" alone took a quarter of the viewport. Step the display
+     sizes down instead of letting every page re-declare its own mobile
+     override. Body copy keeps the 16px floor established above. */
+  :root {
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.25rem;
+    --font-size-2xl: 1.5rem;
+    --font-size-3xl: 2rem;
+  }
+
   .btn-primary,
   .btn-secondary,
   .btn-danger,

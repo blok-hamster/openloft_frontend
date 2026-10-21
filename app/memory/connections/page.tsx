@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { KeyRound, Plus, Trash2, Copy, Check, AlertTriangle } from 'lucide-react';
 import {
   IMemoryConnection,
@@ -19,10 +19,8 @@ import ConfirmDestructiveAction from '@/components/dashboard/ConfirmDestructiveA
 import { useToast } from '@/components/ui/Toast';
 import { memoryErrorMessage } from '@/components/memory/memoryFormat';
 import IntegrationGuide from '@/components/memory/IntegrationGuide';
+import { publicApiBase } from '@/lib/publicApiBase';
 import styles from './Connections.module.css';
-
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') ?? 'http://localhost:3001/api';
 
 /**
  * The harnesses a user can point at their memory, and the exact config each one
@@ -71,6 +69,18 @@ export default function ConnectionsPage() {
   const [revoking, setRevoking] = useState<IMemoryConnection | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const issuedRef = useRef<HTMLDivElement | null>(null);
+
+  /* A one-time secret below the fold is a secret the user may never see. The
+     mint flow closes the dialog and paints the key further down the page;
+     bring it into view as soon as it exists. */
+  useEffect(() => {
+    const node = issuedRef.current;
+    /* jsdom (tests) has no scrollIntoView; the browser path is the point. */
+    if (issued && typeof node?.scrollIntoView === 'function') {
+      node.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [issued]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -158,7 +168,12 @@ export default function ConnectionsPage() {
       <Card className={styles.endpointCard}>
         <div className={styles.endpointRow}>
           <label className={styles.endpointLabel}>Memory endpoint</label>
-          <code className={styles.endpointValue}>{`${BASE_URL}/memory`}</code>
+          {/* SSR resolves the env-only base; a deployed browser upgrades a
+              missing env to same-origin. The text is the only divergent node,
+              so let React replace it without a hydration warning. */}
+          <code className={styles.endpointValue} suppressHydrationWarning>
+            {`${publicApiBase()}/memory`}
+          </code>
         </div>
         <p className={styles.endpointHint}>
           Calls go through the platform, which attaches the credential for you. Your application
@@ -195,6 +210,7 @@ export default function ConnectionsPage() {
                     <th scope="col">Key</th>
                     <th scope="col">Scopes</th>
                     <th scope="col">Created</th>
+                    <th scope="col">Last used</th>
                     <th scope="col" aria-label="Actions" />
                   </tr>
                 </thead>
@@ -209,6 +225,9 @@ export default function ConnectionsPage() {
                         <span className={styles.scopeList}>{c.scopes.join(', ')}</span>
                       </td>
                       <td className={styles.dateCell}>{new Date(c.createdAt).toLocaleString()}</td>
+                      <td className={styles.dateCell}>
+                        {c.lastUsedAt ? new Date(c.lastUsedAt).toLocaleString() : 'Never'}
+                      </td>
                       <td className={styles.actionsCell}>
                         <Button
                           variant="ghost"
@@ -246,6 +265,10 @@ export default function ConnectionsPage() {
                       <div className={styles.tableCardRow}>
                         <dt>Created</dt>
                         <dd>{new Date(c.createdAt).toLocaleString()}</dd>
+                      </div>
+                      <div className={styles.tableCardRow}>
+                        <dt>Last used</dt>
+                        <dd>{c.lastUsedAt ? new Date(c.lastUsedAt).toLocaleString() : 'Never'}</dd>
                       </div>
                     </dl>
                     <div className={styles.detailActions}>
@@ -291,6 +314,7 @@ export default function ConnectionsPage() {
       </section>
 
       {issued && (
+        <div ref={issuedRef}>
         <Card className={styles.issuedCard}>
           <div className={styles.issuedHead}>
             <KeyRound size={16} aria-hidden />
@@ -314,6 +338,7 @@ export default function ConnectionsPage() {
           </div>
           <IntegrationGuide apiKey={issued.apiKey} label={issued.label} scopes={issued.scopes} />
         </Card>
+        </div>
       )}
 
       {/* Mint dialog */}

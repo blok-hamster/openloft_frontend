@@ -20,6 +20,18 @@ function count(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
+/** Service health → the status pill. "active"/"ok"/"healthy" are green;
+    "degraded" is the amber paused dot; anything else (including a status
+    the kit has never heard of) is an error, because an unknown health
+    string is a fault dressed as a status. */
+function healthStatusOf(health: MemoryHealth | null): 'active' | 'paused' | 'error' {
+  if (!health?.status) return 'error';
+  const normalized = health.status.toLowerCase();
+  if (['active', 'ok', 'healthy', 'up'].includes(normalized)) return 'active';
+  if (['degraded', 'degrading', 'warning', 'partial'].includes(normalized)) return 'paused';
+  return 'error';
+}
+
 export default function MemoryStatsHeader({
   stats,
   eventStats,
@@ -71,7 +83,10 @@ export default function MemoryStatsHeader({
       )}
 
       <div className={styles.healthRow}>
-        <StatusIndicator status={health?.status ? 'active' : 'error'} />
+        {/* The pill used to say green "active" for ANY non-empty status —
+            "degraded" and "error" rendered as healthy. Map the reported
+            state honestly; an unknown string is a fault, not a green dot. */}
+        <StatusIndicator status={healthStatusOf(health)} />
         <span className={styles.caption}>
           {health?.status
             ? `Memory service reports ${health.status}.`

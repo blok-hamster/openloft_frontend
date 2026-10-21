@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { RefreshCw } from 'lucide-react';
 import {
@@ -43,6 +43,11 @@ function parseTurn(raw: string): number | undefined {
   return Number.isInteger(value) && value >= 0 ? value : undefined;
 }
 
+/** The timeline is a fixed window. It used to share the table's `limit`, so
+ *  choosing 25 rows silently rewrote the chart's window to 25 buckets — a
+ *  display control on one card changing another card's data. */
+const TIMELINE_LIMIT = 100;
+
 /**
  * The cognitive event log: every weight update, override, suppression, prune,
  * consolidation, LTP burst and retrieval the engine recorded. Every read
@@ -62,8 +67,12 @@ export default function EventsTab({ scope }: { scope?: MemoryScopeParams }) {
   const [turnFrom, setTurnFrom] = useState('');
   const [turnTo, setTurnTo] = useState('');
   const [limit, setLimit] = useState(100);
+  /* Late responses must not overwrite newer ones when filters change while
+     a request is in flight. */
+  const loadTokenRef = useRef(0);
 
   const load = useCallback(async () => {
+    const token = ++loadTokenRef.current;
     setLoading(true);
     const from = parseTurn(turnFrom);
     const to = parseTurn(turnTo);
@@ -76,18 +85,20 @@ export default function EventsTab({ scope }: { scope?: MemoryScopeParams }) {
           turn_to: to,
           ...scope,
         }),
-        getMemoryEventTimeline(limit, scope).catch(() => null),
+        getMemoryEventTimeline(TIMELINE_LIMIT, scope).catch(() => null),
       ]);
+      if (loadTokenRef.current !== token) return;
       setEvents(page.results);
       setTotalEvents(page.total);
       setEventsError(null);
       setTimeline(points ?? []);
       setTimelineError(points === null ? 'Timeline unavailable.' : null);
     } catch (err) {
+      if (loadTokenRef.current !== token) return;
       setEvents([]);
       setEventsError(memoryErrorMessage(err));
     } finally {
-      setLoading(false);
+      if (loadTokenRef.current === token) setLoading(false);
     }
   }, [eventType, turnFrom, turnTo, limit, scope]);
 
@@ -133,7 +144,9 @@ export default function EventsTab({ scope }: { scope?: MemoryScopeParams }) {
         <div className={styles.recordsHead}>
           <h2 className={styles.sectionTitle}>Timeline</h2>
           <span className={styles.caption}>
-            {timeline.length > 0 ? `${timeline.length} buckets, busiest at full width` : ''}
+            {timeline.length > 0
+              ? `Last ${TIMELINE_LIMIT} buckets, busiest at full width`
+              : ''}
           </span>
           <Button
             variant="secondary"

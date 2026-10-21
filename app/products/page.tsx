@@ -24,7 +24,6 @@ import Link from 'next/link';
 import { Brain, Cpu, Globe, Server } from 'lucide-react';
 
 import Header from '@/components/landing/Header';
-import Button from '@/components/ui/Button';
 import styles from '@/components/landing/Landing.module.css';
 import pr from './Products.module.css';
 import { isAccountAreaEnabled, FRAMEWORK_REPO } from '@/lib/features';
@@ -184,22 +183,24 @@ export default function ProductsPage() {
                         only when you want us to operate it.
                     </p>
                     <div className={pr.ctaActions}>
-                        <Link href="/docs">
-                            <Button variant="primary" size="lg">
-                                Read the docs
-                            </Button>
+                        {/* A link styled as a button, not a button inside a
+                            link — nested interactive elements are invalid and
+                            give the keyboard two stops for one action. */}
+                        <Link href="/docs" className="btn-primary">
+                            Read the docs
                         </Link>
                         {accountEnabled ? (
-                            <Link href="/auth/register">
-                                <Button variant="secondary" size="lg">
-                                    Get started
-                                </Button>
+                            <Link href="/auth/register" className="btn-secondary">
+                                Get started
                             </Link>
                         ) : (
-                            <a href={FRAMEWORK_REPO} target="_blank" rel="noreferrer noopener">
-                                <Button variant="secondary" size="lg">
-                                    Get the framework
-                                </Button>
+                            <a
+                                href={FRAMEWORK_REPO}
+                                target="_blank"
+                                rel="noreferrer noopener"
+                                className="btn-secondary"
+                            >
+                                Get the framework
                             </a>
                         )}
                     </div>

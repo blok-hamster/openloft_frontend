@@ -30,7 +30,7 @@ const tiers: { id: Tier; name: string; description: string; badge: string; featu
     { 
         id: 'enterprise', 
         name: 'Enterprise', 
-        description: 'Scalable infrastructure for large swarms.', 
+        description: 'Scalable infrastructure for large agent fleets.', 
         badge: 'Custom',
         features: ['Unlimited Agents', 'Dedicated Cluster', 'Advanced Security', 'Dedicated Account Manager']
     },
@@ -94,7 +94,7 @@ function OnboardingPageContent() {
                 await updateSecrets(tenantId, filteredSecrets);
             }
 
-            toast('Setup complete! Welcome to LOFT.', 'success');
+            toast('Setup complete! Welcome to OpenLoft.', 'success');
             router.push('/dashboard');
         } catch {
             toast('Failed to save secrets', 'error');
@@ -112,7 +112,7 @@ function OnboardingPageContent() {
     return (
         <div className={styles.onboardingPage}>
             <div className={styles.onboardingCard}>
-                <div className={styles.onboardingBrand}>LOFT</div>
+                <div className={styles.onboardingBrand}>OpenLoft</div>
                 <div className={styles.onboardingSubtitle}>
                     {user?.email ? `Welcome, ${user.email}` : 'Set up your workspace'}
                 </div>
@@ -135,9 +135,15 @@ function OnboardingPageContent() {
                             placeholder="Acme Corp"
                             value={orgName}
                             onChange={(e) => setOrgName(e.target.value)}
+                            required
                         />
                         <div className={styles.stepActionsEnd}>
-                            <Button variant="primary" loading={loading} onClick={handleCreateTenant}>
+                            <Button
+                                variant="primary"
+                                loading={loading}
+                                disabled={!orgName.trim()}
+                                onClick={handleCreateTenant}
+                            >
                                 Continue
                             </Button>
                         </div>
@@ -148,10 +154,16 @@ function OnboardingPageContent() {
                 {step === 1 && (
                     <div className={styles.stepForm}>
                         <div className={styles.stepTitle}>Select your plan</div>
-                        <div className={styles.tierGrid}>
+                        <div className={styles.tierGrid} role="radiogroup" aria-label="Plan">
                             {tiers.map((tier) => (
-                                <div
+                                /* A plan card is a single-select control, not a
+                                   click-only div — role="radio" gives it the
+                                   keyboard and the announced state for free. */
+                                <button
                                     key={tier.id}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={selectedTier === tier.id}
                                     className={`${styles.tierCard} ${selectedTier === tier.id ? styles.tierCardSelected : ''}`}
                                     onClick={() => setSelectedTier(tier.id)}
                                 >
@@ -165,7 +177,7 @@ function OnboardingPageContent() {
                                         </ul>
                                     </div>
                                     <div className={styles.tierBadge}>{tier.badge}</div>
-                                </div>
+                                </button>
                             ))}
                         </div>
                         <div className={styles.stepActions}>

@@ -89,7 +89,7 @@ function RecordsTabs() {
             key={tab.id}
             href={hrefFor(tab.id)}
             className={active === tab.id ? `${views.tabButton} ${views.tabButtonActive}` : views.tabButton}
-            aria-current={active === tab.id ? 'true' : undefined}
+            aria-current={active === tab.id ? 'page' : undefined}
           >
             {tab.label}
           </Link>

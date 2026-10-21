@@ -1,13 +1,30 @@
 'use client';
 
 import { useState } from 'react';
+import Select from '@/components/ui/Select';
+import Button from '@/components/ui/Button';
 import steps from './EnterpriseSteps.module.css';
 import { AGENT_ROLES, maxAgentsForTier } from './roles';
 
+export interface ConfigurationData {
+  selectedAgents: string[];
+  llmProvider: string;
+  maxAgents: number;
+}
+
 interface Props {
   tier: string;
-  onComplete: (data: any) => void;
+  onComplete: (data: ConfigurationData) => void;
 }
+
+const LLM_OPTIONS = [
+  { value: 'anthropic', label: 'Anthropic (Claude)' },
+  { value: 'openai', label: 'OpenAI (GPT)' },
+  { value: 'google', label: 'Google (Gemini)' },
+  { value: 'groq', label: 'Groq (Llama)' },
+  { value: 'deepseek', label: 'DeepSeek' },
+  { value: 'openrouter', label: 'OpenRouter' },
+];
 
 export default function ConfigurationStep({ tier, onComplete }: Props) {
   const maxAgents = maxAgentsForTier(tier);
@@ -58,25 +75,20 @@ export default function ConfigurationStep({ tier, onComplete }: Props) {
         })}
       </div>
 
-      <label className={steps.field}>
-        <span className={steps.fieldLabel}>LLM Provider</span>
-        <select value={llmProvider} onChange={(e) => setLlmProvider(e.target.value)} className={steps.select}>
-          <option value="anthropic">Anthropic (Claude)</option>
-          <option value="openai">OpenAI (GPT)</option>
-          <option value="google">Google (Gemini)</option>
-          <option value="groq">Groq (Llama)</option>
-          <option value="deepseek">DeepSeek</option>
-          <option value="openrouter">OpenRouter</option>
-        </select>
-      </label>
+      <Select
+        label="LLM Provider"
+        options={LLM_OPTIONS}
+        value={llmProvider}
+        onChange={(e) => setLlmProvider(e.target.value)}
+      />
 
       <p className={steps.stepNote}>
         Selected: {selectedAgents.length}/{maxAgents} agents
       </p>
 
-      <button type="submit" disabled={selectedAgents.length === 0} className={steps.submitButton}>
-        Review & Deploy
-      </button>
+      <Button type="submit" variant="primary" size="lg" disabled={selectedAgents.length === 0}>
+        Review &amp; Deploy
+      </Button>
     </form>
   );
 }

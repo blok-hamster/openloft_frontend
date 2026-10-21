@@ -33,6 +33,13 @@ const MAX_VISIBLE = 3;
 
 export function ToastProvider({ children }: { children: ReactNode }) {
     const [toasts, setToasts] = useState<Toast[]>([]);
+
+    /* Toasts used to be un-dismissable: an error you had already read stayed
+       on top of the page for its full TTL, and on a phone it covered the
+       control it was talking about. */
+    const dismiss = useCallback((id: number) => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, []);
     /* Timers were previously never cleared, so every toast left a pending
        timeout that fired setState after unmount. */
     const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -74,7 +81,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                             exit={{ opacity: 0, y: 10, scale: 0.95 }}
                             transition={{ duration: 0.2 }}
                         >
-                            {t.message}
+                            <span>{t.message}</span>
+                            <button
+                                type="button"
+                                className={styles.toastDismiss}
+                                aria-label="Dismiss notification"
+                                onClick={() => dismiss(t.id)}
+                            >
+                                ×
+                            </button>
                         </motion.div>
                     ))}
                 </AnimatePresence>

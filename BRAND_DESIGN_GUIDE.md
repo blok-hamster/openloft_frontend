@@ -147,6 +147,23 @@ review.
   `min-width: 560px`, `hover: hover` / `hover: none`,
   `prefers-reduced-motion`, `forced-colors`, `print`, `landscape`.
 
+### Phone density (≤480)
+A mobile layout is not the desktop layout allowed to wrap. At phone width
+the app steps down a density, while preserving every touch target:
+
+- Display type steps down globally: `--font-size-lg` 18px,
+  `--font-size-xl` 20px, `--font-size-2xl` 24px, `--font-size-3xl` 32px.
+  Page titles in both consoles cap at 24px; they are app chrome, not
+  landing-page heroes.
+- Cards, state panels and modal bodies use a 16px inset. Empty states use
+  2rem block padding, not the desktop 4rem.
+- A metric row that would clip its labels as two narrow tiles becomes a
+  compact key/value list; labels and one-line hints stay readable.
+- Scope/search fields take the full row. Secondary filters may share a row
+  only when each keeps its label and a 44px control.
+- The 44px touch floor and the 16px input floor below still win over
+  density. Never shrink an input or button to make a row fit.
+
 ### Touch
 - Every tappable control is ≥44px under 900px — `min-height:
   var(--touch-target)` (pills, tabs, list rows, copy buttons, close

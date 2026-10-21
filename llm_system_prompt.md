@@ -53,13 +53,13 @@ You are an expert Frontend Engineer building the UI for **LOFT**, an enterprise-
 - `<SecretManagerPanel />` — Hidden-by-default inputs for LLM API keys, writes to HashiCorp Vault
 
 ### Agent Provisioning
-- `<AgentCreationWizard />` — 3-step modal: (1) Name, (2) LLM Provider selection, (3) Webhook connectors. Animated deployment progress.
+- `<AgentCreationWizard />` — 6-step modal: (1) runtime/harness, (2) name + description, (3) billing strategy (platform credits vs BYOK), (4) LLM provider, (5) model, key choice and connectors, (6) review. Animated deployment progress.
 - `<ConfirmDestructiveAction />` — Type-to-confirm modal for stop/delete actions
 
 ### Orchestration Dashboard
-- `<DashboardHeader />` — Section title (e.g., "ORCHESTRATION"), grid/list toggle, Skills button, "+ NEW AGENT" CTA
+- `<DashboardHeader />` — "Agents" title, deployed count, "+ New Agent" CTA
 - `<AgentList />` — Responsive CSS Grid layout
-- `<AgentCard />` — Agent name, `<StatusIndicator />`, LLM provider, `<Sparkline />` token chart, action buttons (Skills, Logs, Chat, Settings, Open GUI)
+- `<AgentCard />` — Agent name, `<StatusIndicator />`, harness and LLM provider, active-skill count, Config and Logs buttons, lifecycle actions (start/stop/pause/resume/restart), and a more menu (WebUI, HTTP API, Pair Device, custom key, delete). Skills/Logs/Chat/Settings/Open GUI are no longer card actions: the marketplace is a separate page and chat opens through WebUI.
 - `<SkillMarketplaceDrawer />` — Slide-out panel with toggleable skill cards
 - `<MemoryEditorMonaco />` — Code/markdown editor for the agent's MEMORY.md file (Cmd+S to save)
 - `<AgentDirectChatPanel />` — iMessage-style native chat interface to talk to the agent's container webhook

@@ -110,7 +110,8 @@
 
 @media (max-width: 900px) {
     .page {
-        padding: 1rem;
+        /* mainContent owns the phone gutter — see Team.module.css. */
+        padding: 0;
         max-width: 100%;
     }
 
@@ -122,5 +123,15 @@
     .saveButton {
         width: 100%;
         min-height: var(--touch-target);
+    }
+}
+
+@media (max-width: 480px) {
+    .pageTitle {
+        margin-bottom: 1.25rem;
+    }
+
+    .section {
+        margin-bottom: 1.25rem;
     }
 }

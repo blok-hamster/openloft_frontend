@@ -1,14 +1,25 @@
 'use client';
+import Button from '@/components/ui/Button';
 import steps from './EnterpriseSteps.module.css';
 import { roleLabel, tierLabel } from './roles';
+import type { DiscoveryData } from './DiscoveryStep';
+import type { IntegrationData } from './IntegrationStep';
+import type { ConfigurationData } from './ConfigurationStep';
 
-interface Props {
-  formData: { discovery: any; integrations: any; config: any };
-  tier: string;
-  onDeploy: () => void;
+export interface EnterpriseFormData {
+  discovery: Partial<DiscoveryData>;
+  integrations: Partial<IntegrationData>;
+  config: Partial<ConfigurationData>;
 }
 
-export default function GoLiveStep({ formData, tier, onDeploy }: Props) {
+interface Props {
+  formData: EnterpriseFormData;
+  tier: string;
+  onDeploy: () => void;
+  deploying?: boolean;
+}
+
+export default function GoLiveStep({ formData, tier, onDeploy, deploying = false }: Props) {
   /* These were accessed as `discovery.companyName` with no guard, so an
      empty formData threw during render. */
   const discovery = formData.discovery ?? {};
@@ -27,7 +38,7 @@ export default function GoLiveStep({ formData, tier, onDeploy }: Props) {
         <p className={steps.reviewLine}><strong>Company:</strong> {discovery.companyName}</p>
         <p className={steps.reviewLine}><strong>Industry:</strong> {discovery.industry}</p>
         <p className={steps.reviewLine}><strong>Target Audience:</strong> {discovery.targetAudience}</p>
-        {discovery.toneOfVoice?.length > 0 && (
+        {discovery.toneOfVoice && discovery.toneOfVoice.length > 0 && (
           <p className={steps.reviewLine}><strong>Tone:</strong> {discovery.toneOfVoice.join(', ')}</p>
         )}
       </section>
@@ -75,9 +86,17 @@ export default function GoLiveStep({ formData, tier, onDeploy }: Props) {
         </p>
       </div>
 
-      <button type="button" onClick={onDeploy} className={steps.deployButton}>
+      <Button
+        type="button"
+        variant="primary"
+        size="lg"
+        onClick={onDeploy}
+        loading={deploying}
+        disabled={deploying}
+        className={steps.deployButton}
+      >
         Deploy Team
-      </button>
+      </Button>
     </div>
   );
 }

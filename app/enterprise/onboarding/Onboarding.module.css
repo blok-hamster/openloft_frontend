@@ -1,3 +1,14 @@
+.errorBanner {
+    border: 1px solid var(--accent-coral);
+    background: rgba(255, 75, 75, 0.06);
+    color: var(--accent-coral);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+}
+
 .container {
   max-width: 800px;
   margin: 0 auto;

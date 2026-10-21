@@ -161,7 +161,7 @@ function AgentCard({
 }: {
     name: string;
     blurb: string;
-    status: Status;
+    status: ProductStatus;
     detail: string;
 }) {
     const live = status === 'live';

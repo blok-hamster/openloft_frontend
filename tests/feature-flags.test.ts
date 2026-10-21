@@ -181,7 +181,7 @@ describe('gated routes are wired to the gate', () => {
         // still renders the same notice.
         expect(src).toMatch(/if \(!isAccountAreaEnabled\(\)\) return;/);
         expect(src.indexOf('if (!isAccountAreaEnabled()) return;')).toBeLessThan(
-            src.indexOf("router.replace('/auth/login')")
+            src.indexOf('router.replace(`/auth/login?redirect=')
         );
     });
 

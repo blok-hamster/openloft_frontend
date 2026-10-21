@@ -6,6 +6,7 @@ import { getBilling, type IBillingSummary } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import SkeletonLoader from '@/components/ui/SkeletonLoader';
 import styles from '@/components/dashboard/Dashboard.module.css';
 import bill from './Billing.module.css';
 import { CreditCard, Zap, Shield, Crown, TrendingDown, Clock, AlertCircle } from 'lucide-react';
@@ -53,7 +54,7 @@ export default function BillingPage() {
             const importApi = await import('@/lib/api');
             const { url } = await importApi.createCheckoutSession(user.tenantId, {
                 type: 'subscription',
-                tier: tier as any,
+                tier: tier as 'hobby' | 'pro' | 'enterprise',
                 couponCode: couponCode.trim() || undefined
             });
             window.location.href = url;
@@ -92,7 +93,17 @@ export default function BillingPage() {
         }
     };
 
-    if (loading) return <div>Loading billing profile...</div>;
+    if (loading) {
+        return (
+            <div className={styles.billingContainer}>
+                <Card>
+                    <SkeletonLoader variant="text-short" />
+                    <SkeletonLoader variant="card" />
+                    <SkeletonLoader variant="text" count={3} />
+                </Card>
+            </div>
+        );
+    }
 
     /* Billing governs real spend — a render crash or silent blank here is
        worse than an honest failed state with a way back in. */
@@ -141,7 +152,7 @@ export default function BillingPage() {
             name: 'Enterprise',
             price: '$500',
             period: '/mo',
-            description: 'Scalable infrastructure for large swarms.',
+            description: 'Scalable infrastructure for large agent fleets.',
             features: ['Unlimited Agents', 'Platform Credits ($500/mo)', 'Dedicated Cluster', 'Advanced Security', 'Dedicated Account Manager'],
             icon: <Crown size={24} />,
             color: '#a855f7'
@@ -253,7 +264,7 @@ export default function BillingPage() {
                         type="text"
                         value={couponCode}
                         onChange={e => setCouponCode(e.target.value)}
-                        placeholder="e.g. LOFT-XXXXX"
+                        placeholder="e.g. OPENLOFT-XXXXX"
                         className={bill.couponInput}
                     />
                 </div>

@@ -67,11 +67,19 @@ export default function LogsPanel({ agent, open, onClose }: LogsPanelProps) {
     return (
         <Modal open={open} onClose={onClose} title={`Logs — ${agent?.name || agent?.agentId || ''}`}>
             <div className={styles.memoryEditor}>
-                <div className={styles.memoryTabs}>
+                {/* role="tab" with no tablist ancestor is invalid ARIA — a tab
+                    belongs to a tablist and controls a tabpanel. Keyboard
+                    order also stands still: only the selected tab is tabbable,
+                    arrows would move within the list (single pair, so the
+                    default click-first contract is enough here). */}
+                <div className={styles.memoryTabs} role="tablist" aria-label="Logs">
                     <button
                         type="button"
                         role="tab"
+                        id="logs-tab-agent"
+                        aria-controls="logs-panel"
                         aria-selected={tab === 'agent'}
+                        tabIndex={tab === 'agent' ? 0 : -1}
                         className={`${styles.memoryTab} ${tab === 'agent' ? styles.memoryTabActive : ''}`}
                         onClick={() => setTab('agent')}
                     >
@@ -80,7 +88,10 @@ export default function LogsPanel({ agent, open, onClose }: LogsPanelProps) {
                     <button
                         type="button"
                         role="tab"
+                        id="logs-tab-audit"
+                        aria-controls="logs-panel"
                         aria-selected={tab === 'audit'}
+                        tabIndex={tab === 'audit' ? 0 : -1}
                         className={`${styles.memoryTab} ${tab === 'audit' ? styles.memoryTabActive : ''}`}
                         onClick={() => setTab('audit')}
                     >
@@ -88,6 +99,7 @@ export default function LogsPanel({ agent, open, onClose }: LogsPanelProps) {
                     </button>
                 </div>
 
+                <div role="tabpanel" id="logs-panel" aria-labelledby={`logs-tab-${tab}`}>
                 {loading ? (
                     <div className={styles.logLoading}>Loading…</div>
                 ) : tab === 'agent' ? (
@@ -122,6 +134,7 @@ export default function LogsPanel({ agent, open, onClose }: LogsPanelProps) {
                         )}
                     </div>
                 )}
+                </div>
             </div>
         </Modal>
     );

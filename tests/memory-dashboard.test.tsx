@@ -237,8 +237,8 @@ describe('service separation', () => {
         const consoleRedirect = read('app/dashboard/memory/page.tsx');
         const connectionsRedirect = read('app/dashboard/memory/connections/page.tsx');
 
-        expect(consoleRedirect).toContain("router.replace('/memory')");
-        expect(connectionsRedirect).toContain("router.replace('/memory/connections')");
+        expect(consoleRedirect).toContain("redirect('/memory')");
+        expect(connectionsRedirect).toContain("redirect('/memory/connections')");
         // A redirect, not the console itself: nothing of the service's UI may
         // render under the agent dashboard again.
         expect(consoleRedirect).not.toContain('MemoryStatsHeader');

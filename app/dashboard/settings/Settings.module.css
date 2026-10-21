@@ -100,3 +100,17 @@
         width: 100%;
     }
 }
+
+@media (max-width: 480px) {
+    .stack {
+        gap: 1.25rem;
+    }
+
+    .sectionHeading {
+        margin-bottom: 0.75rem;
+    }
+
+    .secretStack {
+        gap: 1rem;
+    }
+}

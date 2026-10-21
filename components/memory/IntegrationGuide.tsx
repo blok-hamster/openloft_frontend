@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Copy, Check } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import { publicApiBase } from '@/lib/publicApiBase';
 import styles from './IntegrationGuide.module.css';
 
 interface IntegrationGuideProps {
@@ -27,7 +28,7 @@ export default function IntegrationGuide({ apiKey, label, scopes }: IntegrationG
   const [tab, setTab] = useState<'mcp' | 'rest' | 'openai'>('mcp');
   const [copied, setCopied] = useState(false);
 
-  const base = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, '') ?? 'http://localhost:3001/api';
+  const base = publicApiBase();
 
   const blocks = useMemo<Record<string, { title: string; note: string; body: string }>>(
     () => ({
@@ -112,7 +113,10 @@ export default function IntegrationGuide({ apiKey, label, scopes }: IntegrationG
             key={id}
             type="button"
             role="tab"
+            id={`integration-tab-${id}`}
+            aria-controls="integration-panel"
             aria-selected={tab === id}
+            tabIndex={tab === id ? 0 : -1}
             className={tab === id ? styles.tabActive : styles.tab}
             onClick={() => setTab(id)}
           >
@@ -121,6 +125,9 @@ export default function IntegrationGuide({ apiKey, label, scopes }: IntegrationG
         ))}
       </div>
 
+      {/* The tab's panel, named by its active tab — the pair completes the
+          pattern the gutter already announced. */}
+      <div role="tabpanel" id="integration-panel" aria-labelledby={`integration-tab-${tab}`}>
       <p className={styles.note}>{current.note}</p>
 
       <div className={styles.codeWrap}>
@@ -139,6 +146,7 @@ export default function IntegrationGuide({ apiKey, label, scopes }: IntegrationG
       <p className={styles.scopeNote}>
         Scopes granted: <code>{scopes.join(', ') || 'none'}</code>
       </p>
+      </div>
     </section>
   );
 }

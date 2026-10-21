@@ -318,7 +318,10 @@ export default function PlaygroundPage() {
               <button
                 type="button"
                 role="tab"
+                id="playground-tab-recall"
+                aria-controls="playground-panel"
                 aria-selected={tool === 'recall'}
+                tabIndex={tool === 'recall' ? 0 : -1}
                 className={tool === 'recall' ? `${views.tabButton} ${views.tabButtonActive}` : views.tabButton}
                 onClick={() => setTool('recall')}
               >
@@ -327,7 +330,10 @@ export default function PlaygroundPage() {
               <button
                 type="button"
                 role="tab"
+                id="playground-tab-ingest"
+                aria-controls="playground-panel"
                 aria-selected={tool === 'ingest'}
+                tabIndex={tool === 'ingest' ? 0 : -1}
                 className={tool === 'ingest' ? `${views.tabButton} ${views.tabButtonActive}` : views.tabButton}
                 onClick={() => setTool('ingest')}
               >
@@ -335,7 +341,7 @@ export default function PlaygroundPage() {
               </button>
             </div>
 
-            <div className={views.railBody}>
+            <div className={views.railBody} role="tabpanel" id="playground-panel" aria-labelledby={`playground-tab-${tool}`}>
               {tool === 'recall' ? (
                 <>
                   <Input

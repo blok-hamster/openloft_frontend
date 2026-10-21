@@ -60,6 +60,16 @@ describe('graph canvas gestures', () => {
         expect(css).toMatch(/\.graphZoomBtn\s*\{[^}]*min-height:\s*var\(--touch-target\)/);
     });
 
+    it('makes nodes keyboard controls rather than pointer-only shapes', () => {
+        // M2: the canvas promised "select a node" but only a pointer could.
+        // Nodes are buttons in the tab order and Enter/Space selects them;
+        // the svg is a labelled group so role="img" cannot flatten them.
+        expect(src).toMatch(/role="group"/);
+        expect(src).toMatch(/role=\{node && onSelect \? 'button' : undefined\}/);
+        expect(src).toMatch(/tabIndex=\{node && onSelect \? 0 : undefined\}/);
+        expect(src).toMatch(/event\.key === 'Enter' \|\| event\.key === ' '/);
+    });
+
     it('does not lose the tap-to-select contract', () => {
         // dragMovedRef still shields the click that follows a drag; pin it
         // so a gesture refactor cannot re-select nodes the user moved.

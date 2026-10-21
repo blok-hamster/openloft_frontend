@@ -208,7 +208,7 @@ export default function AdminPage() {
             <div className={styles.adminHeader}>
                 <div>
                     <h1 className={styles.adminTitle}>Fleet Control</h1>
-                    <div className={styles.adminBrand}>LOFT Admin</div>
+                    <div className={styles.adminBrand}>OpenLoft Admin</div>
                 </div>
                 <div className={styles.adminActions}>
                     <Button variant="secondary" size="sm" onClick={handleScaleOut}>Test Scale Out</Button>

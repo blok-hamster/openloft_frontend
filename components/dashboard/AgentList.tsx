@@ -4,6 +4,7 @@ import styles from './Dashboard.module.css';
 import { IAgent } from '@/lib/api';
 import AgentCard from './AgentCard';
 import Button from '@/components/ui/Button';
+import { Bot } from 'lucide-react';
 
 interface AgentListProps {
     agents: IAgent[];
@@ -29,10 +30,10 @@ export default function AgentList({ agents, onDeploy, onSettings, onStop, onStar
     if (agents.length === 0) {
         return (
             <div className={styles.emptyState}>
-                <div className={styles.emptyIcon}>⬡</div>
+                <div className={styles.emptyIcon} aria-hidden="true"><Bot size={40} /></div>
                 <div className={styles.emptyTitle}>No agents deployed</div>
                 <div className={styles.emptyDescription}>
-                    Deploy your first AI agent to get started with LOFT orchestration.
+                    Deploy your first AI agent to get started with OpenLoft.
                 </div>
                 {onDeploy && (
                     <Button type="button" variant="primary" onClick={onDeploy}>

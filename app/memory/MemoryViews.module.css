@@ -315,6 +315,23 @@
     fill: none;
 }
 
+.graphNodeInteractive {
+    outline: none;
+}
+
+/* Focus lives on the halo: an SVG outline is clipped inconsistently, while
+   a thicker ring on the node reads at any zoom level. */
+.graphNodeInteractive:focus-visible {
+    outline: none;
+}
+
+.graphNodeInteractive:focus-visible .graphNodeHalo,
+.graphNodeInteractive:focus-visible .graphNodeHaloSelected {
+    stroke: var(--accent-blue);
+    stroke-width: 3;
+    stroke-dasharray: none;
+}
+
 .graphNodeHaloSelected {
     fill: none;
     stroke: var(--off-black);
@@ -781,4 +798,59 @@
 .grow {
     flex: 1 1 18rem;
     min-width: 0;
+}
+
+/* Phones: the chat chrome was another desktop-sized surface. Drop the
+   header/rail padding, give the two scope fields the full row instead of
+   squeezing them side by side, and let the transcript keep a usable height
+   without pushing the composer below the fold. */
+@media (max-width: 480px) {
+    .playgroundLayout {
+        gap: 0.875rem;
+    }
+
+    .chatHead {
+        padding: 0.5rem 0.65rem;
+        gap: 0.4rem 0.5rem;
+    }
+
+    .chatHead > div {
+        flex: 1 1 100%;
+    }
+
+    .chatScroll {
+        min-height: 14rem;
+        padding: 0.65rem;
+        max-height: 55dvh;
+    }
+
+    .chatEmpty {
+        gap: 0.6rem;
+        padding: 1rem 0.5rem;
+    }
+
+    .composer {
+        gap: 0.4rem;
+        padding: 0.5rem;
+    }
+
+    .toolRail {
+        gap: 0.75rem;
+    }
+
+    .callout {
+        padding: 0.65rem 0.75rem;
+    }
+
+    .railStat {
+        padding: 0.45rem 0.5rem;
+    }
+
+    .graphCanvasWrap {
+        padding: 0.35rem;
+    }
+
+    .graphLegend {
+        gap: 0.35rem 0.65rem;
+    }
 }

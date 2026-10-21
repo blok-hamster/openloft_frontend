@@ -310,12 +310,12 @@ describe('agents route move', () => {
         const index = read('app/dashboard/page.tsx');
 
         // The orchestration view — header, list and every modal — lives at
-        // /dashboard/agents now, and the root is a redirect to it, so the
-        // post-login redirects in AuthContext and the Hero CTA still land
-        // somewhere real.
+        // /dashboard/agents now, and the root is a server redirect to it, so
+        // the post-login redirects in AuthContext and the Hero CTA still land
+        // somewhere real without painting a blank frame first.
         expect(moved).toContain('DashboardHeader');
         expect(moved).toContain('AgentList');
         expect(moved).not.toContain('useRouter');
-        expect(index).toContain("router.replace('/dashboard/agents')");
+        expect(index).toContain("redirect('/dashboard/agents')");
     });
 });

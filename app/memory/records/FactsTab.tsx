@@ -60,19 +60,25 @@ export default function FactsTab({ scope }: FactsTabProps) {
      is where endpoint errors surface loudly. */
   const [projection, setProjection] = useState<MemoryDecayProjection | null>(null);
   const projectionRequested = useRef(false);
+  /* Pager and scope changes fire overlapping requests; only the newest may
+     paint. Without this, a slow page 1 could land after page 2. */
+  const loadTokenRef = useRef(0);
 
   const loadRecords = useCallback(async () => {
+    const token = ++loadTokenRef.current;
     setLoading(true);
     try {
       const page = await getMemoryRecords({ limit, offset, ...scope });
+      if (loadTokenRef.current !== token) return;
       setRecords(page.results);
       setRecordsError(null);
       if (typeof page.total === 'number') setTotalRecords(page.total);
     } catch (err) {
+      if (loadTokenRef.current !== token) return;
       setRecords([]);
       setRecordsError(memoryErrorMessage(err));
     } finally {
-      setLoading(false);
+      if (loadTokenRef.current === token) setLoading(false);
     }
   }, [limit, offset, scope]);
 

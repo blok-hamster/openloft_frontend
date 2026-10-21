@@ -573,7 +573,10 @@ export default function MemoryGraphCanvas({
         ref={svgRef}
         className={views.graphSvg}
         viewBox={`0 0 ${VIEW.width} ${VIEW.height}`}
-        role="img"
+        /* Not role="img": an image flattens its descendants, and the nodes
+           inside are individually focusable controls. A labelled group keeps
+           the summary while letting the buttons through. */
+        role="group"
         aria-label={`Entity graph${drawable.focus ? `, focused on ${drawable.focus}` : ''}: ${
           drawable.nodes.length
         } entities, ${drawable.edges.length} links. Select a node for detail; drag to untangle; pinch, ctrl-scroll or the buttons to zoom.`}
@@ -620,9 +623,28 @@ export default function MemoryGraphCanvas({
         return (
           <g
             key={place.id}
-            className={`${DOMINANT_CLASS[place.dominant]} ${dimmed ? views.graphNodeDim : ''}`}
+            className={`${views.graphNodeInteractive} ${DOMINANT_CLASS[place.dominant]} ${
+              dimmed ? views.graphNodeDim : ''
+            }`}
             transform={`translate(${place.x.toFixed(1)},${place.y.toFixed(1)})`}
             style={{ cursor: node ? 'pointer' : undefined }}
+            /* The pointer gesture was the only way into the detail panel.
+               Nodes are controls: reachable with Tab, activated like a
+               button, and named with what opening them tells you. */
+            tabIndex={node && onSelect ? 0 : undefined}
+            role={node && onSelect ? 'button' : undefined}
+            aria-label={
+              node && onSelect
+                ? `Select ${place.id}${recordCount > 0 ? `, ${recordCount} records` : ''}`
+                : undefined
+            }
+            onKeyDown={(event) => {
+              if (!node || !onSelect) return;
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onSelect(place.id);
+              }
+            }}
             onPointerEnter={() => setHoverId(place.id)}
             onPointerLeave={() =>
               setHoverId((current) => (current === place.id ? null : current))

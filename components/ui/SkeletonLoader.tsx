@@ -1,7 +1,7 @@
 import styles from './UI.module.css';
 
 interface SkeletonLoaderProps {
-    variant?: 'card' | 'text' | 'text-short' | 'avatar';
+    variant?: 'card' | 'text' | 'text-short';
     count?: number;
     className?: string;
 }
@@ -11,7 +11,6 @@ export default function SkeletonLoader({ variant = 'text', count = 1, className 
         card: styles.skeletonCard,
         text: styles.skeletonText,
         'text-short': styles.skeletonTextShort,
-        avatar: styles.skeletonAvatar,
     }[variant];
 
     return (

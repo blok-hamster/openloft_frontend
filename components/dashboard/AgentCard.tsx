@@ -2,16 +2,15 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import {
-    Settings, ScrollText, Key, Link, ExternalLink,
-    Terminal, Square, Pause, RotateCcw, Play, Trash2, MoreHorizontal,
+    Settings, ScrollText, Key, Link, ExternalLink, Globe,
+    Square, Pause, RotateCcw, Play, Trash2, MoreHorizontal,
 } from 'lucide-react';
-import { IAgent, approveAgentDevice, getAgentCredentials, IAgentCredentials } from '@/lib/api';
+import { IAgent, approveAgentDevice, getAgentCredentials } from '@/lib/api';
 import { requestAgentUiProxySession } from '@/lib/socketApi';
 import { rewriteBootstrapUrl } from '@/lib/openclawBootstrap';
 import { HARNESS_NAMES } from './AgentTypeSelector';
 import { useToast } from '@/components/ui/Toast';
 import StatusIndicator from '@/components/ui/StatusIndicator';
-import Sparkline from '@/components/ui/Sparkline';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import styles from './Dashboard.module.css';
@@ -71,61 +70,6 @@ interface AgentCardProps {
     onHttpDetails?: (agent: IAgent) => void;
 }
 
-/**
- * Pair this browser with an OpenClaw agent and return the token it issued.
- *
- * OpenClaw's device-pairing flow: connect to its WebSocket, get closed with
- * 1008/1005, POST /api/agents/:id/device/approve, then reconnect — the second
- * handshake returns a token with the `operator` role and the `operator.read`
- * scope that `/control-ui-config.json` requires.
- *
- * Extracted from `pairDevice` below because the Web UI needs the same token and
- * the previous code only ever produced it for the "Pair Device" button, where it
- * was used solely to flip a boolean.
- */
-async function pairOpenClawDevice(agentId: string): Promise<string | null> {
-    const { wsProtocol } = agentOrigin();
-    return new Promise((resolve) => {
-        let settled = false;
-        const finish = (v: string | null) => {
-            if (settled) return;
-            settled = true;
-            resolve(v);
-        };
-
-        const connect = () => {
-            const ws = new WebSocket(`${wsProtocol}://${agentId}.${agentOrigin().baseDomain}`);
-            ws.onmessage = (event) => {
-                try {
-                    const msg = JSON.parse(String(event.data));
-                    if (msg?.token) {
-                        ws.close();
-                        finish(msg.token as string);
-                    }
-                } catch { /* plaintext frame; not the pairing token */ }
-            };
-            ws.onopen = () => {
-                // Already paired from a previous run: the gateway sends the
-                // token immediately. Waiting for the close below would hang.
-                try { ws.send(JSON.stringify({ type: 'hello', client: 'dashboard' })); } catch { /* ignore */ }
-            };
-            ws.onclose = async (e) => {
-                if (e.code === 1008 || e.code === 1005) {
-                    try {
-                        await approveAgentDevice(agentId);
-                        setTimeout(connect, 1500);
-                    } catch { finish(null); }
-                } else {
-                    finish(null);
-                }
-            };
-            ws.onerror = () => finish(null);
-        };
-
-        connect();
-    });
-}
-
 export default function AgentCard({
     agent, onSettings, onStop,
     onStart, onPause, onResume, onRestart, onDelete,
@@ -140,10 +84,6 @@ export default function AgentCard({
        rule; the card only paints it. */
     const isPending = (action: string) =>
         pendingAction === `${agent.agentId}:${action}`;
-
-    /* Previously Math.random() on every render, which re-drew the SVG (and
-       invalidated layout) on each poll tick. Stable for the card's lifetime. */
-    const mockData = useMemo(() => Array.from({ length: 12 }, () => Math.random() * 100), []);
 
     const status = agent.status as string;
     const isProvisioning = status === 'provisioning';
@@ -346,7 +286,7 @@ export default function AgentCard({
                 {
                     key: 'http',
                     label: 'HTTP API',
-                    icon: <Terminal size={12} />,
+                    icon: <Globe size={12} />,
                     onClick: () => onHttpDetails?.(agent),
                     disabled,
                 },
@@ -447,9 +387,6 @@ export default function AgentCard({
                     {HARNESS_NAMES[agent.agentType] ?? agent.agentType}
                 </span>
                 <span className={styles.agentMetaItem}>LLM: {agent.llmProvider}</span>
-                <span className={styles.agentMetaItem}>
-                    <Sparkline data={mockData} />
-                </span>
                 <span className={styles.agentSkillCount}>
                     {agent.activeSkills?.length ?? 0} Skills
                 </span>

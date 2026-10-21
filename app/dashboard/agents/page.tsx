@@ -200,6 +200,7 @@ export default function DashboardPage() {
       ) : (
         <AgentList
           agents={agents}
+          onDeploy={() => setShowWizard(true)}
           onSettings={(a) => setConfigAgent(a)}
           onStop={(a) => setStopTarget(a)}
           onStart={(a) => handleLifecycleAction('start', a)}

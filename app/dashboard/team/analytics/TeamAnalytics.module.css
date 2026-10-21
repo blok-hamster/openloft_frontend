@@ -56,7 +56,8 @@
 
 @media (max-width: 900px) {
     .page {
-        padding: 1rem;
+        /* mainContent owns the phone gutter — see Team.module.css. */
+        padding: 0;
     }
 
     /* minmax(200px, 1fr) already collapses to one column on its own,
@@ -67,11 +68,15 @@
 }
 
 @media (max-width: 480px) {
+    .pageTitle {
+        margin-bottom: 1.25rem;
+    }
+
     .metricGrid {
         grid-template-columns: 1fr;
     }
 
     .notice {
-        padding: 1.25rem;
+        padding: 1rem;
     }
 }

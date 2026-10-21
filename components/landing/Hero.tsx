@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useSyncExternalStore } from 'react';
+import { Component, ReactNode, useState, useCallback, useEffect, useSyncExternalStore } from 'react';
 import { Github } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
@@ -23,6 +23,42 @@ function SplineSkeleton() {
             <span className={styles.skeletonText}>Loading 3D Scene</span>
         </div>
     );
+}
+
+/** The drawn guarantee set — also the fallback when the 3D scene cannot
+ *  arrive. A slow or blocked CDN used to leave "Loading 3D Scene" forever. */
+function MemoryPostcard() {
+    return (
+        <div className={styles.heroPostcard} aria-label="What the memory guarantees">
+            <span className={styles.heroPostcardRow}>
+                <span style={{ background: 'var(--accent-forest)' }} />
+                Dated
+            </span>
+            <span className={styles.heroPostcardRow}>
+                <span style={{ background: 'var(--accent-coral)' }} />
+                Decay-aware
+            </span>
+            <span className={styles.heroPostcardRow}>
+                <span style={{ background: 'var(--accent-blue)' }} />
+                Source-attributed
+            </span>
+            <span className={styles.heroPostcardFacts}>what recall reads back</span>
+        </div>
+    );
+}
+
+/** Catches a failed runtime import (the dynamic() chunk itself). The timeout
+ *  below covers a chunk that loads but never reaches onLoad. */
+class SplineBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+    state = { failed: false };
+
+    static getDerivedStateFromError() {
+        return { failed: true };
+    }
+
+    render() {
+        return this.state.failed ? <MemoryPostcard /> : this.props.children;
+    }
 }
 
 /* The 3D scene and its multi-megabyte runtime stay off phones: the compact
@@ -50,6 +86,7 @@ export default function Hero() {
     const accountEnabled = isAccountAreaEnabled();
     const compact = useCompactViewport();
     const [splineLoaded, setSplineLoaded] = useState(false);
+    const [splineFailed, setSplineFailed] = useState(false);
     /* The scene mounts only after hydration confirms a desktop viewport. A
        phone's brief desktop-shaped hydration frame must not even fetch the
        runtime chunk; the skeleton it shows for two frames is what the
@@ -68,6 +105,14 @@ export default function Hero() {
             cancelAnimationFrame(id);
         };
     }, [compact]);
+
+    /* Eight seconds is generous for a multi-megabyte scene on a slow link and
+       short enough that nobody sits behind a spinner it will never leave. */
+    useEffect(() => {
+        if (!splineMounted || splineLoaded || splineFailed) return;
+        const id = window.setTimeout(() => setSplineFailed(true), 8000);
+        return () => window.clearTimeout(id);
+    }, [splineMounted, splineLoaded, splineFailed]);
 
     const handleSplineLoad = useCallback((splineApp: Application) => {
         const canvas = splineApp.canvas as HTMLCanvasElement;
@@ -130,37 +175,23 @@ export default function Hero() {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
                 >
-                    {compact ? (
-                        <div className={styles.heroPostcard} aria-label="What the memory guarantees">
-                            <span className={styles.heroPostcardRow}>
-                                <span style={{ background: 'var(--accent-forest)' }} />
-                                Dated
-                            </span>
-                            <span className={styles.heroPostcardRow}>
-                                <span style={{ background: 'var(--accent-coral)' }} />
-                                Decay-aware
-                            </span>
-                            <span className={styles.heroPostcardRow}>
-                                <span style={{ background: 'var(--accent-blue)' }} />
-                                Source-attributed
-                            </span>
-                            <span className={styles.heroPostcardFacts}>
-                                what recall reads back
-                            </span>
-                        </div>
+                    {compact || splineFailed ? (
+                        <MemoryPostcard />
                     ) : splineMounted ? (
-                        <div className={styles.splineBox}>
-                            {!splineLoaded && <SplineSkeleton />}
-                            <div
-                                className={styles.splineCanvas}
-                                style={{ opacity: splineLoaded ? 1 : 0 }}
-                            >
-                                <Spline
-                                    scene="https://prod.spline.design/AgBxmKW9HDN4p0op/scene.splinecode"
-                                    onLoad={handleSplineLoad}
-                                />
+                        <SplineBoundary>
+                            <div className={styles.splineBox}>
+                                {!splineLoaded && <SplineSkeleton />}
+                                <div
+                                    className={styles.splineCanvas}
+                                    style={{ opacity: splineLoaded ? 1 : 0 }}
+                                >
+                                    <Spline
+                                        scene="https://prod.spline.design/AgBxmKW9HDN4p0op/scene.splinecode"
+                                        onLoad={handleSplineLoad}
+                                    />
+                                </div>
                             </div>
-                        </div>
+                        </SplineBoundary>
                     ) : null}
                 </motion.div>
 

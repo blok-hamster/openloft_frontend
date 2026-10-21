@@ -80,7 +80,11 @@ export default function PublicSkillsPage() {
             return;
         }
         if (!isAuthenticated) {
-            router.push(`/auth/login?redirect=/dashboard/skills?install=${slug}`);
+            /* The redirect target has its own query — encode it so the
+               login page receives one parameter, not a nested `?`. */
+            router.push(
+              `/auth/login?redirect=${encodeURIComponent(`/dashboard/skills?install=${slug}`)}`,
+            );
         } else {
             router.push(`/dashboard/skills?install=${slug}`);
         }
@@ -92,12 +96,13 @@ export default function PublicSkillsPage() {
             
             <section className={styles.productHero}>
                 <div className={styles.container}>
-                    <h1 className={styles.heroTitle}>Extend Your Swarm</h1>
+                    <h1 className={styles.heroTitle}>Extend what your agents can do</h1>
                     <p className={styles.heroSubtitle}>Discover thousands of community-built skills and plugins on ClawHub.</p>
                     
                     <div className={ps.searchWrap}>
-                        <Input 
-                            placeholder="Search skills, plugins, or creators..." 
+                        <Input
+                            aria-label="Search skills, plugins, or creators"
+                            placeholder="Search skills, plugins, or creators..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             icon={<Search size={18} />}
@@ -115,6 +120,10 @@ export default function PublicSkillsPage() {
                                 <div className={ps.statusNote}>Searching ClawHub...</div>
                             ) : searchError ? (
                                 <div className={ps.statusNote}>{searchError}</div>
+                            ) : results.length === 0 ? (
+                                <div className={ps.statusNote}>
+                                    No skills match “{searchQuery.trim()}”. Try a broader term.
+                                </div>
                             ) : results.map((res) => (
                                 <SkillCard key={res.slug} skill={res} onInstall={handleInstallClick} canInstall={accountEnabled} />
                             ))}
@@ -130,6 +139,8 @@ export default function PublicSkillsPage() {
                                 <div className={ps.statusNote}>Loading trending...</div>
                             ) : trendingError ? (
                                 <div className={ps.statusNote}>{trendingError}</div>
+                            ) : trending.length === 0 ? (
+                                <div className={ps.statusNote}>No trending skills right now.</div>
                             ) : trending.map((res) => (
                                 <SkillCard key={res.slug} skill={res} onInstall={handleInstallClick} canInstall={accountEnabled} />
                             ))}

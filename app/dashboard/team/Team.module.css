@@ -128,7 +128,10 @@
 
 @media (max-width: 900px) {
     .container {
-        padding: 1rem;
+        /* The dashboard shell's main column already supplies the phone
+           gutter; adding another 1rem here inset this page 32px from each
+           edge and made its cards look narrower than every other page. */
+        padding: 0;
     }
 
     .header {
@@ -149,5 +152,16 @@
 
     .agentGrid {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .title {
+        font-size: 1.25rem;
+    }
+
+    .loading,
+    .empty {
+        padding: 2rem 1rem;
     }
 }

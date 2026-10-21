@@ -1,15 +1,10 @@
-'use client';
-
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { redirect } from 'next/navigation';
 
 /**
- * Events moved to a tab on the records page — the log and the facts it
- * produced are one browse. This route only forwards old bookmarks; the tab
- * itself is /memory/records?tab=events.
+ * Events moved to a tab on the records page — the timeline and the facts
+ * it describes read better together. This route only forwards old
+ * bookmarks; server-side, so nothing paints before the redirect.
  */
 export default function EventsRedirectPage() {
-  const router = useRouter();
-  useEffect(() => { router.replace('/memory/records?tab=events'); }, [router]);
-  return null;
+    redirect('/memory/records?tab=events');
 }

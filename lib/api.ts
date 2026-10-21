@@ -118,7 +118,12 @@ export interface IUserContext {
 
 export interface ICreateCheckoutSessionRequest {
   type: 'subscription' | 'topup';
-  tier?: 'pro' | 'enterprise';
+  /* 'hobby' is a real checkout tier (billingController maps it to
+     STRIPE_HOBBY_PRICE_ID); 'free' is the unsubscribed default, not a
+     purchasable price. The old union omitted hobby and forced a cast at
+     the call site. The tenant model still says 'free' where checkout says
+     'hobby' — see DECISIONS_PENDING.md. */
+  tier?: 'hobby' | 'pro' | 'enterprise';
   amount?: number;
   couponCode?: string;
 }

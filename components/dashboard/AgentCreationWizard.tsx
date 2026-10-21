@@ -10,6 +10,7 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
 import AgentTypeSelector, { HARNESS_NAMES } from './AgentTypeSelector';
+import { Check } from 'lucide-react';
 import styles from './Dashboard.module.css';
 import wiz from './AgentCreationWizard.module.css';
 
@@ -406,7 +407,7 @@ export default function AgentCreationWizard({ open, onClose, onCreated }: AgentC
                                     size="sm"
                                     disabled={!hasSavedKeyForProvider}
                                 >
-                                    Use Saved Key {hasSavedKeyForProvider ? '✅' : '(None)'}
+                                    Use Saved Key {hasSavedKeyForProvider ? <Check size={12} aria-hidden /> : '(None)'}
                                 </Button>
                                 <Button
                                     variant={!useSavedKey ? "secondary" : "ghost"}

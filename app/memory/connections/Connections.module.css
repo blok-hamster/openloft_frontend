@@ -296,6 +296,39 @@
   .cardStack {
     display: flex;
   }
+
+  .wrap {
+    gap: 1rem;
+  }
+
+  .header {
+    gap: 0.75rem;
+  }
+
+  .title {
+    letter-spacing: 0.03em;
+  }
+
+  .endpointCard,
+  .listCard {
+    padding: 1rem;
+  }
+
+  .mintForm {
+    gap: 1rem;
+  }
+
+  .scopeField {
+    padding: 0.75rem;
+  }
+
+  .mintActions {
+    flex-direction: column-reverse;
+  }
+
+  .mintActions > * {
+    width: 100%;
+  }
 }
 
 .fieldHint {

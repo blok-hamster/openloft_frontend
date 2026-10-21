@@ -291,7 +291,9 @@
 }
 
 .statusDotIdle {
-    background: var(--mid-grey);
+    /* Mid-grey sat at 2.05:1 on the canvas — a status pip that needs to be
+       found, not guessed at. Secondary text is the same neutral at 5.97:1. */
+    background: var(--text-secondary);
 }
 
 .statusDotError {
@@ -300,8 +302,8 @@
 }
 
 .statusDotPaused {
+    /* Solid: 0.85 opacity drops amber under the 3:1 non-text floor. */
     background: var(--accent-amber);
-    opacity: 0.85;
 }
 
 .statusDotProvisioning {
@@ -354,13 +356,6 @@
     width: 40%;
 }
 
-.skeletonAvatar {
-    composes: skeleton;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-}
-
 @keyframes shimmer {
 
     0%,
@@ -401,6 +396,37 @@
     max-width: 400px;
 }
 
+.toastDismiss {
+    /* Inherits the toast's ink so it works on all three variants. The
+       global button reset makes this a bare glyph, and the 44px floor is
+       lower priority than keeping the pill compact — the tap target is the
+       padded text row itself. */
+    color: inherit;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0.25rem;
+    margin-right: -0.25rem;
+    opacity: 0.7;
+}
+
+@media (hover: hover) {
+    .toastDismiss:hover {
+        opacity: 1;
+    }
+}
+
+/* Touch floor: the glyph's padded box is under 44px and this is the only
+   way out of a toast without waiting it out. */
+@media (max-width: 900px) {
+    .toastDismiss {
+        min-width: var(--touch-target);
+        min-height: var(--touch-target);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
+
 .toastSuccess {
     composes: toast;
     background: var(--accent-forest);
@@ -409,6 +435,8 @@
 .toastError {
     composes: toast;
     background: var(--accent-coral);
+    /* `toast` is white type; on coral that is 2.72:1. Ink reads at 6.4:1. */
+    color: var(--off-black);
 }
 
 .toastInfo {
@@ -427,6 +455,13 @@
     stroke-width: 1.5;
     stroke-linecap: round;
     stroke-linejoin: round;
+}
+
+/* Neutral default; the memory chart overrides it with the prune accent. */
+.sparklineThreshold {
+    stroke: var(--mid-grey);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
 }
 /* ============================================================
    Interactive terminal
@@ -578,5 +613,31 @@
 
     .skeletonCard {
         height: 140px;
+    }
+}
+
+/* Phones: a 1.5rem card inset on a 320px column left 208px for content
+   after the page gutter, and every surface in both consoles paid it. The
+   same 24px also made a two-field form look like a desktop dialog squeezed
+   into a phone. Tighten the chrome; tap targets stay at 44px. */
+@media (max-width: 480px) {
+    .card {
+        padding: 1rem;
+    }
+
+    .btnSizeMd {
+        padding: 0.6rem 1rem;
+    }
+
+    .btnSizeLg {
+        padding: 0.75rem 1.25rem;
+    }
+
+    .modalHeader {
+        padding: 0.65rem 1rem;
+    }
+
+    .modalBody {
+        padding: 1rem;
     }
 }

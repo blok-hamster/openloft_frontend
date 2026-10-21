@@ -156,8 +156,8 @@ export default function LobbyListPage() {
                 <span>{Array.isArray(lobby.agentIds) ? lobby.agentIds.length : 0} Agents</span>
               </div>
               <div className={styles.agentActions}>
-                <Link href={`/dashboard/lobby/${lobby.lobbyId}`} passHref>
-                  <Button variant="ghost" size="sm">Enter Lobby</Button>
+                <Link href={`/dashboard/lobby/${lobby.lobbyId}`} className="btn-ghost">
+                  Enter Lobby
                 </Link>
                 <Button
                   variant="ghost"

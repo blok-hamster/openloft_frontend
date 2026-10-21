@@ -13,7 +13,7 @@ export default function BillingCancelPage() {
     return (
         <div className={`${styles.billingContainer} ${r.resultCenter}`}>
             <Card className={r.resultCard}>
-                <div className={r.resultIconSuccess}>
+                <div className={r.resultIconCancel}>
                     <XCircle size={64} aria-hidden="true" />
                 </div>
                 <h1 className={`${styles.headerTitle} ${r.resultTitle}`}>Payment Cancelled</h1>

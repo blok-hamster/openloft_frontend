@@ -661,6 +661,60 @@
 }
 
 @media (max-width: 480px) {
+  .sectionBlock {
+    margin-bottom: 1.25rem;
+  }
+
+  /* The search box was shrink-to-fit beside Import and the agent filter at
+     320px. Give it the row; the two compact controls wrap beneath it. */
+  .searchWrap {
+    flex: 1 1 100%;
+  }
+
+  /* Three tabs whose intrinsic width is ~440px cannot share a 320px bar.
+     Rather than leaving the last tab off-screen behind a horizontal
+     scroller with no affordance, give every tab an equal third and let
+     the two-word labels wrap. Icons are decoration here, so they go. */
+  .tabsSpaced {
+    flex-wrap: wrap;
+    overflow: visible;
+    margin-bottom: 1rem;
+  }
+
+  .tabsSpaced > button {
+    flex: 1 1 0;
+    min-width: 0;
+    justify-content: center;
+    padding: 0.5rem 0.35rem;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.3;
+  }
+
+  .tabsSpaced > button svg {
+    display: none;
+  }
+
+  .sectionHeadingLg {
+    margin-bottom: 0.75rem;
+  }
+
+  .stackXl {
+    gap: 1rem;
+  }
+
+  .emptyPadded {
+    padding: 1rem;
+  }
+
+  .centerNote {
+    padding: 1rem;
+  }
+
+  .detailCard {
+    padding: 0.75rem;
+  }
+
   .resultActions {
     flex-direction: column-reverse;
     align-items: stretch;
