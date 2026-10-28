@@ -37,7 +37,16 @@ export const requestAgentUiProxySession = async (
 ): Promise<{ url: string; expiresIn: number }> => {
   const { data } = await api.post(`/agents/${agentId}/opencode-proxy/token`);
   const backend = new URL(API_BASE_URL.replace(/\/api\/?$/, ''));
-  const vhostOrigin = `${backend.protocol}//agent-ui-${agentId}.localhost${
+
+  // Localhost: browsers resolve *.localhost to loopback (RFC 6761), no DNS needed.
+  // Production: use the agent domain so the URL reaches the VM, not the user's computer.
+  const isLocal = backend.hostname === 'localhost' || backend.hostname === '127.0.0.1';
+  const agentDomain =
+    process.env.NEXT_PUBLIC_AGENT_DOMAIN || backend.hostname.replace(/^api\./, 'agents.');
+  const host = isLocal
+    ? `agent-ui-${agentId}.localhost`
+    : `agent-ui-${agentId}.${agentDomain}`;
+  const vhostOrigin = `${backend.protocol}//${host}${
     backend.port ? `:${backend.port}` : ''
   }`;
   return {
