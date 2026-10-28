@@ -35,8 +35,11 @@ export default function IntegrationGuide({ apiKey, label, scopes }: IntegrationG
       mcp: {
         title: 'MCP — Claude Code, Cursor, Codex',
         note:
-          'Add this to your MCP client config. The host authenticates with your session, so the ' +
-          'key stays on the platform and never enters the client.',
+          'Add this to your MCP client config. The client presents your key to ' +
+          'the platform edge as a Bearer token; the edge forwards it verbatim to ' +
+          'the memory substrate, which is the sole verifier and re-checks it on ' +
+          'every request, so revocation is instant. The platform never verifies ' +
+          'or caches the key itself.',
         body: JSON.stringify(
           {
             mcpServers: {
