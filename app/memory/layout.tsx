@@ -126,17 +126,22 @@ export default function MemoryLayout({ children }: { children: ReactNode }) {
                     );
                 })}
             </nav>
-            <div className={styles.sidebarFooter}>
-                <div className={styles.sidebarUser}>{user?.email}</div>
-                <button
-                    type="button"
-                    className={styles.logoutButton}
-                    onClick={logout}
-                >
-                    <LogOut size={14} />
-                    Log Out
-                </button>
-            </div>
+            {/* Email + logout live on the mobile bottom dock, so they're
+               omitted from the drawer while it's open. Desktop keeps them
+               because navOpen is never true there. */}
+            {!navOpen && (
+                <div className={styles.sidebarFooter}>
+                    <div className={styles.sidebarUser}>{user?.email}</div>
+                    <button
+                        type="button"
+                        className={styles.logoutButton}
+                        onClick={logout}
+                    >
+                        <LogOut size={14} />
+                        Log Out
+                    </button>
+                </div>
+            )}
         </>
     );
 
@@ -153,6 +158,10 @@ export default function MemoryLayout({ children }: { children: ReactNode }) {
                 aria-label="Open navigation"
                 aria-expanded={navOpen}
                 aria-controls="memory-nav"
+                /* Hidden while the drawer is open so it can't sit on top of
+                   the drawer content / block the brand. Stays in the DOM so
+                   the focus-return ref stays valid. */
+                style={navOpen ? { display: 'none' } : undefined}
             >
                 <Menu size={20} />
             </button>

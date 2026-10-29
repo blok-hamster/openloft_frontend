@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Space_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/AuthContext";
+import { NavDrawerProvider } from "@/lib/NavDrawerContext";
 import { ToastProvider } from "@/components/ui/Toast";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
@@ -65,9 +66,11 @@ export default function RootLayout({
         />
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!}>
           <AuthProvider>
-            <ToastProvider>
-              {children}
-            </ToastProvider>
+            <NavDrawerProvider>
+              <ToastProvider>
+                {children}
+              </ToastProvider>
+            </NavDrawerProvider>
           </AuthProvider>
         </GoogleOAuthProvider>
       </body>

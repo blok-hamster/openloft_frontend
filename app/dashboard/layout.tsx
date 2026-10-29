@@ -1,10 +1,11 @@
 'use client';
 
 import Image from 'next/image';
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
+import { useNavDrawer } from '@/lib/NavDrawerContext';
 import { useDrawerFocus } from '@/lib/useDrawerFocus';
 import { LayoutGrid, Settings, Shield, LogOut, Users, CreditCard, Menu, X, Plus } from 'lucide-react';
 import styles from '@/components/dashboard/Dashboard.module.css';
@@ -42,7 +43,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const { user, logout, isLoading } = useAuth();
     const router = useRouter();
 
-    const [navOpen, setNavOpen] = useState(false);
+    const { navOpen, openDrawer, closeDrawer } = useNavDrawer();
     const menuButtonRef = useRef<HTMLButtonElement>(null);
     const drawerRef = useRef<HTMLElement>(null);
 
@@ -71,7 +72,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
        the drawer promises aria-modal, and a Tab that leaks through the
        scrim is a modal that lied (shared with the memory shell). */
     useDrawerFocus(navOpen, drawerRef, menuButtonRef, () => {
-        setNavOpen(false);
+        closeDrawer();
         menuButtonRef.current?.focus();
     });
 
@@ -88,11 +89,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const navContent = (
         <>
             <div className={styles.sidebarBrand}>
-                <Link href="/" onClick={() => setNavOpen(false)}>
+                <Link href="/">
                     <Image src="/black_logo.svg" alt="OpenLoft" width={100} height={32} priority />
                 </Link>
             </div>
-            <ProductSwitcher active="agents" onNavigate={() => setNavOpen(false)} />
+            {/* Navigate between products but keep the drawer open so the
+               newly mounted shell's sections are visible. */}
+            <ProductSwitcher active="agents" />
             <nav className={styles.sidebarNav} id="dashboard-nav" aria-label="Dashboard">
                 {navItems.map((item) => {
                     const isActive = isRouteActive(pathname, item.href);
@@ -103,7 +106,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                             href={item.href}
                             className={isActive ? styles.sidebarLinkActive : styles.sidebarLink}
                             aria-current={isActive ? 'page' : undefined}
-                            onClick={() => setNavOpen(false)}
                         >
                             <Icon size={16} />
                             {item.label}
@@ -117,24 +119,28 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         href="/admin"
                         className={isRouteActive(pathname, '/admin') ? styles.sidebarLinkActive : styles.sidebarLink}
                         aria-current={isRouteActive(pathname, '/admin') ? 'page' : undefined}
-                        onClick={() => setNavOpen(false)}
                     >
                         <Shield size={16} />
                         Admin
                     </Link>
                 )}
             </nav>
-            <div className={styles.sidebarFooter}>
-                <div className={styles.sidebarUser}>{user?.email}</div>
-                <button
-                    type="button"
-                    className={styles.logoutButton}
-                    onClick={logout}
-                >
-                    <LogOut size={14} />
-                    Log Out
-                </button>
-            </div>
+            {/* Email + logout live on the mobile bottom dock, so they're
+               omitted from the drawer while it's open. Desktop keeps them
+               because navOpen is never true there. */}
+            {!navOpen && (
+                <div className={styles.sidebarFooter}>
+                    <div className={styles.sidebarUser}>{user?.email}</div>
+                    <button
+                        type="button"
+                        className={styles.logoutButton}
+                        onClick={logout}
+                    >
+                        <LogOut size={14} />
+                        Log Out
+                    </button>
+                </div>
+            )}
         </>
     );
 
@@ -147,10 +153,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 ref={menuButtonRef}
                 type="button"
                 className={styles.mobileMenuButton}
-                onClick={() => setNavOpen(true)}
+                onClick={openDrawer}
                 aria-label="Open navigation"
                 aria-expanded={navOpen}
                 aria-controls="dashboard-nav"
+                /* Hidden while the drawer is open so it can't sit on top of
+                   the drawer content / block the brand. Stays in the DOM so
+                   the focus-return ref stays valid. */
+                style={navOpen ? { display: 'none' } : undefined}
             >
                 <Menu size={20} />
             </button>
@@ -159,7 +169,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             {navOpen && (
                 <div
                     className={styles.sidebarScrim}
-                    onClick={() => setNavOpen(false)}
+                    onClick={() => closeDrawer()}
                     aria-hidden="true"
                 />
             )}
@@ -174,7 +184,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <button
                     type="button"
                     className={styles.drawerClose}
-                    onClick={() => { setNavOpen(false); menuButtonRef.current?.focus(); }}
+                    onClick={() => { closeDrawer(); menuButtonRef.current?.focus(); }}
                     aria-label="Close navigation"
                 >
                     <X size={20} />

@@ -820,6 +820,122 @@
     }
 }
 
+/* ============================================================
+   Mobile drawer content — the off-canvas menu reuses the desktop
+   nav, but phones need taller tap targets, readable type and a
+   footer a thumb can actually hit. These rules only apply under
+   900px; the docked desktop sidebar keeps its own density above.
+   `composes` is only legal at the top level of this module, so
+   the active-state override below redeclares its mobile props.
+   ============================================================ */
+
+@media (max-width: 900px) {
+    .sidebar {
+        width: min(320px, 90vw);
+        overflow-y: auto;
+        /* Momentum scroll on iOS so a long nav list doesn't drag
+           the page behind the drawer with it. */
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .sidebarBrand {
+        padding: 0 1rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .sidebarLink {
+        min-height: var(--touch-target);
+        padding: 1rem 1rem;
+        font-size: var(--font-size-sm);
+        letter-spacing: 0.06em;
+    }
+
+    .sidebarLink:not(.sidebarLinkActive) {
+        border-bottom: 1px solid rgba(26, 26, 26, 0.06);
+    }
+
+    .sidebarNav .sidebarLink:last-child {
+        border-bottom: none;
+    }
+
+    .sidebarLinkActive {
+        min-height: var(--touch-target);
+        padding: 1rem 1rem;
+        font-size: var(--font-size-sm);
+        letter-spacing: 0.06em;
+        color: var(--text-primary);
+        background: rgba(26, 26, 26, 0.08);
+        border-left: none;
+        border-bottom: none;
+    }
+
+    .sidebarFooter {
+        padding: 1.25rem 1rem;
+        border-top: var(--border);
+    }
+
+    .sidebarUser {
+        font-size: var(--font-size-sm);
+        white-space: normal;
+        text-overflow: unset;
+        line-height: 1.4;
+        margin-bottom: 0.75rem;
+    }
+
+    /* Logout becomes a full-width button-shaped tap target at the
+       bottom of the drawer — hard to miss, hard to mis-tap. */
+    .logoutButton {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0.85rem 1rem;
+        margin-top: 0;
+        border: var(--border);
+        border-radius: var(--radius-md);
+        background: var(--bg-color);
+        color: var(--text-primary);
+        font-size: var(--font-size-sm);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        min-height: var(--touch-target);
+        transition: background var(--transition-fast), color var(--transition-fast);
+        cursor: pointer;
+    }
+
+    .logoutButton:focus-visible {
+        outline: 2px solid var(--accent-blue);
+        outline-offset: 2px;
+    }
+
+    @media (hover: hover) {
+        .logoutButton:hover {
+            background: rgba(26, 26, 26, 0.06);
+        }
+    }
+}
+
+/* Small-phone refinement: the drawer sits nearer the edges and the
+   footer gives the home indicator clearance. */
+@media (max-width: 480px) {
+    .sidebar {
+        width: min(300px, 92vw);
+    }
+
+    .sidebarBrand {
+        margin-bottom: 1rem;
+    }
+
+    .sidebarFooter {
+        padding: 1rem 0.75rem;
+    }
+
+    .logoutButton {
+        padding: 1rem 0.75rem;
+    }
+}
+
 @media (max-width: 480px) {
     /* The header still fights the menu button for space at 320px; a tracked
        2rem title buys nothing at that width. */
