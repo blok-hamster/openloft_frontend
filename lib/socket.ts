@@ -14,6 +14,7 @@
  */
 
 import { io, type Socket } from 'socket.io-client';
+import { getApiOrigin } from './apiBase';
 
 export type { Socket };
 export const TOKEN_STORAGE_KEY = 'loft_token';
@@ -21,12 +22,11 @@ export const TOKEN_STORAGE_KEY = 'loft_token';
 /**
  * API origin, without the trailing `/api`.
  *
- * `NEXT_PUBLIC_API_URL` is documented to end in `/api` — the axios instance
- * hardcodes that expectation, and the two call sites each stripped the suffix
- * with their own regex. Strip it once here.
+ * Uses the runtime host-matched origin from `lib/apiBase.ts` so `.tech` and
+ * `.xyz` frontend visits connect to their corresponding API host.
  */
 export function socketOrigin(): string {
-  return (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '') || 'http://localhost:3001';
+  return getApiOrigin();
 }
 
 export const readAuthToken = (): string | null => {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
+import { getApiOrigin } from '@/lib/apiBase';
 import styles from './TeamSettings.module.css';
 
 export default function TeamSettingsPage() {
@@ -14,7 +15,7 @@ export default function TeamSettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const API_URL = getApiOrigin();
 
   /* The token lives beside the user in the auth context, not on the user
      object — `(user as any)?.token` sent `Bearer undefined` on every call. */

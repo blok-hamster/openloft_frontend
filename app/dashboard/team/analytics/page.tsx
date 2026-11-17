@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
+import { getApiOrigin } from '@/lib/apiBase';
 import styles from './TeamAnalytics.module.css';
 
 interface Metrics {
@@ -22,7 +23,7 @@ export default function TeamAnalyticsPage() {
     pipelineExecutions: 0,
   });
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const API_URL = getApiOrigin();
 
   /* A load failure is a state: the zeroed metric grid used to be the only
      output of a broken backend, indistinguishable from a quiet day. */

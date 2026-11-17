@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { resolveApiBaseUrl } from './apiBase';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = resolveApiBaseUrl();
 // Exported for callers that need the API's ORIGIN (not /api), such as the
 // proxied agent UI, whose iframe points at the backend's /agent-ui mount.
 export { API_BASE_URL };
@@ -16,9 +17,12 @@ const api = axios.create({
 });
 export { api };
 
-// Attach JWT from localStorage on every request
+// Attach JWT from localStorage and resolve the host-matched API base on every browser request
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
+    if (!config.baseURL || config.baseURL === API_BASE_URL) {
+      config.baseURL = resolveApiBaseUrl();
+    }
     const token = localStorage.getItem('loft_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

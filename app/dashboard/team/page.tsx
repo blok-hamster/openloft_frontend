@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
+import { getApiOrigin } from '@/lib/apiBase';
 import PipelineFlow from '@/components/enterprise/PipelineFlow';
 import styles from './Team.module.css';
 
@@ -29,7 +30,7 @@ export default function TeamDashboardPage() {
      deployed" told a broken backend to go create a new deployment. */
   const [error, setError] = useState<string | null>(null);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const API_URL = getApiOrigin();
 
   /* `(user as any)?.token` was always undefined — the token lives beside
      the user in the auth context, not on the user object; every team
