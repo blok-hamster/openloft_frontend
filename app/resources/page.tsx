@@ -31,7 +31,7 @@ import Card from '@/components/ui/Card';
 import styles from '@/components/landing/Landing.module.css';
 import r from './Resources.module.css';
 
-const REPO = 'https://github.com/blok-hamster/nmafc';
+import { FRAMEWORK_REPO, FRAMEWORK_LICENCE } from '@/lib/features';
 
 const RESOURCES = [
     {
@@ -46,17 +46,17 @@ const RESOURCES = [
         type: 'Quickstart',
         title: 'Install and first turn',
         description:
-            'Install the package, construct a memory, process one turn and recall what it kept.',
+            'Install the nmafc Python package with pip, construct a memory, process one turn and recall what it kept.',
         icon: Terminal,
         href: '/docs#quickstart',
     },
     {
         type: 'Integration',
-        title: 'Harness setup — MCP',
+        title: 'Harness setup — Hermes & MCP',
         description:
-            'Point Claude Code, OpenCode, Cursor or Codex at the memory server. One config block each.',
+            'Add long-term memory to Hermes Agent via the openloft-memory plugin, or connect Claude Code, Cursor and Codex over MCP.',
         icon: Plug,
-        href: '/docs#mcp',
+        href: '/docs#hermes-plugin',
     },
     {
         type: 'Reference',
@@ -70,7 +70,7 @@ const RESOURCES = [
         type: 'Benchmarks',
         title: 'LoCoMo results',
         description:
-            'Accuracy across all five question categories, with the p-values and the losses. Reproducible with one command.',
+            'Accuracy across the paired LoCoMo evaluation, including context savings, p-values and reproduction commands.',
         icon: LineChart,
         href: '/docs#benchmarks',
     },
@@ -78,9 +78,9 @@ const RESOURCES = [
         type: 'Source',
         title: 'Repository',
         description:
-            'The engine, under Apache-2.0. Open an issue or read the implementation.',
+            `The engine, under ${FRAMEWORK_LICENCE} (free for non-commercial use). Open an issue or read the implementation.`,
         icon: Github,
-        href: REPO,
+        href: FRAMEWORK_REPO,
         external: true,
     },
 ];

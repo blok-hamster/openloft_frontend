@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight, Check, Clock, Server, Wrench } from 'lucide-react';
 import styles from './HostedMemoryBand.module.css';
-import { isAccountAreaEnabled } from '@/lib/features';
+import { isAccountAreaEnabled, FRAMEWORK_LICENCE } from '@/lib/features';
 import { ProductStatus, STATUS_META, DEPLOYMENT_STATUS } from '@/lib/productStatus';
 
 /**
@@ -122,10 +122,10 @@ export default function HostedMemoryBand() {
             <div className={styles.container}>
                 <h2 className={styles.title}>Or we run the memory itself</h2>
                 <p className={styles.lede}>
-                    Same engine, operated by us. The framework is free and open
-                    source — this is the tier where we provision, secure, monitor and
-                    support the memory layer for your agents, and the tier where it
-                    runs inside your own perimeter.
+                    Same engine, operated by us. The framework is free for
+                    non-commercial use under {FRAMEWORK_LICENCE} — this is the tier
+                    where we provision, secure, monitor and support the memory layer for
+                    your agents, and the tier where it runs inside your own perimeter.
                 </p>
 
                 <div className={styles.grid}>

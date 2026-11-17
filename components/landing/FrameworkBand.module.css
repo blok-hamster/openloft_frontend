@@ -69,6 +69,11 @@
   text-underline-offset: 2px;
 }
 
+.body code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

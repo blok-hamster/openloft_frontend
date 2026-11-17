@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ReactNode } from 'react';
 import { Hammer, Database, Github, BookOpen, ArrowRight } from 'lucide-react';
-import { isPreLaunch, FRAMEWORK_REPO } from '@/lib/features';
+import { isPreLaunch, FRAMEWORK_REPO, FRAMEWORK_LICENCE } from '@/lib/features';
 import styles from './FeatureGate.module.css';
 
 /**
@@ -34,7 +34,7 @@ export default function FeatureGate({ children }: { children: ReactNode }) {
 
                 <p className={styles.gateBody}>
                     Signing in is switched off while the hosted tier finishes building. Nothing is
-                    lost — the memory framework itself is ready, open source, and usable today
+                    lost — the memory framework itself is ready, source-available, and usable today
                     without an account.
                 </p>
 
@@ -56,8 +56,8 @@ export default function FeatureGate({ children }: { children: ReactNode }) {
                 </ul>
 
                 <p className={styles.gateAvailable}>
-                    <strong>Available now:</strong> the NMAFC framework — Apache-2.0, runs on your
-                    own infrastructure, no account required.
+                    <strong>Available now:</strong> the NMAFC framework — {FRAMEWORK_LICENCE} (free
+                    for non-commercial use), runs on your own infrastructure, no account required.
                 </p>
 
                 <div className={styles.gateActions}>

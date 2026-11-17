@@ -142,7 +142,7 @@ export default function Hero() {
                         Memory is what makes an agent an agent
                     </h1>
                     <p className={styles.heroDescription}>
-                        Most assistants forget the moment the transcript scrolls away. <span style={{ color: '#F47A4A' }}>NMAFC</span> is an open-source memory layer that keeps a dated, decay-aware, source-attributed record of everything it learns — and hands back a small, precise context hundreds of sessions later.
+                        Most assistants forget the moment the transcript scrolls away. <span style={{ color: '#F47A4A' }}>NMAFC</span> is a stateful memory layer that keeps a dated, decay-aware, source-attributed record of everything it learns — and hands back a small, precise context hundreds of sessions later.
                     </p>
                     <div className={styles.heroActions}>
                         {accountEnabled ? (

@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     default: "OpenLoft — agent memory that outlives the context window",
     template: "%s — OpenLoft",
   },
-  description: "NMAFC is an open-source memory layer for agents: dated, decay-aware, source-attributed facts, and a small precise context hundreds of sessions later. OpenLoft hosts the agents that use it.",
+  description: "NMAFC is a source-available memory layer for agents: dated, decay-aware, source-attributed facts, and a small precise context hundreds of sessions later. OpenLoft hosts the agents that use it.",
   icons: {
     icon: "/loft_favicon.png",
   },

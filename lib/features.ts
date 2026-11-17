@@ -83,3 +83,8 @@ export function isPreLaunch(): boolean {
 }
 
 export const FRAMEWORK_REPO = 'https://github.com/blok-hamster/nmafc';
+export const FRAMEWORK_PACKAGE = 'nmafc';
+export const FRAMEWORK_LICENCE = 'PolyForm Noncommercial 1.0.0';
+export const FRAMEWORK_LICENCE_NOTE =
+    'Free for non-commercial use; commercial use requires a licence';
+export const HERMES_PLUGIN_REPO = 'https://github.com/blok-hamster/hermes-plugin-openloft-memory';

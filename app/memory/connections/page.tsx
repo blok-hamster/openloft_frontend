@@ -38,6 +38,13 @@ const HARNESSES = [
     available: true,
   },
   {
+    id: 'hermes',
+    label: 'Hermes Agent (openloft-memory)',
+    note: 'Native memory provider plugin with automatic recall, background ingest, and loft_* tools.',
+    transport: 'Python plugin',
+    available: true,
+  },
+  {
     id: 'rest',
     label: 'REST (any language)',
     note: 'Mem0-compatible, so a client already speaking to Mem0 changes base URL and key.',

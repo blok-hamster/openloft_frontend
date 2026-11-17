@@ -26,7 +26,7 @@ import { Brain, Cpu, Globe, Server } from 'lucide-react';
 import Header from '@/components/landing/Header';
 import styles from '@/components/landing/Landing.module.css';
 import pr from './Products.module.css';
-import { isAccountAreaEnabled, FRAMEWORK_REPO } from '@/lib/features';
+import { isAccountAreaEnabled, FRAMEWORK_REPO, FRAMEWORK_LICENCE } from '@/lib/features';
 import { HARNESS_STATUS, DEPLOYMENT_STATUS, statusPhrase } from '@/lib/productStatus';
 
 const HARNESS_NAMES: Record<keyof typeof HARNESS_STATUS, string> = {
@@ -50,11 +50,12 @@ const announcedHarnesses = (Object.keys(HARNESS_STATUS) as Array<keyof typeof HA
 
 const PRODUCTS = [
     {
-        tag: 'Open source · Apache-2.0',
+        tag: `Source-available · ${FRAMEWORK_LICENCE}`,
         title: 'NMAFC Memory Framework',
         icon: Brain,
-        desc: 'An open-source memory layer for LLM agents. It compacts each turn into dated atomic facts, ages unused ones on a decay curve set for the long haul, and retrieves through a fusion of five ranked channels — so context stays small no matter how long the conversation gets.',
+        desc: 'A stateful memory layer for LLM agents (pip install nmafc). It compacts each turn into dated atomic facts, ages unused ones on a decay curve set for the long haul, and retrieves through a fusion of five ranked channels — so context stays small no matter how long the conversation gets.',
         items: [
+            'Install into any Python 3.11–3.13 project via pip install nmafc',
             'Temporal grounding: relative dates resolved at write time',
             'Three memory types with different decay rates',
             'Source attribution back to the originating turns',
@@ -116,8 +117,8 @@ export default function ProductsPage() {
                     <h1 className={styles.heroTitle}>Three products, one engine</h1>
                     <p className={styles.heroSubtitle}>
                         Run the memory framework yourself, let us host your agents, or
-                        let us run the memory layer entirely. Every path uses the same
-                        open-source build.
+                        let us run the memory layer entirely. Every path runs on the
+                        same NMAFC engine.
                     </p>
                 </div>
             </section>
@@ -179,8 +180,9 @@ export default function ProductsPage() {
                     <p
                         className={`${styles.heroSubtitle} ${pr.ctaBody}`}
                     >
-                        It is free and open source. Host an agent or the memory layer
-                        only when you want us to operate it.
+                        Free for non-commercial use under {FRAMEWORK_LICENCE} —
+                        commercial licensing is also available. Host an agent or the
+                        memory layer only when you want us to operate it.
                     </p>
                     <div className={pr.ctaActions}>
                         {/* A link styled as a button, not a button inside a

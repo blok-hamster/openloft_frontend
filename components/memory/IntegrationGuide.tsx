@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { Copy, Check } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { publicApiBase } from '@/lib/publicApiBase';
+import { HERMES_PLUGIN_REPO } from '@/lib/features';
 import styles from './IntegrationGuide.module.css';
 
 interface IntegrationGuideProps {
@@ -25,7 +26,7 @@ interface IntegrationGuideProps {
  * correct public URL for it to advertise.
  */
 export default function IntegrationGuide({ apiKey, label, scopes }: IntegrationGuideProps) {
-  const [tab, setTab] = useState<'mcp' | 'rest' | 'openai'>('mcp');
+  const [tab, setTab] = useState<'mcp' | 'hermes' | 'rest' | 'openai'>('mcp');
   const [copied, setCopied] = useState(false);
 
   const base = publicApiBase();
@@ -55,6 +56,22 @@ export default function IntegrationGuide({ apiKey, label, scopes }: IntegrationG
           null,
           2,
         ),
+      },
+      hermes: {
+        title: 'Hermes Agent — openloft-memory',
+        note:
+          'Zero-dependency Python memory provider plugin (requires Hermes >= 0.19.0). ' +
+          'Installs automatic per-turn recall, non-blocking background ingest, and five ' +
+          'loft_* memory tools.',
+        body: [
+          `git clone ${HERMES_PLUGIN_REPO} "$HOME/.hermes/plugins/openloft-memory"`,
+          `export OPENLOFT_MEMORY_API_KEY="${apiKey}"`,
+          `# Optional if targeting this origin explicitly:`,
+          `# export OPENLOFT_MEMORY_BASE_URL="${base}/memory"`,
+          `hermes plugins enable openloft-memory`,
+          `hermes memory setup`,
+          `hermes openloft-memory health`,
+        ].join('\n'),
       },
       rest: {
         title: 'REST — any language',
@@ -111,7 +128,7 @@ export default function IntegrationGuide({ apiKey, label, scopes }: IntegrationG
       <h3 className={styles.heading}>Connect your application</h3>
 
       <div className={styles.tabs} role="tablist" aria-label="Integration method">
-        {(Object.keys(blocks) as ('mcp' | 'rest' | 'openai')[]).map((id) => (
+        {(Object.keys(blocks) as ('mcp' | 'hermes' | 'rest' | 'openai')[]).map((id) => (
           <button
             key={id}
             type="button"

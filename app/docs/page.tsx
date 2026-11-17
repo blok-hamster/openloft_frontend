@@ -19,10 +19,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, CheckCircle2, Info, Search, Terminal } from 'lucide-react';
 
 import Header from '@/components/landing/Header';
+import { FRAMEWORK_REPO, FRAMEWORK_LICENCE } from '@/lib/features';
 import styles from './Docs.module.css';
 import { GROUPS, SECTIONS, sectionText, type Block } from './content';
-
-const REPO_URL = 'https://github.com/blok-hamster/nmafc';
 
 const CALLOUT_ICON = {
   note: Info,
@@ -218,14 +217,15 @@ export default function DocsPage() {
         <div className={styles.container}>
           <h1 className={styles.heroTitle}>Documentation</h1>
           <p className={styles.heroSubtitle}>
-            Everything about the OpenLoft platform: the NMAFC memory framework, the agents we
-            host for you, and the hosted memory service. Start with the framework — it is
-            open source, so run it yourself with no OpenLoft account required.
+            Everything about the OpenLoft platform: the NMAFC Python package, the Hermes
+            Agent memory plugin, the agents we host for you, and the hosted memory service.
+            Start with <code className={styles.inlineCode}>pip install nmafc</code> — free
+            for non-commercial use with no OpenLoft account required.
           </p>
 
           <a
             className={styles.repoLink}
-            href={REPO_URL}
+            href={FRAMEWORK_REPO}
             target="_blank"
             rel="noreferrer noopener"
           >
@@ -240,7 +240,7 @@ export default function DocsPage() {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search the docs — try &quot;decay&quot;, &quot;mcp&quot;, or &quot;forget&quot;"
+              placeholder="Search the docs — try &quot;pip&quot;, &quot;hermes&quot;, &quot;decay&quot;, or &quot;mcp&quot;"
               aria-label="Search documentation"
             />
             {query.trim() && (
@@ -341,10 +341,11 @@ export default function DocsPage() {
       <footer className={styles.container}>
         <div className={styles.footer}>
           <p>
-            NMAFC is open source under Apache-2.0. If you would rather not operate it
-            yourself, OpenLoft Memory runs the same engine as a managed, multi-tenant
-            service with the tenant bound to a credential, or deployed into your own
-            perimeter — see{' '}
+            NMAFC is source-available under {FRAMEWORK_LICENCE} (free for non-commercial
+            use; commercial use requires a separate licence). The Hermes Agent memory
+            plugin (<code className={styles.inlineCode}>openloft-memory</code>) is MIT
+            licensed. If you would rather not operate the memory backend yourself, OpenLoft
+            Memory runs it as a managed, multi-tenant service — see{' '}
             <a className={styles.link} href="#hosted-memory">
               Hosted Memory
             </a>
@@ -352,7 +353,8 @@ export default function DocsPage() {
           </p>
           <p style={{ marginTop: '0.75rem' }}>
             Benchmark figures are from LoCoMo (Maharana et al., 2024), licensed CC BY-NC 4.0.
-            Reproduce them with{' '}
+            Reproduce them from a repository checkout with{' '}
+            <code className={styles.inlineCode}>nmafc eval locomo regenerate</code> or{' '}
             <code className={styles.inlineCode}>
               python scripts/benchmarks/results/paired_2026_09_10/summarise.py
             </code>{' '}

@@ -235,11 +235,11 @@ describe('FeatureGate rendering', () => {
         expect(screen.getByText(/not open yet/i)).toBeInTheDocument();
     });
 
-    it('always offers a route to the open-source framework while gated', async () => {
+    it('always offers a route to the framework while gated', async () => {
         const { screen } = await renderGate();
         expect(screen.getByRole('link', { name: /read the docs/i })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: /star on github/i })).toBeInTheDocument();
-        expect(screen.getByText(/apache-2\.0/i)).toBeInTheDocument();
+        expect(screen.getByText(/polyform noncommercial 1\.0\.0/i)).toBeInTheDocument();
     });
 
     it('names both unbuilt features in the notice', async () => {
