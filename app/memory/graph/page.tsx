@@ -19,7 +19,7 @@ import MemoryGraphCanvas, { GraphLegend, GRAPH_MAX_EDGES, GRAPH_MAX_NODES } from
 import MemoryRecordDetail from '@/components/memory/MemoryRecordDetail';
 import MemoryForgetDialog from '@/components/memory/MemoryForgetDialog';
 import MemoryRecordTable, { MemorySort } from '@/components/memory/MemoryRecordTable';
-import MemoryScopeBar from '@/components/memory/MemoryScopeBar';
+import MemoryScopeBrowser from '@/components/memory/MemoryScopeBrowser';
 import MemoryStatePanel from '@/components/memory/MemoryStatePanel';
 import { formatWeight, memoryErrorMessage } from '@/components/memory/memoryFormat';
 import styles from '@/components/memory/Memory.module.css';
@@ -76,6 +76,7 @@ function GraphView() {
      the two pages never changes what store is on screen. */
   const agentParam = searchParams.get('agent')?.trim() ?? '';
   const conversationParam = searchParams.get('conversation')?.trim() ?? '';
+  const sharedParam = searchParams.get('shared') === '1';
 
   const [loaded, setLoaded] = useState<Loaded>(EMPTY);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -94,17 +95,20 @@ function GraphView() {
     () => ({
       agentId: agentParam || undefined,
       conversationId: conversationParam || undefined,
+      shared: sharedParam || undefined,
     }),
-    [agentParam, conversationParam],
+    [agentParam, conversationParam, sharedParam],
   );
 
   const handleScopeChange = useCallback(
-    (next: { agentId: string; conversationId: string }) => {
+    (next: { agentId: string; conversationId: string; shared?: boolean }) => {
       const params = new URLSearchParams(searchParams.toString());
       if (next.agentId === '') params.delete('agent');
       else params.set('agent', next.agentId);
       if (next.conversationId === '') params.delete('conversation');
       else params.set('conversation', next.conversationId);
+      if (next.shared) params.set('shared', '1');
+      else params.delete('shared');
       const qs = params.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
@@ -117,17 +121,19 @@ function GraphView() {
       const params = new URLSearchParams({ entity });
       if (agentParam) params.set('agent', agentParam);
       if (conversationParam) params.set('conversation', conversationParam);
+      if (sharedParam) params.set('shared', '1');
       return `/memory/graph?${params.toString()}`;
     },
-    [agentParam, conversationParam],
+    [agentParam, conversationParam, sharedParam],
   );
   const graphHref = useCallback(() => {
     const params = new URLSearchParams();
     if (agentParam) params.set('agent', agentParam);
     if (conversationParam) params.set('conversation', conversationParam);
+    if (sharedParam) params.set('shared', '1');
     const qs = params.toString();
     return qs ? `/memory/graph?${qs}` : '/memory/graph';
-  }, [agentParam, conversationParam]);
+  }, [agentParam, conversationParam, sharedParam]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -232,9 +238,10 @@ function GraphView() {
           </Button>
         </header>
 
-        <MemoryScopeBar
+        <MemoryScopeBrowser
           agentId={agentParam}
           conversationId={conversationParam}
+          shared={sharedParam}
           onChange={handleScopeChange}
         />
 
@@ -337,9 +344,10 @@ function GraphView() {
         </Button>
       </header>
 
-      <MemoryScopeBar
+      <MemoryScopeBrowser
         agentId={agentParam}
         conversationId={conversationParam}
+        shared={sharedParam}
         onChange={handleScopeChange}
       />
 

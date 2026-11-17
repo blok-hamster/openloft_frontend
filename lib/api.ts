@@ -827,6 +827,8 @@ export type MemoryType = 'CoreAnchor' | 'ActiveContext' | 'EphemeralState';
 
 export interface MemoryRecord {
   id: string;
+  agent_id?: string | null;
+  conversation_id?: string;
   entity_name: string;
   fact_content: string;
   memory_type: MemoryType;
@@ -893,6 +895,8 @@ export type MemoryEventType =
 
 export interface MemoryEvent {
   event_type: MemoryEventType | string;
+  agent_id?: string | null;
+  conversation_id?: string;
   turn: number;
   timestamp: string | null;
   record_id: string | null;
@@ -947,6 +951,8 @@ export interface MemoryDecayCurve {
   memory_type: MemoryType;
   current_weight: number;
   consolidation_index: number;
+  agent_id?: string | null;
+  conversation_id?: string;
   points: MemoryDecayPoint[];
 }
 
@@ -980,6 +986,11 @@ export interface MemoryHealth {
 export interface MemoryScopeParams {
   agentId?: string;
   conversationId?: string;
+  /** The tenant's pre-agent shared store, addressed exactly. Absent agentId
+   *  otherwise means every store, so the shared store needs its own flag —
+   *  no caller-chosen agent string can name it. Mutually exclusive with
+   *  agentId upstream, which answers 400 if both arrive. */
+  shared?: boolean;
 }
 
 export const getMemoryRecords = async (
@@ -1007,6 +1018,68 @@ export const getMemoryRecordSource = async (
     `/memory/records/${encodeURIComponent(recordId)}/source`,
     { params: scope },
   );
+  return data;
+};
+
+/** The tenant's (agent, conversation) stores, grouped agent-first. `agent_id`
+ *  null is the pre-agent shared store — where every write before agent scoping
+ *  went — listed first so it is never mistaken for missing data. */
+export interface MemoryScopeConversation {
+  conversation_id: string;
+  records: number;
+  active_records: number;
+  max_turn: number;
+  /** Raw caller timestamp of the latest dated turn, clock-prefix-trimmed by
+   *  the service; null when the store keeps no turn dates. */
+  last_activity: string | null;
+}
+
+export interface MemoryScopeAgent {
+  agent_id: string | null;
+  conversations: MemoryScopeConversation[];
+}
+
+export interface MemoryScopeTree {
+  tenant: string;
+  agents: MemoryScopeAgent[];
+  /** False when no turn in the whole tenant was ever dated: turn numbers are
+   *  then not dates, and the UI must not render them as though they were. */
+  has_turn_dates: boolean;
+}
+
+/** One turn of a conversation's transcript. `text` null means the store does
+ *  not retain the wording — the same real answer `/records/{id}/source` gives
+ *  — and a turn can legitimately carry no wording at all (a forget bumps the
+ *  counter without recording a message). */
+export interface MemoryTurn {
+  turn: number;
+  occurred_at: string | null;
+  text: string | null;
+}
+
+export interface MemoryTurnPage {
+  agent_id: string | null;
+  conversation_id: string;
+  /** The engine's own turn count, gaps and all — not "rows that have text". */
+  total: number;
+  limit: number;
+  offset: number;
+  has_dates: boolean;
+  /** Whether any turn on this page carries wording. */
+  has_text: boolean;
+  turns: MemoryTurn[];
+}
+
+/** The scope tree — the drill-down the console's scope selector is built on. */
+export const getMemoryScopes = async (): Promise<MemoryScopeTree> => {
+  const { data } = await api.get<MemoryScopeTree>('/memory/scopes');
+  return data;
+};
+
+export const getMemoryTurns = async (
+  params: { limit?: number; offset?: number } & MemoryScopeParams = {},
+): Promise<MemoryTurnPage> => {
+  const { data } = await api.get<MemoryTurnPage>('/memory/turns', { params });
   return data;
 };
 
