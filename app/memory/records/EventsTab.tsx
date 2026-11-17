@@ -54,7 +54,13 @@ const TIMELINE_LIMIT = 100;
  * here is a read at the service too — no reinforcement, no decay, no events
  * written by looking.
  */
-export default function EventsTab({ scope }: { scope?: MemoryScopeParams }) {
+export default function EventsTab({
+  scope,
+  onFilterScope,
+}: {
+  scope?: MemoryScopeParams;
+  onFilterScope?: (scope: { agentId: string; conversationId: string; shared?: boolean }) => void;
+}) {
   const [events, setEvents] = useState<MemoryEvent[]>([]);
   const [totalEvents, setTotalEvents] = useState<number | null>(null);
   const [eventsError, setEventsError] = useState<string | null>(null);
@@ -102,13 +108,15 @@ export default function EventsTab({ scope }: { scope?: MemoryScopeParams }) {
     }
   }, [eventType, turnFrom, turnTo, limit, scope]);
 
-  /* An entity link lands on the graph page with this tab's scope intact, so
-     the neighbourhood drawn there is the one the events came from. */
+  /* An entity link lands on the graph page with this event's scope intact, so
+     the neighbourhood drawn there is the one the event came from. */
   const graphHref = useCallback(
-    (entity: string) => {
+    (entity: string, event?: MemoryEvent) => {
       const params = new URLSearchParams({ entity });
-      if (scope?.agentId) params.set('agent', scope.agentId);
-      if (scope?.conversationId) params.set('conversation', scope.conversationId);
+      const agentId = event?.agent_id ?? scope?.agentId;
+      const conversationId = event?.conversation_id ?? scope?.conversationId;
+      if (agentId) params.set('agent', agentId);
+      if (conversationId) params.set('conversation', conversationId);
       return `/memory/graph?${params.toString()}`;
     },
     [scope],
@@ -243,6 +251,8 @@ export default function EventsTab({ scope }: { scope?: MemoryScopeParams }) {
                 <tr>
                   <th scope="col">Turn</th>
                   <th scope="col">Type</th>
+                  <th scope="col">Conversation ID</th>
+                  <th scope="col">Agent ID</th>
                   <th scope="col">Entity</th>
                   <th scope="col">Weight</th>
                   <th scope="col">Tier change</th>
@@ -257,11 +267,40 @@ export default function EventsTab({ scope }: { scope?: MemoryScopeParams }) {
                     <td>
                       <span className={styles.chip}>{event.event_type.replace(/_/g, ' ')}</span>
                     </td>
+                    <td className={styles.cellMono}>
+                      {onFilterScope ? (
+                        <button
+                          type="button"
+                          className={styles.entityButton}
+                          title="Filter to this conversation and agent"
+                          onClick={() =>
+                            onFilterScope(
+                              event.agent_id === null
+                                ? {
+                                    conversationId: event.conversation_id ?? 'default',
+                                    agentId: '',
+                                    shared: true,
+                                  }
+                                : {
+                                    conversationId: event.conversation_id ?? 'default',
+                                    agentId: event.agent_id ?? '',
+                                    shared: false,
+                                  },
+                            )
+                          }
+                        >
+                          {event.conversation_id ?? 'default'}
+                        </button>
+                      ) : (
+                        event.conversation_id ?? 'default'
+                      )}
+                    </td>
+                    <td className={styles.cellMono}>{event.agent_id ?? 'default'}</td>
                     <td>
                       {event.entity_name ? (
                         <Link
                           className={styles.entityButton}
-                          href={graphHref(event.entity_name)}
+                          href={graphHref(event.entity_name, event)}
                         >
                           {event.entity_name}
                         </Link>
@@ -290,7 +329,7 @@ export default function EventsTab({ scope }: { scope?: MemoryScopeParams }) {
                 ))}
                 {events.length === 0 && (
                   <tr>
-                    <td colSpan={7} className={styles.emptyCell}>
+                    <td colSpan={9} className={styles.emptyCell}>
                       No events match these filters.
                     </td>
                   </tr>

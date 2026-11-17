@@ -25,7 +25,13 @@ const MAX_CURVES = 12;
  * the engine will drop on its own. This lives beside the fact list because
  * the fact and its fate are one read apart.
  */
-export default function DecayTab({ scope }: { scope?: MemoryScopeParams }) {
+export default function DecayTab({
+  scope,
+  onFilterScope,
+}: {
+  scope?: MemoryScopeParams;
+  onFilterScope?: (scope: { agentId: string; conversationId: string; shared?: boolean }) => void;
+}) {
   const [projection, setProjection] = useState<MemoryDecayProjection | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -129,11 +135,57 @@ export default function DecayTab({ scope }: { scope?: MemoryScopeParams }) {
                   curve.points[curve.points.length - 1]?.weight ?? curve.current_weight;
                 const crosses = crossingTurn(curve, projection.prune_threshold);
 
+                const curveConversation = curve.conversation_id ?? 'default';
+                const curveAgent = curve.agent_id ?? null;
+                const isExactScope =
+                  scope?.conversationId === curveConversation &&
+                  (curveAgent === null
+                    ? // The shared store's curve is matched exactly by the
+                      // shared scope; an agentless whole-tenant view contains
+                      // it but is not it.
+                      scope?.shared === true
+                    : scope?.agentId === curveAgent && !scope?.shared);
+
                 return (
                   <div key={curve.record_id} className={views.curveCard}>
                     <div className={views.curveHead}>
                       <MemoryTypeBadge type={curve.memory_type} />
                       <span className={views.curveEntity}>{curve.entity_name}</span>
+                    </div>
+                    <div className={styles.segmentBar}>
+                      <div className={styles.segmentMeta}>
+                        <span className={styles.scopePill}>
+                          <span className={styles.scopePillKey}>conv</span>
+                          {curveConversation}
+                        </span>
+                        <span className={styles.scopePill}>
+                          <span className={styles.scopePillKey}>agent</span>
+                          {curveAgent ?? 'default'}
+                        </span>
+                      </div>
+                      {onFilterScope && !isExactScope && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            onFilterScope(
+                              curveAgent === null
+                                ? {
+                                    conversationId: curveConversation,
+                                    agentId: '',
+                                    shared: true,
+                                  }
+                                : {
+                                    conversationId: curveConversation,
+                                    agentId: curveAgent ?? '',
+                                    shared: false,
+                                  },
+                            )
+                          }
+                        >
+                          Filter scope
+                        </Button>
+                      )}
                     </div>
                     <div className={views.curveMeta}>
                       <span>now {formatWeight(curve.current_weight)}</span>

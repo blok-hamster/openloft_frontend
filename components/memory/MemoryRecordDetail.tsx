@@ -94,6 +94,14 @@ export default function MemoryRecordDetail({
 
       <div className={styles.metaGrid}>
         <div>
+          <div className={styles.metaLabel}>Conversation ID</div>
+          <div className={styles.metaValue}>{record.conversation_id ?? 'default'}</div>
+        </div>
+        <div>
+          <div className={styles.metaLabel}>Agent ID</div>
+          <div className={styles.metaValue}>{record.agent_id ?? 'default'}</div>
+        </div>
+        <div>
           <div className={styles.metaLabel}>Weight</div>
           <div className={styles.metaValue}>
             <WeightMeter weight={record.weight} />

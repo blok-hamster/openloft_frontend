@@ -140,6 +140,8 @@ export default function MemoryPage() {
                 <tr>
                   <th scope="col">Type</th>
                   <th scope="col">Entity</th>
+                  <th scope="col">Conversation ID</th>
+                  <th scope="col">Agent ID</th>
                   <th scope="col">Fact</th>
                   <th scope="col">Weight</th>
                   <th scope="col">Turn</th>
@@ -154,11 +156,13 @@ export default function MemoryPage() {
                     <td>
                       <Link
                         className={styles.entityButton}
-                        href={`/memory/graph?entity=${encodeURIComponent(record.entity_name)}`}
+                        href={`/memory/graph?entity=${encodeURIComponent(record.entity_name)}${record.conversation_id ? `&conversation=${encodeURIComponent(record.conversation_id)}` : ''}${record.agent_id ? `&agent=${encodeURIComponent(record.agent_id)}` : ''}`}
                       >
                         {record.entity_name}
                       </Link>
                     </td>
+                    <td className={styles.cellMono}>{record.conversation_id ?? 'default'}</td>
+                    <td className={styles.cellMono}>{record.agent_id ?? 'default'}</td>
                     <td className={styles.factCell}>
                       <span className={styles.factText}>{record.fact_content}</span>
                     </td>

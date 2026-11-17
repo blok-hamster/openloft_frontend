@@ -24,9 +24,24 @@ import styles from '@/components/memory/Memory.module.css';
 const DETAIL_HORIZON = 50;
 
 interface FactsTabProps {
-  /** Sub-scope to browse; absent means the tenant's default store. The page
-   *  remounts this tab on a scope change, so no cross-scope state survives. */
+  /** Sub-scope to browse; absent means organization-wide across all agents and
+   *  conversations. The page remounts this tab on a scope change. */
   scope?: MemoryScopeParams;
+  onFilterScope?: (scope: { agentId: string; conversationId: string; shared?: boolean }) => void;
+}
+
+function recordScopeOf(
+  record: MemoryRecord | null,
+  fallback?: MemoryScopeParams,
+): MemoryScopeParams | undefined {
+  if (!record) return fallback;
+  if (record.conversation_id === undefined && record.agent_id === undefined) {
+    return fallback;
+  }
+  return {
+    agentId: record.agent_id ?? undefined,
+    conversationId: record.conversation_id ?? fallback?.conversationId,
+  };
 }
 
 /**
@@ -40,7 +55,7 @@ interface FactsTabProps {
  * nothing reinforces it" is answered where the fact is, without guessing
  * which curve on the Decay tab is the one in hand.
  */
-export default function FactsTab({ scope }: FactsTabProps) {
+export default function FactsTab({ scope, onFilterScope }: FactsTabProps) {
   const [records, setRecords] = useState<MemoryRecord[]>([]);
   const [totalRecords, setTotalRecords] = useState<number | null>(null);
   const [recordsError, setRecordsError] = useState<string | null>(null);
@@ -59,7 +74,7 @@ export default function FactsTab({ scope }: FactsTabProps) {
      purpose: the drawer simply renders without the curve, and the Decay tab
      is where endpoint errors surface loudly. */
   const [projection, setProjection] = useState<MemoryDecayProjection | null>(null);
-  const projectionRequested = useRef(false);
+  const projectionKeyRef = useRef<string | null>(null);
   /* Pager and scope changes fire overlapping requests; only the newest may
      paint. Without this, a slow page 1 could land after page 2. */
   const loadTokenRef = useRef(0);
@@ -98,12 +113,17 @@ export default function FactsTab({ scope }: FactsTabProps) {
   const handleSelect = useCallback(
     (record: MemoryRecord) => {
       setSelected(record);
-      if (projectionRequested.current) return;
-      projectionRequested.current = true;
-      getMemoryDecayCurves(DETAIL_HORIZON, scope)
-        .then(setProjection)
+      const targetScope = recordScopeOf(record, scope);
+      const targetKey = `${targetScope?.agentId ?? ''}|${targetScope?.conversationId ?? ''}`;
+      if (projectionKeyRef.current === targetKey) return;
+      projectionKeyRef.current = targetKey;
+      setProjection(null);
+      getMemoryDecayCurves(DETAIL_HORIZON, targetScope)
+        .then((data) => {
+          if (projectionKeyRef.current === targetKey) setProjection(data);
+        })
         .catch(() => {
-          projectionRequested.current = false;
+          if (projectionKeyRef.current === targetKey) projectionKeyRef.current = null;
         });
     },
     [scope],
@@ -117,7 +137,7 @@ export default function FactsTab({ scope }: FactsTabProps) {
     setSelected(null);
     setForgetting(null);
     setProjection(null);
-    projectionRequested.current = false;
+    projectionKeyRef.current = null;
     loadRecords();
   }, [loadRecords]);
 
@@ -148,6 +168,8 @@ export default function FactsTab({ scope }: FactsTabProps) {
   const selectedDecay = selected
     ? decayFor(selected, projection, DETAIL_HORIZON)
     : null;
+  const selectedScope = useMemo(() => recordScopeOf(selected, scope), [selected, scope]);
+  const forgettingScope = useMemo(() => recordScopeOf(forgetting, scope), [forgetting, scope]);
 
   return (
     <>
@@ -197,6 +219,8 @@ export default function FactsTab({ scope }: FactsTabProps) {
             onLimitChange={handleLimitChange}
             onOffsetChange={handleOffsetChange}
             onSelect={handleSelect}
+            onFilterScope={onFilterScope}
+            activeScope={scope}
             windowNote={allSupersededNote}
           />
         )}
@@ -208,7 +232,7 @@ export default function FactsTab({ scope }: FactsTabProps) {
         onClose={handleCloseDetail}
         onForget={handleForget}
         decay={selectedDecay}
-        scope={scope}
+        scope={selectedScope}
       />
 
       <MemoryForgetDialog
@@ -216,7 +240,7 @@ export default function FactsTab({ scope }: FactsTabProps) {
         open={forgetting !== null}
         onClose={handleCloseForget}
         onForgotten={handleForgotten}
-        scope={scope}
+        scope={forgettingScope}
       />
     </>
   );

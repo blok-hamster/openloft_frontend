@@ -115,6 +115,14 @@ export default function MemorySearchPanel({ onSelect, scope }: MemorySearchPanel
                 <span className={styles.searchHitHead}>
                   <MemoryTypeBadge type={hit.record.memory_type} />
                   <span className={styles.searchHitEntity}>{hit.record.entity_name}</span>
+                  <span className={styles.scopePill}>
+                    <span className={styles.scopePillKey}>conv</span>
+                    {hit.record.conversation_id ?? 'default'}
+                  </span>
+                  <span className={styles.scopePill}>
+                    <span className={styles.scopePillKey}>agent</span>
+                    {hit.record.agent_id ?? 'default'}
+                  </span>
                   <span className={styles.readout} title="Similarity score">
                     <span className={styles.readoutKey}>score</span>
                     {formatScore(hit.score)}

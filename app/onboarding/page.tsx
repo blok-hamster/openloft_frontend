@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
-import { createTenant, updateSecrets, updateSubscription, IUserContext } from '@/lib/api';
+import { createTenant, updateSubscription, IUserContext } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
@@ -45,7 +45,6 @@ function OnboardingPageContent() {
     const [orgName, setOrgName] = useState('');
     const [selectedTier, setSelectedTier] = useState<Tier>('hobby');
     const [tenantId, setTenantId] = useState('');
-    const [secrets, setSecrets] = useState({ OPENAI_API_KEY: '', ANTHROPIC_API_KEY: '' });
     const [loading, setLoading] = useState(false);
 
     const handleCreateTenant = async () => {
@@ -74,30 +73,13 @@ function OnboardingPageContent() {
     };
 
     const handleTierSelect = async () => {
-        try {
-            await updateSubscription(tenantId, selectedTier);
-            setStep(2);
-        } catch {
-            toast('Failed to save plan selection', 'error');
-        }
-    };
-
-    const handleSecretsSubmit = async () => {
         setLoading(true);
         try {
-            const filteredSecrets: Record<string, string> = {};
-            Object.entries(secrets).forEach(([k, v]) => {
-                if (v.trim()) filteredSecrets[k] = v;
-            });
-
-            if (Object.keys(filteredSecrets).length > 0) {
-                await updateSecrets(tenantId, filteredSecrets);
-            }
-
+            await updateSubscription(tenantId, selectedTier);
             toast('Setup complete! Welcome to OpenLoft.', 'success');
             router.push('/dashboard');
         } catch {
-            toast('Failed to save secrets', 'error');
+            toast('Failed to save plan selection', 'error');
         } finally {
             setLoading(false);
         }
@@ -122,8 +104,6 @@ function OnboardingPageContent() {
                     <div className={stepDotClass(0)} />
                     <div className={styles.stepLine} />
                     <div className={stepDotClass(1)} />
-                    <div className={styles.stepLine} />
-                    <div className={stepDotClass(2)} />
                 </div>
 
                 {/* Step 0: Organization Name */}
@@ -181,39 +161,9 @@ function OnboardingPageContent() {
                             ))}
                         </div>
                         <div className={styles.stepActions}>
-                            <Button variant="ghost" onClick={() => setStep(0)}>Back</Button>
-                            <Button variant="primary" onClick={handleTierSelect}>Continue</Button>
-                        </div>
-                    </div>
-                )}
-
-                {/* Step 2: Secret Injection */}
-                {step === 2 && (
-                    <div className={styles.stepForm}>
-                        <div className={styles.stepTitle}>Add your API keys</div>
-                        <p className={styles.secretNote}>
-                            Your keys are encrypted and stored in a dedicated vault namespace. You can skip this and add them later in settings.
-                        </p>
-                        <div className={styles.secretGroup}>
-                            <Input
-                                label="OpenAI API Key"
-                                type="password"
-                                placeholder="sk-..."
-                                value={secrets.OPENAI_API_KEY}
-                                onChange={(e) => setSecrets((s) => ({ ...s, OPENAI_API_KEY: e.target.value }))}
-                            />
-                            <Input
-                                label="Anthropic API Key"
-                                type="password"
-                                placeholder="sk-ant-..."
-                                value={secrets.ANTHROPIC_API_KEY}
-                                onChange={(e) => setSecrets((s) => ({ ...s, ANTHROPIC_API_KEY: e.target.value }))}
-                            />
-                        </div>
-                        <div className={styles.stepActions}>
-                            <Button variant="ghost" onClick={() => setStep(1)}>Back</Button>
-                            <Button variant="primary" loading={loading} onClick={handleSecretsSubmit}>
-                                Launch Dashboard
+                            <Button variant="ghost" disabled={loading} onClick={() => setStep(0)}>Back</Button>
+                            <Button variant="primary" loading={loading} onClick={handleTierSelect}>
+                                Launch Workspace
                             </Button>
                         </div>
                     </div>
